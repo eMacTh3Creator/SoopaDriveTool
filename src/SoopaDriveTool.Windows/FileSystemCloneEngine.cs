@@ -133,7 +133,14 @@ public static class FileSystemCloneEngine
     $size=[long]([math]::Floor(($remaining-$reserve-2MB)/1MB)*1MB)
     if($size -lt 64MB){throw 'Destination Windows/data partition is too small'}
     $p=New-Partition -DiskNumber $d.Number -Size $size -AssignDriveLetter;$p|Format-Volume -FileSystem NTFS -NewFileSystemLabel 'Clone' -Confirm:$false|Out-Null;$windows=[string]$p.DriveLetter
-    if($r.Recovery){$p=New-Partition -DiskNumber $d.Number -UseMaximumSize -GptType '{DE94BBA4-06D1-4D40-A16A-BFD50179D6AC}' -AssignDriveLetter;$p|Format-Volume -FileSystem NTFS -NewFileSystemLabel 'Recovery' -Confirm:$false|Out-Null;$recovery=[string]$p.DriveLetter;$p|Set-Partition -NoDefaultDriveLetter $true}
+    if($r.Recovery){$p=New-Partition -DiskNumber $d.Number -UseMaximumSize -GptType '{DE94BBA4-06D1-4D40-A16A-BFD50179D6AC}' -AssignDriveLetter;$p|Format-Volume -FileSystem NTFS -NewFileSystemLabel 'Recovery' -Confirm:$false|Out-Null;$recovery=[string]$p.DriveLetter;
+      $script=[IO.Path]::GetTempFileName()
+      try {
+        @("select disk $($d.Number)","select partition $($p.PartitionNumber)",'gpt attributes=0x8000000000000001','exit')|Set-Content -LiteralPath $script -Encoding ASCII
+        $log=& "$env:windir\System32\diskpart.exe" /s $script
+        if($LASTEXITCODE -ne 0 -or !(Get-Partition -DiskNumber $d.Number -PartitionNumber $p.PartitionNumber).NoDefaultDriveLetter){throw 'Recovery partition attributes could not be set'}
+      } finally {Remove-Item -LiteralPath $script -Force}
+    }
     @{Windows=$windows;Efi=$efi;Recovery=$recovery}|ConvertTo-Json -Compress
     """;
 }
