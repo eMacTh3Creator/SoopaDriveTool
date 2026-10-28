@@ -22,3 +22,6 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+
+Self-contained packages also redistribute Microsoft .NET and WPF runtime components under their MIT licenses. See the included DotNet-LICENSE.txt, DotNet-THIRD-PARTY-NOTICES.txt, WPF-LICENSE.txt and WPF-THIRD-PARTY-NOTICES.txt for notices. Runtime component sources: https://github.com/dotnet/runtime and https://github.com/dotnet/wpf

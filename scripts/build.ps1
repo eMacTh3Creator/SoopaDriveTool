@@ -17,6 +17,7 @@ try{
  if($LASTEXITCODE -ne 0){throw 'Publish failed'}
  if(!(Test-Path "$publish\Tools\diskspd.exe")){throw 'Native benchmark engine missing from publish output'}
  Copy-Item "$root\README.md","$root\LICENSE","$root\THIRD-PARTY-NOTICES.txt" $publish
+ Copy-Item "$root\docs\DotNet-LICENSE.txt","$root\docs\DotNet-THIRD-PARTY-NOTICES.txt","$root\docs\WPF-LICENSE.txt","$root\docs\WPF-THIRD-PARTY-NOTICES.txt" $publish
  if(!$Compiler){$candidates=@("$tools\InnoSetup\ISCC.exe",'C:\Program Files (x86)\Inno Setup 6\ISCC.exe','C:\Program Files (x86)\Inno Setup 7\ISCC.exe','C:\Program Files\Inno Setup 7\ISCC.exe');$Compiler=$candidates | Where-Object {Test-Path $_} | Select-Object -First 1}
  if(!$Compiler){throw 'Install Inno Setup 6.7+ or pass -Compiler with the ISCC.exe path.'}
  & $Compiler /Qp "/DAppVersion=$Version" "/DRuntime=$Runtime" "/DPublishDir=$publish" "/DOutDir=$output" "$PSScriptRoot\installer.iss"
