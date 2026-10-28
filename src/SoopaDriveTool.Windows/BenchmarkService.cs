@@ -32,15 +32,27 @@ public static class BenchmarkService
                     ct.ThrowIfCancellationRequested();progress?.Report($"{p.Name} · {mode} · pass {pass+1}/{passes}");
                     var start=new ProcessStartInfo(engine){UseShellExecute=false,CreateNoWindow=true,RedirectStandardOutput=true,RedirectStandardError=true};
                     var args=new List<string>{$"-b{p.BlockBytes}",$"-o{p.QueueDepth}",$"-t{p.Threads}",$"-d{seconds}","-W1","-C0","-Sh","-L","-Rxml","-w"+(mode=="Read"?"0":mode=="Write"?"100":"30")};if(p.Random)args.Add("-r4K");else args.Add("-s");if(!zero)args.Add("-Z1M");args.Add(file);foreach(var a in args)start.ArgumentList.Add(a);
-                    using var process=Process.Start(start)??throw new IOException("Could not start DiskSpd.");var output=process.StandardOutput.ReadToEndAsync(ct);var error=process.StandardError.ReadToEndAsync(ct);
-                    try{await process.WaitForExitAsync(ct);}catch{try{process.Kill(true);await process.WaitForExitAsync();}catch{}throw;}
+                    using var process=Process.Start(start)??throw new IOException("Could not start DiskSpd.");var output=process.StandardOutput.ReadToEndAsync();var error=process.StandardError.ReadToEndAsync();
+                    using var deadline=CancellationTokenSource.CreateLinkedTokenSource(ct);deadline.CancelAfter(TimeSpan.FromSeconds(seconds+90));
+                    try{await process.WaitForExitAsync(deadline.Token);}
+                    catch(OperationCanceledException){try{process.Kill(true);using var exitDeadline=new CancellationTokenSource(TimeSpan.FromSeconds(10));await process.WaitForExitAsync(exitDeadline.Token);}catch{}if(ct.IsCancellationRequested)throw;throw new TimeoutException("DiskSpd did not finish within the expected time. Check the storage driver and try a smaller workload.");}
                     var text=await output;var err=await error;if(process.ExitCode!=0)throw new IOException("DiskSpd: "+err+" "+text);
                     measurements.Add(Parse(text,p.Name,mode));
                 }
                 list.Add(new(p.Name,mode,measurements.Average(x=>x.MBps),measurements.Average(x=>x.Iops),measurements.Average(x=>x.LatencyMs),measurements.Average(x=>x.P99Ms)));
             }
         }
-        finally{if(File.Exists(file))File.Delete(file);if(Directory.Exists(scratch))Directory.Delete(scratch);}
+        finally
+        {
+            // Antivirus and delayed I/O teardown can briefly retain handles after process exit.
+            Exception? cleanupError=null;
+            for(int attempt=0;attempt<30;attempt++)
+            {
+                try{if(File.Exists(file))File.Delete(file);if(Directory.Exists(scratch))Directory.Delete(scratch);if(Directory.GetDirectories(folder,Path.GetFileName(scratch)).Length!=0)throw new IOException("Temporary directory deletion is still pending.");cleanupError=null;break;}
+                catch(Exception ex) when(ex is IOException or UnauthorizedAccessException){cleanupError=ex;await Task.Delay(100);}
+            }
+            if(cleanupError!=null)throw new IOException("Could not remove the temporary benchmark directory: "+scratch,cleanupError);
+        }
         var run=new BenchmarkRun(DateTime.UtcNow,drive.Name,fileMiB,seconds,passes,profile,"Microsoft DiskSpd 2.3",System.Runtime.InteropServices.RuntimeInformation.ProcessArchitecture.ToString(),list);
         await Data.SaveAsync(Path.Combine(Data.Home,"benchmarks",DateTime.UtcNow.ToString("yyyyMMdd-HHmmss-fff")+".json"),run);return run;
     }

@@ -18,6 +18,7 @@ jobs:
           - runtime: win-arm64
             runner: windows-11-arm
     runs-on: ${{ matrix.runner }}
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-dotnet@v4

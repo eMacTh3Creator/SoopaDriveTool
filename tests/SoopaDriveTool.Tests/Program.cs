@@ -43,11 +43,18 @@ class Program
             using var gptStream=new MemoryStream(gpt);Check(PartitionInspector.Inspect(gptStream).Single().Name=="Test data","Valid GPT header/table CRC and partition decode");gpt[512+20]^=1;Reject(()=>PartitionInspector.Inspect(gptStream),"Corrupt GPT header CRC rejected");gpt[512+20]^=1;gpt[1024+56]^=1;Reject(()=>PartitionInspector.Inspect(gptStream),"Corrupt GPT table CRC rejected");
 
             var xml="<Results><Profile><TimeSpans><TimeSpan><Duration>2</Duration></TimeSpan></TimeSpans></Profile><TimeSpan><TestTimeSeconds>2</TestTimeSeconds><Thread><Target><BytesCount>2000000</BytesCount><IOCount>500</IOCount></Target></Thread><Latency><AverageTotalMilliseconds>0.5</AverageTotalMilliseconds><Bucket><Percentile>99</Percentile><TotalMilliseconds>1.2</TotalMilliseconds></Bucket></Latency></TimeSpan></Results>";var result=BenchmarkService.Parse(xml,"test","Read");Check(result.MBps==1&&result.Iops==250&&result.P99Ms==1.2,"DiskSpd unit conversion and p99 parsing");
+            if(args.Contains("--benchmark-only"))await BenchmarkChecks(root);
             if(args.Contains("--integration"))await Integration(root);
             Console.WriteLine($"ALL {passed} CHECKS PASSED");return 0;
         }
         catch(Exception ex){Console.Error.WriteLine(ex);return 1;}
         finally{try{Directory.Delete(root,true);}catch{}}
+    }
+    static async Task BenchmarkChecks(string root)
+    {
+            var benchmarkFolder=Path.Combine(root,"benchmark");Directory.CreateDirectory(benchmarkFolder);var benchmark=await BenchmarkService.RunAsync(benchmarkFolder,64,1,1,"Real world",false,false,null,CancellationToken.None);Check(benchmark.Results.Count==4&&benchmark.Results.All(x=>x.MBps>0&&x.Iops>0),"Live native DiskSpd real-world workloads");Check(!Directory.GetDirectories(benchmarkFolder,".soopadrivetool-*").Any(),"Benchmark temporary data removed");
+            using(var stop=new CancellationTokenSource()){try{await BenchmarkService.RunAsync(benchmarkFolder,64,5,1,"Real world",false,false,new ImmediateProgress(s=>{if(s.Contains("pass"))stop.CancelAfter(250);}),stop.Token);throw new Exception("Benchmark did not cancel");}catch(OperationCanceledException){Check(true,"Running benchmark can be cancelled");}}
+            Check(!Directory.GetDirectories(benchmarkFolder,".soopadrivetool-*").Any(),"Cancelled benchmark releases file handles and removes temporary data");
     }
     static async Task Integration(string root)
     {
@@ -70,9 +77,7 @@ class Program
             await Apply(OperationKind.ResizePartition,edit:o=>o with{Bytes=128L*1024*1024},partition:true);Check((await Current()).Partitions.Last(p=>p.Letter.Length>0).Size==128L*1024*1024,"Resize partition to 128 MiB");Check(File.ReadAllBytes(content).SequenceEqual(payload),"Resize preserves file content");
             await Apply(OperationKind.SetLabel,edit:o=>o with{Value="SOOPATEST"},partition:true);Check((await Current()).Partitions.Any(p=>p.Label=="SOOPATEST"),"Volume rename");
             await Apply(OperationKind.CheckFileSystem,partition:true);Check(true,"Filesystem scan");
-            var benchmarkFolder=Path.Combine(root,"benchmark");Directory.CreateDirectory(benchmarkFolder);var benchmark=await BenchmarkService.RunAsync(benchmarkFolder,64,1,1,"Real world",false,false,null,CancellationToken.None);Check(benchmark.Results.Count==4&&benchmark.Results.All(x=>x.MBps>0&&x.Iops>0),"Live native DiskSpd real-world workloads");Check(!Directory.GetDirectories(benchmarkFolder,".soopadrivetool-*").Any(),"Benchmark temporary data removed");
-            using(var stop=new CancellationTokenSource()){await RejectAsync(()=>BenchmarkService.RunAsync(benchmarkFolder,64,5,1,"Real world",false,false,new ImmediateProgress(s=>{if(s.Contains("pass"))stop.CancelAfter(250);}),stop.Token),"Running benchmark can be cancelled");}
-            Check(!Directory.GetDirectories(benchmarkFolder,".soopadrivetool-*").Any(),"Cancelled benchmark releases file handles and removes temporary data");
+            await BenchmarkChecks(root);
             await Apply(OperationKind.Offline);await Apply(OperationKind.Offline,index:1);
             var image=Path.Combine(root,"disk.sdi");await Apply(OperationKind.BackupImage,edit:o=>o with{Value=image});Check(File.Exists(image)&&File.Exists(image+".json"),"Verified full raw disk image");
             disk=await Current();var target=await Current(1);await StorageService.ExecuteAsync(DiskOperation.For(disk,OperationKind.CloneDisk) with{TargetDiskNumber=target.Number,TargetIdentity=target.Identity,TargetLayout=target.Layout});Check(true,"Raw clone and full target read-back verification");
