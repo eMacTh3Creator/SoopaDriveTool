@@ -8,5 +8,9 @@
   "ActivityAndSmartSectionsVisuallyReviewed": true,
   "ReleaseLinksTargetVersion": "0.2.0",
   "DesktopInputUsed": false,
-  "Stage": "Local preview; deployed page is checked at publication"
+  "Stage": "Local and published v0.2.0 checks completed",
+  "LivePageVersionVerified": "0.2.0",
+  "LivePageUrl": "https://emacth3creator.github.io/SoopaDriveTool/",
+  "DownloadLinksHttpStatus": 200,
+  "LiveCssAndScreenshotsMatchedRepository": true
 }

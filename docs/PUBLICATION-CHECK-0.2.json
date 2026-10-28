@@ -1,0 +1,72 @@
+{
+  "version": "0.2.0",
+  "checkedUtc": "2026-10-28T21:54:52.624151+00:00",
+  "releaseUrl": "https://github.com/eMacTh3Creator/SoopaDriveTool/releases/tag/v0.2.0",
+  "prerelease": true,
+  "assets": [
+    {
+      "name": "BUILD-PROVENANCE.json",
+      "sha256": "7b06a62535d79f91eab091a4e3ecba3916b0e065b4db6b3f9de7f71bad6da96b",
+      "bytes": 3034,
+      "url": "https://github.com/eMacTh3Creator/SoopaDriveTool/releases/download/v0.2.0/BUILD-PROVENANCE.json",
+      "serverDigestMatched": true,
+      "downloadHttpStatus": 200
+    },
+    {
+      "name": "SHA256SUMS.txt",
+      "sha256": "cd6a1da915d8ade78da94dc2c2e80b4a1e71606f19f9d859a96de3aaa9d51914",
+      "bytes": 505,
+      "url": "https://github.com/eMacTh3Creator/SoopaDriveTool/releases/download/v0.2.0/SHA256SUMS.txt",
+      "serverDigestMatched": true,
+      "downloadHttpStatus": 200
+    },
+    {
+      "name": "smartmontools-7.5.tar.gz",
+      "sha256": "690b83ca331378da9ea0d9d61008c4b22dde391387b9bbad7f29387f2595f76e",
+      "bytes": 1122317,
+      "url": "https://github.com/eMacTh3Creator/SoopaDriveTool/releases/download/v0.2.0/smartmontools-7.5.tar.gz",
+      "serverDigestMatched": true,
+      "downloadHttpStatus": 200
+    },
+    {
+      "name": "SoopaDriveTool-0.2.0-arm64-Portable.zip",
+      "sha256": "d6dcf37fba3e84a6562f8c08fab0d973870674540ce825ac1998eff3622228b7",
+      "bytes": 63651739,
+      "url": "https://github.com/eMacTh3Creator/SoopaDriveTool/releases/download/v0.2.0/SoopaDriveTool-0.2.0-arm64-Portable.zip",
+      "serverDigestMatched": true,
+      "downloadHttpStatus": 200
+    },
+    {
+      "name": "SoopaDriveTool-0.2.0-arm64-Setup.exe",
+      "sha256": "2e5b5592bd22834944dda8ed24fd62a9305d07533b75d346fd91dd399173f2e2",
+      "bytes": 54680434,
+      "url": "https://github.com/eMacTh3Creator/SoopaDriveTool/releases/download/v0.2.0/SoopaDriveTool-0.2.0-arm64-Setup.exe",
+      "serverDigestMatched": true,
+      "downloadHttpStatus": 200
+    },
+    {
+      "name": "SoopaDriveTool-0.2.0-x64-Portable.zip",
+      "sha256": "93618a83be23987c3b4f3749295f8ff0f244b01f874e9a0343afcf2c785bf84e",
+      "bytes": 68686383,
+      "url": "https://github.com/eMacTh3Creator/SoopaDriveTool/releases/download/v0.2.0/SoopaDriveTool-0.2.0-x64-Portable.zip",
+      "serverDigestMatched": true,
+      "downloadHttpStatus": 200
+    },
+    {
+      "name": "SoopaDriveTool-0.2.0-x64-Setup.exe",
+      "sha256": "99c4e3a5f7ae2e414922863bc75b3cf476978b689b78f869d77bbdb1d79274b9",
+      "bytes": 59909103,
+      "url": "https://github.com/eMacTh3Creator/SoopaDriveTool/releases/download/v0.2.0/SoopaDriveTool-0.2.0-x64-Setup.exe",
+      "serverDigestMatched": true,
+      "downloadHttpStatus": 200
+    }
+  ],
+  "siteVersionVerified": "0.2.0",
+  "siteAssetsMatchedRepository": [
+    "style.css",
+    "assets/app-preview.png",
+    "assets/activity-preview.png"
+  ],
+  "pagesRun": "https://github.com/eMacTh3Creator/SoopaDriveTool/actions/runs/40775676806",
+  "tagCommit": "b871b7ed70707f381c151b328a96ac91bdc58c7d"
+}

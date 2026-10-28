@@ -10,7 +10,7 @@ The drive-workflow implementation is at source commit `0de6fe5272df55d48f2eb1104
 | Native ARM64 GitHub Actions | **66 checks passed; installer passed** | Policy, backup/parser/SMART export tests; actual native DiskSpd and cancellation/cleanup; native installer installation, render and uninstallation. |
 | Native x64 GitHub Actions | **108 checks passed; installer passed** | Full expanded integration suite, including offline-hive remapping and EFI/BCD checks; native installer installation, render and uninstallation. |
 | Packaged ARM64 app in the local VM | **Passed** | Nine workspaces rendered from the actual release portable package; background backup success, verified snapshot and failure reporting. No desktop window/input was used. |
-| Website | **Passed locally** | Desktop 1280px and phone 390px checks; viewport/scroll widths matched; all six images loaded; activity and SMART sections reviewed; no browser console warnings/errors. Deployed version and links verified separately at publication. |
+| Website | **Passed locally and deployed** | Desktop 1280px and phone 390px checks; viewport/scroll widths matched; all six images loaded; activity and SMART sections reviewed; no browser console warnings/errors. Live v0.2.0 page, CSS and screenshots matched the repository; all seven release downloads returned HTTP 200 and server digests/sizes matched local files. |
 
 Native packages come directly from [the architecture-matrix CI run](https://github.com/eMacTh3Creator/SoopaDriveTool/actions/runs/40774366489). The local full ARM suite used stable .NET SDK 10.0.401/runtime 10.0.12. The packaged self-contained runtimes are recorded in `BUILD-PROVENANCE.json`; release-package checks used those included runtimes. The bundled license/notices were compared with official runtime/WPF v10.0.14 files and have identical normalized contents.
 
@@ -40,7 +40,7 @@ Synthetic ATA, NVMe and SCSI fixtures cover raw attributes/counters/logs, failur
 - [ARM64 installer checks](INSTALLER-ARM64-CHECK-0.2.json) and [x64 installer checks](INSTALLER-X64-CHECK-0.2.json)
 - [Native ARM64 results](CI-ARM64-TEST-RESULTS-0.2.txt) and [native x64 results](CI-X64-TEST-RESULTS-0.2.txt)
 - [Native CI job summary](CI-SUMMARY-0.2.json)
-- [Website checks](SITE-CHECK-0.2.json)
+- [Website checks](SITE-CHECK-0.2.json) and [published asset verification](PUBLICATION-CHECK-0.2.json)
 
 ## Remaining qualification
 
