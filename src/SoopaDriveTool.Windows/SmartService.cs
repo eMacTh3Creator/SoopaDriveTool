@@ -8,7 +8,7 @@ public static class SmartService
     public static async Task<SmartReport> ReadAsync(DiskInfo disk,string deviceType="auto")
     {
         if(!StorageService.IsAdmin)throw new UnauthorizedAccessException("Restart as administrator for full SMART/device-log access.");
-        if(deviceType is not ("auto" or "sat" or "scsi" or "nvme"))throw new IOException("Unsupported transport override.");
+        if(deviceType is not ("auto" or "sat" or "sat,12" or "sat,16" or "scsi" or "nvme" or "sntasmedia" or "sntjmicron" or "sntrealtek"))throw new IOException("Unsupported transport override.");
         var assembly=Assembly.GetExecutingAssembly();using var manifest=assembly.GetManifestResourceStream(assembly.GetManifestResourceNames().Single(n=>n.EndsWith("dependencies.json")))!;using var data=await JsonDocument.ParseAsync(manifest);var pin=data.RootElement.GetProperty("smartmontools");
         string root=Path.Combine(AppContext.BaseDirectory,"Tools","smartmontools");string exe=Path.Combine(root,"smartctl.exe"),db=Path.Combine(root,"drivedb.h");
         foreach(var pair in new[]{(exe,"smartctl_sha256"),(db,"drivedb_sha256")})

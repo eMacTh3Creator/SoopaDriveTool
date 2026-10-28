@@ -19,7 +19,7 @@ public static class ProcessTool
             while((n=await process.StandardOutput.ReadAsync(buffer))>0)
             {
                 string part=new(buffer,0,n);if(output.Length<16*1024*1024)output.Append(part);tail=(tail+part);if(tail.Length>4096)tail=tail[^4096..];
-                var matches=Regex.Matches(tail,@"(\d+(?:\.\d+)?)%");if(matches.Count==0)continue;
+                var matches=Regex.Matches(tail,@"\[[=\s]*(\d+(?:\.\d+)?)%");if(matches.Count==0)continue;
                 if(double.TryParse(matches[^1].Groups[1].Value,NumberStyles.Float,CultureInfo.InvariantCulture,out var pct)&&pct>=0&&pct<=100&&pct>=last+.2)
                 {last=pct;progress?.Report(new(phase,start+span*pct/100,$"{phase}: {pct:0.0}%"));}
             }

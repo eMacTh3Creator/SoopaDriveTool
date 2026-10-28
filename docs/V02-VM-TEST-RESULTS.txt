@@ -57,6 +57,7 @@ PASS: Printable SMART HTML escapes device-supplied content
 PASS: Unsupported VM/USB SMART is never reported as healthy
 PASS: Unsupported commands produce an explicitly partial report
 PASS: SCSI/SAS defect and error counters remain in the full report
+PASS: SMART CSV neutralizes device-supplied spreadsheet formulas
 PASS: Chain progress combines completed steps and measured active-step progress
 PASS: Live storage inventory
 PASS: Backend blocks system disk mutations
@@ -93,6 +94,10 @@ PASS: Rejected OS clone preserves destination layout
 PASS: Quick wipe removes partition metadata and reports RAW state
 PASS: Thorough Random overwrite reports progress and verifies every pass
 PASS: Thorough ThreePass overwrite reports progress and verifies every pass
+PASS: UEFI layout check uses its own disposable VHD
+PASS: Windows-aware destination builds actual GPT / EFI / MSR / NTFS layout
+PASS: BCDBoot writes a real BCD store only to the explicit disposable EFI target
+PASS: Explicit-target BCDBoot preserves the host firmware boot entries
 PASS: Bundled smartctl runs on Windows ARM/x64 and returns a device/unsupported report
 PASS: Disposable VHDs detached; original disk count restored
-ALL 97 CHECKS PASSED
+ALL 102 CHECKS PASSED

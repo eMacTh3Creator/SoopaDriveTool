@@ -35,12 +35,12 @@ public class SmartReport
         bool hasNvme=root.TryGetProperty("nvme_smart_health_information_log",out _);bool hasScsi=root.EnumerateObject().Any(p=>p.Name.StartsWith("scsi_",StringComparison.Ordinal));
         bool? passed=null;if(root.TryGetProperty("smart_status",out var status)&&status.TryGetProperty("passed",out var good)&&good.ValueKind is JsonValueKind.True or JsonValueKind.False)passed=good.GetBoolean();
         string overall=passed==false||(exitStatus&8)!=0?"FAILING":passed==true?(exitStatus&(16|32|64|128))!=0?"Warnings present":"PASSED":"Unavailable";
-        if(!hasAttributes&&!hasNvme&&!hasScsi){warnings.Add("This drive/controller/VM did not expose detailed SMART data. No health pass is inferred.");overall="Unavailable";}
+        if(!hasAttributes&&!hasNvme&&!hasScsi){warnings.Add("This drive/controller/VM did not expose detailed SMART data. No health pass is inferred.");if(overall!="FAILING")overall="Unavailable";}
         if(!string.IsNullOrWhiteSpace(windowsSerial)&&serial.Length>0&&!Normalize(serial).Equals(Normalize(windowsSerial),StringComparison.OrdinalIgnoreCase))warnings.Add("SMART serial differs from Windows inventory; verify the physical label/USB bridge before using this report for resale.");
         var attributes=new List<SmartAttribute>();
         if(hasAttributes)foreach(var a in ata.GetProperty("table").EnumerateArray())attributes.Add(new(Text(a,"id"),Text(a,"name"),Text(a,"value"),Text(a,"worst"),Text(a,"thresh"),a.TryGetProperty("raw",out var raw)?Text(raw,"string"):"",Text(a,"when_failed")));
         var fields=new List<SmartField>();Flatten(root,"",fields);
-        if((exitStatus&3)!=0)overall="Unavailable";else if((exitStatus&4)!=0&&overall=="PASSED")overall="Partial report";
+        if((exitStatus&3)!=0&&overall!="FAILING")overall="Unavailable";else if((exitStatus&4)!=0&&overall=="PASSED")overall="Partial report";
         string original=root.TryGetProperty("smartctl",out var tool)&&tool.TryGetProperty("output",out var output)&&output.ValueKind==JsonValueKind.Array?string.Join(Environment.NewLine,output.EnumerateArray().Select(e=>e.ToString())):"";
         return new(){WindowsDiskNumber=diskNumber,DevicePath="/dev/pd"+diskNumber,Model=model,Serial=serial,Firmware=Text(root,"firmware_version"),Protocol=protocol,Overall=overall,ExitStatus=exitStatus,Coverage=hasNvme?"NVMe health, error/self-test logs and all additional fields returned by smartctl -x":hasAttributes?"ATA normalized/raw attributes, logs and all additional fields returned by smartctl -x":hasScsi?"SCSI/SAS counters, logs and all additional fields returned by smartctl -x":"Detailed SMART unavailable",Warnings=warnings,Attributes=attributes,Fields=fields,OriginalText=original,Raw=root.Clone()};
     }

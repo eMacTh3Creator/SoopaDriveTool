@@ -21,6 +21,9 @@ public partial class App:Application
             if(e.Args.Length>=2 && e.Args[0]=="--render")
             {
                 var w=new MainWindow(true,e.Args.Length>2?e.Args[2]:"Overview");w.Width=1440;w.Height=940;w.WindowStyle=WindowStyle.None;var visual=(FrameworkElement)w.Content;visual.Width=1440;visual.Height=940;visual.Measure(new System.Windows.Size(1440,940));visual.Arrange(new Rect(0,0,1440,940));visual.UpdateLayout();
+                w.Content=null;System.Windows.Documents.TextElement.SetFontSize(visual,13);System.Windows.Documents.TextElement.SetFontFamily(visual,new FontFamily("Segoe UI Variable Text"));
+                using var hiddenSource=new System.Windows.Interop.HwndSource(new System.Windows.Interop.HwndSourceParameters("SoopaDriveTool offscreen render"){Width=1440,Height=940,PositionX=-32000,PositionY=-32000,WindowStyle=unchecked((int)0x80000000)});
+                hiddenSource.RootVisual=visual;await Dispatcher.InvokeAsync(()=>{},System.Windows.Threading.DispatcherPriority.ApplicationIdle);visual.Measure(new System.Windows.Size(1440,940));visual.Arrange(new Rect(0,0,1440,940));visual.UpdateLayout();
                 var bitmap=new RenderTargetBitmap(1440,940,96,96,PixelFormats.Pbgra32);bitmap.Render(visual);var encoder=new PngBitmapEncoder();encoder.Frames.Add(BitmapFrame.Create(bitmap));using var stream=File.Create(e.Args[1]);encoder.Save(stream);w.Close();Shutdown(0);return;
             }
             PendingPlan? pending=null;

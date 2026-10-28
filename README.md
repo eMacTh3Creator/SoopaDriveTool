@@ -41,7 +41,7 @@ Windows build host, stable .NET 10 SDK, Inno Setup 6.7+, and 7-Zip for pinned sm
 ./scripts/test.ps1 -Runtime win-arm64 -Integration
 ```
 
-Engine binaries are fetched from pinned Microsoft/smartmontools releases and verified against `scripts/dependencies.json`. smartctl is a separate GPL executable; its license and complete corresponding source archive are included in packages. The x64 SMART collector runs under emulation on Windows ARM; the app and DiskSpd are native. No service is installed. No credentials are needed to build. See [validation](docs/VALIDATION.md), [security](SECURITY.md), and [third-party licenses](THIRD-PARTY-NOTICES.txt).
+Engine binaries are fetched from pinned Microsoft/smartmontools releases and verified against `scripts/dependencies.json`. smartctl is a separate GPL executable; its license and complete corresponding source archive are included in packages. The x64 SMART collector runs under emulation on Windows ARM; the app and DiskSpd are native. No service is installed. No credentials are needed to build. See [validation](docs/VALIDATION-0.2.md), [security](SECURITY.md), and [third-party licenses](THIRD-PARTY-NOTICES.txt).
 
 The website uses buildless HTML/CSS/JS. GitHub Actions builds both architectures and deploys GitHub Pages. Release creation is explicit; CI does not publish a release on every push.
 
