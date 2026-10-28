@@ -7,6 +7,11 @@ partial class Program
 {
     static void V02CoreTests()
     {
+        var registration=WindowsRecovery.ReadRegistration("<WindowsRE><WinreLocation offset='1048576' path='\\Recovery\\WindowsRE'/></WindowsRE>");
+        Check(registration?.Offset==1048576&&registration.RelativePath==@"Recovery\WindowsRE","Recovery registration retains its source partition offset and relative path");
+        Reject(()=>WindowsRecovery.ReadRegistration("<WindowsRE><WinreLocation offset='1048576' path='\\..\\escape'/></WindowsRE>"),"Recovery registration rejects paths escaping the source volume");
+        Reject(()=>WindowsRecovery.ReadRegistration("<!DOCTYPE x [<!ENTITY e SYSTEM 'file:///C:/Windows/win.ini'>]><WindowsRE>&e;</WindowsRE>"),"Recovery XML rejects external entities");
+        Check(WindowsRecovery.ReserveBytes(900L*1024*1024)>=1200L*1024*1024,"Large recovery images reserve at least 300 MiB of servicing space");
         var d=Disk() with{Partitions=[new(){Number=1,Offset=1024*1024,Size=64L*1024*1024,FileSystem="NTFS",Label="A",Letter="S",Encryption="None"},new(){Number=2,Offset=65L*1024*1024,Size=64L*1024*1024,FileSystem="NTFS",Label="B",Letter="T",Encryption="None"}]};
         var ops=new List<DiskOperation>{DiskOperation.For(d,OperationKind.DeletePartition,d.Partitions[0]),DiskOperation.For(d,OperationKind.DeletePartition,d.Partitions[1]),DiskOperation.For(d,OperationKind.CreatePartition) with{Bytes=128L*1024*1024,Value="New"}};
         var projected=QueuePlanner.Project([d],ops).Single();var pending=projected.Partitions.Single(p=>p.Number<0);Check(pending.Number==QueuePlanner.VirtualNumber(2)&&pending.Offset==16L*1024*1024,"Queue creates a virtual partition after two deletions");
@@ -68,8 +73,17 @@ partial class Program
             var text=await StorageService.PowerShellAsync($"diskpart /s '{script.Replace("'","''")}'; (Get-DiskImage -ImagePath '{file.Replace("'","''")}'|Get-Disk).Number");int number=int.Parse(text.Split('\n').Last().Trim());
             var target=(await StorageService.InventoryAsync()).Single(d=>d.Number==number);Check(target.Bus=="File Backed Virtual"&&!target.Protected,"UEFI layout check uses its own disposable VHD");
             var op=DiskOperation.For(source,OperationKind.CloneDisk) with{CloneMode=CloneMode.WindowsUefi,TargetDiskNumber=number,TargetIdentity=target.Identity,TargetLayout=target.Layout};
-            var letters=await FileSystemCloneEngine.CreateDestinationLayoutAsync(op,target,false);var after=(await StorageService.InventoryAsync()).Single(d=>d.Number==number);
+            var letters=await FileSystemCloneEngine.CreateDestinationLayoutAsync(op,target,true,1200L*1024*1024);var after=(await StorageService.InventoryAsync()).Single(d=>d.Number==number);
             Check(after.Style=="GPT"&&after.Partitions.Any(p=>p.FileSystem=="FAT32")&&after.Partitions.Any(p=>p.FileSystem=="NTFS")&&after.Partitions.Any(p=>p.Type=="Reserved"),"Windows-aware destination builds actual GPT / EFI / MSR / NTFS layout");
+            var recoveryPartition=after.Partitions.Single(p=>p.Letter==letters.Recovery);
+            Check(recoveryPartition.Size>=1200L*1024*1024,"Recovery destination honors image-dependent capacity");
+            var recoveryDirectory=Path.Combine(letters.Recovery+@":\",@"Recovery\WindowsRE");Directory.CreateDirectory(recoveryDirectory);await File.WriteAllTextAsync(Path.Combine(recoveryDirectory,"Winre.wim"),"Owned recovery discovery fixture");
+            var config=Path.Combine(letters.Windows+@":\",@"Windows\System32\Recovery");Directory.CreateDirectory(config);
+            await File.WriteAllTextAsync(Path.Combine(config,"ReAgent.xml"),$"<WindowsRE><WinreLocation offset='{recoveryPartition.Offset}' path='\\Recovery\\WindowsRE'/></WindowsRE>");
+            await StorageService.PowerShellAsync($"Get-Partition -DiskNumber {number} | Where-Object DriveLetter -eq '{letters.Recovery}' | Remove-PartitionAccessPath -AccessPath '{letters.Recovery}:\\'");
+            after=(await StorageService.InventoryAsync()).Single(d=>d.Number==number);
+            var found=await WindowsRecovery.FindAsync(after,after.Partitions.Single(p=>p.Letter==letters.Windows));
+            Check(found!=null&&await File.ReadAllTextAsync(found)=="Owned recovery discovery fixture","Recovery discovery reads the selected disk's hidden partition without assigning a drive letter");
             await OfflineMappingCheck(source,after,letters.Windows[0]);
             var firmwareBefore=await StorageService.PowerShellAsync("bcdedit.exe /enum firmware");var system=Environment.GetFolderPath(Environment.SpecialFolder.Windows);var boot=await ProcessTool.RunAsync(Path.Combine(system,"System32","bcdboot.exe"),[system,"/s",letters.Efi+":","/f","UEFI","/c","/v"]);
             Check(boot.ExitCode==0&&File.Exists(Path.Combine(letters.Efi+@":\",@"EFI\Microsoft\Boot\BCD")),"BCDBoot writes a real BCD store only to the explicit disposable EFI target");
