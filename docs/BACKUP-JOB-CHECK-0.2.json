@@ -1,0 +1,7 @@
+{
+  "BackgroundBackup": "Passed",
+  "Package": "0.2.0 ARM64 portable",
+  "FailureReport": "Passed",
+  "NoDesktopWindow": true,
+  "VerifiedSnapshot": "Passed"
+}

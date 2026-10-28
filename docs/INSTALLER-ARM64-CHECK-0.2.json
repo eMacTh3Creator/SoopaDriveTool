@@ -1,0 +1,11 @@
+{
+  "Installer": "Passed",
+  "EngineMachine": "0xaa64",
+  "Runtime": "win-arm64",
+  "Utc": "2026-10-28T21:45:39.5388342Z",
+  "AppMachine": "0xaa64",
+  "InstalledRender": "Passed",
+  "SmartCollectorMachine": "0x8664",
+  "Uninstall": "Passed",
+  "SmartSourceIncluded": true
+}

@@ -1,0 +1,11 @@
+{
+  "Utc": "2026-10-28T21:52:23.0981477Z",
+  "SmartCollectorMachine": "0x8664",
+  "EngineMachine": "0x8664",
+  "SmartSourceIncluded": true,
+  "Uninstall": "Passed",
+  "Installer": "Passed",
+  "AppMachine": "0x8664",
+  "Runtime": "win-x64",
+  "InstalledRender": "Passed"
+}
