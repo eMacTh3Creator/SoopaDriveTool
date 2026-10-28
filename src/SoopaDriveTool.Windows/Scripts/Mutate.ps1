@@ -1,5 +1,20 @@
 $ErrorActionPreference='Stop'
 $ProgressPreference='SilentlyContinue'
+function Report-Drive($phase,$percent,$message) {
+ [Console]::Out.WriteLine('__SDT_PROGRESS__'+(@{Phase=$phase;Percent=$percent;Message=$message} | ConvertTo-Json -Compress))
+}
+function Wait-StorageJob($job,$phase) {
+ try {
+  while($job.State -in @('Running','NotStarted','Blocked')) {
+   $r=@($job.Progress) | Select-Object -Last 1
+   $percent=$null;if($r -and $r.PercentComplete -ge 0){$percent=[double]$r.PercentComplete}
+   Report-Drive $phase $percent 'Windows storage provider is working. Percentage is shown only when the provider reports one.'
+   Start-Sleep -Milliseconds 400
+  }
+  Receive-Job -Job $job -Wait -ErrorAction Stop
+ } finally { Remove-Job -Job $job -Force -ErrorAction SilentlyContinue }
+}
+Report-Drive 'Preflight' $null 'Validating the selected disk and partition again.'
 # Request is JSON data, never executable user text. Script is an embedded resource.
 $o=$request.Operation; $expected=$request.Disk
 $d=Get-Disk -Number $o.DiskNumber
@@ -26,12 +41,12 @@ switch ([string]$o.KindName) {
  'InitializeMbr' { if($d.PartitionStyle -ne 'RAW' -or $parts.Count -gt 0){throw 'Requires an empty RAW disk'}; Initialize-Disk -Number $d.Number -PartitionStyle MBR | Out-Null }
  'CreatePartition' {
    if ($o.Bytes -lt 16MB -or $o.FileSystem -notin @('NTFS','exFAT','FAT32')) {throw 'Invalid partition parameters'}
-   $new=New-Partition -DiskNumber $d.Number -Size ([long]$o.Bytes) -Alignment 1MB -AssignDriveLetter
-   try { $new | Format-Volume -FileSystem $o.FileSystem -NewFileSystemLabel $o.Value -Confirm:$false | Out-Null }
+   $offset=[long]$o.Offset; if($offset -le 0){$new=New-Partition -DiskNumber $d.Number -Size ([long]$o.Bytes) -Alignment 1MB -AssignDriveLetter}else{$new=New-Partition -DiskNumber $d.Number -Size ([long]$o.Bytes) -Offset $offset -AssignDriveLetter}
+   try { Wait-StorageJob ($new | Format-Volume -FileSystem $o.FileSystem -NewFileSystemLabel $o.Value -Confirm:$false -AsJob) 'Formatting' | Out-Null }
    catch { throw "Partition was created but formatting failed. Refresh the disk before proceeding. $($_.Exception.Message)" }
  }
- 'ResizePartition' { $s=$p | Get-PartitionSupportedSize; if($o.Bytes -lt $s.SizeMin -or $o.Bytes -gt $s.SizeMax){throw 'Requested size is outside Windows supported limits'}; $p | Resize-Partition -Size ([long]$o.Bytes) }
- 'FormatPartition' { if($o.FileSystem -notin @('NTFS','exFAT','FAT32')){throw 'Invalid filesystem'}; $p | Format-Volume -FileSystem $o.FileSystem -NewFileSystemLabel $o.Value -Confirm:$false | Out-Null }
+ 'ResizePartition' { $s=$p | Get-PartitionSupportedSize; if($o.Bytes -lt $s.SizeMin -or $o.Bytes -gt $s.SizeMax){throw 'Requested size is outside Windows supported limits'}; Wait-StorageJob ($p | Resize-Partition -Size ([long]$o.Bytes) -AsJob) 'Resizing' }
+ 'FormatPartition' { if($o.FileSystem -notin @('NTFS','exFAT','FAT32')){throw 'Invalid filesystem'}; Wait-StorageJob ($p | Format-Volume -FileSystem $o.FileSystem -NewFileSystemLabel $o.Value -Confirm:$false -AsJob) 'Formatting' | Out-Null }
  'DeletePartition' { $p | Remove-Partition -Confirm:$false }
  'SetLabel' { $p | Get-Volume | Set-Volume -NewFileSystemLabel $o.Value }
  'SetLetter' { if($o.Value -cnotmatch '^[D-Z]$'){throw 'Invalid drive letter'}; if(Get-Volume -DriveLetter $o.Value -ErrorAction SilentlyContinue){throw 'Drive letter already in use'}; $p | Set-Partition -NewDriveLetter $o.Value }
@@ -42,6 +57,7 @@ switch ([string]$o.KindName) {
  'ReadWrite' { Set-Disk -Number $d.Number -IsReadOnly $false }
  'ReTrim' { if(!$p.DriveLetter){throw 'Requires a mounted volume'}; Optimize-Volume -DriveLetter $p.DriveLetter -ReTrim }
  'CheckFileSystem' { if(!$p.DriveLetter){throw 'Requires a mounted volume'}; Repair-Volume -DriveLetter $p.DriveLetter -Scan | Out-String | Write-Output }
+ 'QuickWipeDisk' { Clear-Disk -Number $d.Number -RemoveData -RemoveOEM -Confirm:$false; Update-HostStorageCache }
  default { throw 'Unknown storage operation.' }
 }
 'Completed.'

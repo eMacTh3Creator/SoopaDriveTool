@@ -5,7 +5,7 @@ using System.Text.Json;
 using SoopaDriveTool.Core;
 using SoopaDriveTool.Windows;
 class ImmediateProgress(Action<string> callback):IProgress<string>{public void Report(string value)=>callback(value);}
-class Program
+partial class Program
 {
     static int passed;
     static void Check(bool value,string name){if(!value)throw new Exception("FAIL: "+name);passed++;Console.WriteLine("PASS: "+name);}
@@ -43,6 +43,7 @@ class Program
             using var gptStream=new MemoryStream(gpt);Check(PartitionInspector.Inspect(gptStream).Single().Name=="Test data","Valid GPT header/table CRC and partition decode");gpt[512+20]^=1;Reject(()=>PartitionInspector.Inspect(gptStream),"Corrupt GPT header CRC rejected");gpt[512+20]^=1;gpt[1024+56]^=1;Reject(()=>PartitionInspector.Inspect(gptStream),"Corrupt GPT table CRC rejected");
 
             var xml="<Results><Profile><TimeSpans><TimeSpan><Duration>2</Duration></TimeSpan></TimeSpans></Profile><TimeSpan><TestTimeSeconds>2</TestTimeSeconds><Thread><Target><BytesCount>2000000</BytesCount><IOCount>500</IOCount></Target></Thread><Latency><AverageTotalMilliseconds>0.5</AverageTotalMilliseconds><Bucket><Percentile>99</Percentile><TotalMilliseconds>1.2</TotalMilliseconds></Bucket></Latency></TimeSpan></Results>";var result=BenchmarkService.Parse(xml,"test","Read");Check(result.MBps==1&&result.Iops==250&&result.P99Ms==1.2,"DiskSpd unit conversion and p99 parsing");
+            V02CoreTests();
             if(args.Contains("--benchmark-only"))await BenchmarkChecks(root);
             if(args.Contains("--integration"))await Integration(root);
             Console.WriteLine($"ALL {passed} CHECKS PASSED");return 0;
@@ -85,6 +86,7 @@ class Program
             disk=await Current();p=disk.Partitions.Last(p=>p.Letter.Length>0);Check(File.ReadAllBytes(Path.Combine(p.Letter+@":\","roundtrip.txt")).SequenceEqual(payload),"Image restore recovers original file bytes");
             await Apply(OperationKind.DeletePartition,partition:true);Check((await Current()).Partitions.All(p=>p.Protected),"Delete data partition");
             await Apply(OperationKind.CreatePartition,edit:o=>o with{Bytes=64L*1024*1024,Value="EXFATTEST",FileSystem="exFAT"});Check((await Current()).Partitions.Any(p=>p.FileSystem=="exFAT"),"Create exFAT partition");
+            await V02Integration(root,await Current(),await Current(1));
         }
         finally
         {

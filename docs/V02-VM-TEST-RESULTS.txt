@@ -1,0 +1,98 @@
+PASS: Valid data partition operation
+PASS: Boot disk is protected
+PASS: Disk replacement rejected
+PASS: Layout changes rejected
+PASS: BitLocker changes rejected
+PASS: Unknown encryption rejected
+PASS: Online raw operations rejected
+PASS: System drive letter rejected
+PASS: Unknown operations rejected
+PASS: Missing partition selection rejected
+PASS: Control characters rejected
+PASS: Mismatched clone capacity rejected
+PASS: Snapshot SHA-256 verification
+PASS: File restore content
+PASS: Binary restore content
+PASS: Unchanged content deduplicated
+PASS: New content produces one new object
+PASS: Earlier snapshot remains verifiable
+PASS: Existing restore files protected
+PASS: Nested repository rejected
+PASS: Unsafe path rejected: ../evil
+PASS: Unsafe path rejected: /root
+PASS: Unsafe path rejected: a/../b
+PASS: Unsafe path rejected: a\b
+PASS: Unsafe path rejected: C:/evil
+PASS: Unsafe path rejected: a:stream
+PASS: Unsafe path rejected: CON.txt
+PASS: Unsafe path rejected: file.
+PASS: Unsafe path rejected: a//b
+PASS: Corrupt compressed object rejected
+PASS: Malicious manifest rejected before restore
+PASS: MBR partition decode
+PASS: Invalid MBR signature rejected
+PASS: Out-of-range MBR rejected
+PASS: CRC32 reference vector
+PASS: Valid GPT header/table CRC and partition decode
+PASS: Corrupt GPT header CRC rejected
+PASS: Corrupt GPT table CRC rejected
+PASS: DiskSpd unit conversion and p99 parsing
+PASS: Queue creates a virtual partition after two deletions
+PASS: Dependent rename targets the newly created partition
+PASS: Queue projection does not mutate the real baseline
+PASS: Planner rejects an overlapping/out-of-capacity allocation
+PASS: External rename is detected between steps
+PASS: Deletion transition verifies unaffected partitions
+PASS: Unexpected unrelated geometry change stops a chain
+PASS: Filesystem-aware clone permits a smaller destination with sufficient used capacity
+PASS: Byte-exact mode does not silently become a smaller-target clone
+PASS: Filesystem-aware cloning blocks the running system source
+PASS: Quick metadata reset can be queued for an online data disk
+PASS: Quick reset projection removes layout without claiming secure erasure
+PASS: ATA raw attributes and nonzero health bitfields are retained
+PASS: Detailed ATA error-log fields are preserved
+PASS: SMART export retains original text and complete JSON
+PASS: Failing NVMe media/wear counters are exported without suppressing health failures
+PASS: Printable SMART HTML escapes device-supplied content
+PASS: Unsupported VM/USB SMART is never reported as healthy
+PASS: Unsupported commands produce an explicitly partial report
+PASS: SCSI/SAS defect and error counters remain in the full report
+PASS: Chain progress combines completed steps and measured active-step progress
+PASS: Live storage inventory
+PASS: Backend blocks system disk mutations
+PASS: Disposable VHD identity
+PASS: Disposable VHD identity
+PASS: Initialize GPT through backend
+PASS: Create + format NTFS partition
+PASS: 1 MiB partition alignment
+PASS: Resize partition to 128 MiB
+PASS: Resize preserves file content
+PASS: Volume rename
+PASS: Filesystem scan
+PASS: Live native DiskSpd real-world workloads
+PASS: Benchmark temporary data removed
+PASS: Running benchmark can be cancelled
+PASS: Cancelled benchmark releases file handles and removes temporary data
+PASS: Verified full raw disk image
+PASS: Raw clone and full target read-back verification
+PASS: Zero-overwrite and full read-back verification
+PASS: Raw image restore and full read-back verification
+PASS: Image restore recovers original file bytes
+PASS: Delete data partition
+PASS: Create exFAT partition
+PASS: Extended destructive tests are restricted to owned VHDs
+PASS: Apply executes delete + delete + create + dependent rename on a real VHD
+PASS: Activity records current phases, completed steps and verified outcomes
+PASS: Real external layout/label change stops a reviewed queue before writing
+PASS: Preflight failure is recorded in the activity run
+PASS: Real DISM filesystem clone preserves source file content
+PASS: Filesystem clone restores the source read-only state
+PASS: DISM capture/apply phases are visible to activity
+PASS: Windows-aware mode rejects an ordinary data volume before clearing the destination
+PASS: Rejected OS clone preserves destination layout
+PASS: Quick wipe removes partition metadata and reports RAW state
+PASS: Thorough Random overwrite reports progress and verifies every pass
+PASS: Thorough ThreePass overwrite reports progress and verifies every pass
+PASS: Bundled smartctl runs on Windows ARM/x64 and returns a device/unsupported report
+PASS: Disposable VHDs detached; original disk count restored
+ALL 97 CHECKS PASSED

@@ -1,0 +1,30 @@
+using System.Diagnostics;
+using System.Globalization;
+using System.Text;
+using System.Text.RegularExpressions;
+using SoopaDriveTool.Core;
+namespace SoopaDriveTool.Windows;
+public record ToolResult(int ExitCode,string Output,string Error);
+public static class ProcessTool
+{
+    public static async Task<ToolResult> RunAsync(string executable,IEnumerable<string> arguments,string phase="",IProgress<DriveProgress>? progress=null,double start=0,double span=100,CancellationToken ct=default)
+    {
+        var info=new ProcessStartInfo(executable){UseShellExecute=false,CreateNoWindow=true,RedirectStandardOutput=true,RedirectStandardError=true,StandardOutputEncoding=Encoding.UTF8,StandardErrorEncoding=Encoding.UTF8};foreach(var a in arguments)info.ArgumentList.Add(a);
+        using var process=Process.Start(info)??throw new IOException("Could not start "+Path.GetFileName(executable));
+        var output=new StringBuilder();var error=process.StandardError.ReadToEndAsync();double last=-1;
+        var read=Read();
+        async Task Read()
+        {
+            var buffer=new char[1024];int n;string tail="";
+            while((n=await process.StandardOutput.ReadAsync(buffer))>0)
+            {
+                string part=new(buffer,0,n);if(output.Length<16*1024*1024)output.Append(part);tail=(tail+part);if(tail.Length>4096)tail=tail[^4096..];
+                var matches=Regex.Matches(tail,@"(\d+(?:\.\d+)?)%");if(matches.Count==0)continue;
+                if(double.TryParse(matches[^1].Groups[1].Value,NumberStyles.Float,CultureInfo.InvariantCulture,out var pct)&&pct>=0&&pct<=100&&pct>=last+.2)
+                {last=pct;progress?.Report(new(phase,start+span*pct/100,$"{phase}: {pct:0.0}%"));}
+            }
+        }
+        try{await process.WaitForExitAsync(ct);await read;return new(process.ExitCode,output.ToString(),await error);}
+        catch{try{process.Kill(true);await process.WaitForExitAsync();}catch{}throw;}
+    }
+}

@@ -3,5 +3,14 @@
     "version": "2.3",
     "url": "https://github.com/microsoft/diskspd/releases/download/v2.3/DiskSpd.ZIP",
     "sha256": "18609981e8b04b4f645f1fd182ad0541615fe71722de36a9a933c54f747218a3"
+  },
+  "smartmontools": {
+    "version": "7.5",
+    "url": "https://github.com/smartmontools/smartmontools/releases/download/RELEASE_7_5/smartmontools-7.5.win32-setup.exe",
+    "sha256": "896337fcc253220614cf8cdbd5cf2321c5aa326a37a04160a672a281e6104c70",
+    "smartctl_sha256": "b5db94e5082c042be44994b7a4fa8f7b5c8e713b2ab1c9a560d8f7a7995ea27d",
+    "drivedb_sha256": "dd39c6a520d38895da61923fe26fe7c9c5eb3f42325f2e4477a06ed7a61966d0",
+    "source_url": "https://github.com/smartmontools/smartmontools/releases/download/RELEASE_7_5/smartmontools-7.5.tar.gz",
+    "source_sha256": "690b83ca331378da9ea0d9d61008c4b22dde391387b9bbad7f29387f2595f76e"
   }
 }

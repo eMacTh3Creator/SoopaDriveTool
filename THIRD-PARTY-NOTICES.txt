@@ -25,3 +25,6 @@ SOFTWARE.
 
 
 Self-contained packages also redistribute Microsoft .NET and WPF runtime components under their MIT licenses. See the included DotNet-LICENSE.txt, DotNet-THIRD-PARTY-NOTICES.txt, WPF-LICENSE.txt and WPF-THIRD-PARTY-NOTICES.txt for notices. Runtime component sources: https://github.com/dotnet/runtime and https://github.com/dotnet/wpf
+
+
+SMART collection runs smartctl 7.5 (smartmontools) as a separate executable, under the GNU GPL version 2 or later. It is not linked into the MIT-licensed application. Its GPL license is included as Smartmontools-COPYING.txt. Complete corresponding upstream source and build instructions are included in Licenses/smartmontools-7.5.tar.gz and distributed as a release asset. Upstream: https://github.com/smartmontools/smartmontools. The x64 collector runs under Windows x64 emulation on ARM64. No smartd service is installed.

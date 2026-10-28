@@ -23,7 +23,15 @@ public partial class App:Application
                 var w=new MainWindow(true,e.Args.Length>2?e.Args[2]:"Overview");w.Width=1440;w.Height=940;w.WindowStyle=WindowStyle.None;var visual=(FrameworkElement)w.Content;visual.Width=1440;visual.Height=940;visual.Measure(new System.Windows.Size(1440,940));visual.Arrange(new Rect(0,0,1440,940));visual.UpdateLayout();
                 var bitmap=new RenderTargetBitmap(1440,940,96,96,PixelFormats.Pbgra32);bitmap.Render(visual);var encoder=new PngBitmapEncoder();encoder.Frames.Add(BitmapFrame.Create(bitmap));using var stream=File.Create(e.Args[1]);encoder.Save(stream);w.Close();Shutdown(0);return;
             }
-            ShutdownMode=ShutdownMode.OnMainWindowClose;MainWindow=new MainWindow();MainWindow.Show();
+            PendingPlan? pending=null;
+            if(e.Args.Length==2&&e.Args[0]=="--resume-plan")
+            {
+                var path=Path.GetFullPath(e.Args[1]);var directory=Path.Combine(Data.Home,"pending");BackupEngine.RejectExistingAncestorLinks(path);
+                if(!BackupEngine.IsInside(path,directory)||!File.Exists(path)||new FileInfo(path).Length>1024*1024)throw new IOException("Invalid pending-plan handoff.");
+                pending=JsonSerializer.Deserialize<PendingPlan>(await File.ReadAllTextAsync(path),Data.Json)??throw new IOException("Invalid pending plan.");
+                QueuePlanner.Project(pending.Baselines,pending.Operations);File.Delete(path);
+            }
+            ShutdownMode=ShutdownMode.OnMainWindowClose;MainWindow=new MainWindow(restoredPlan:pending);MainWindow.Show();
         }
         catch(Exception ex)
         {
