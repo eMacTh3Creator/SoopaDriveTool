@@ -2,6 +2,9 @@ param([ValidateSet('win-arm64','win-x64')][string]$Runtime='win-x64',[string]$Ve
 $ErrorActionPreference='Stop';$root=Split-Path $PSScriptRoot -Parent;$output=Join-Path $root "artifacts\$Runtime";$arch=$Runtime.Replace('win-','')
 $installer=Join-Path $output "SoopaDriveTool-$Version-$arch-Setup.exe";$testDir=Join-Path $env:TEMP ('SoopaDriveTool-InstallCheck-'+[guid]::NewGuid().ToString('N'))
 $preview=Join-Path $output 'installed-preview.png'
+foreach($base in @('HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall','HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall')){
+ if(Test-Path (Join-Path $base '{A34ED4DE-2A9B-43D8-AB4C-4F9C737B3095}_is1')){throw 'An existing SoopaDriveTool installation is present. Run install/uninstall smoke checks only on an isolated clean host to preserve that installation.'}
+}
 try{
   $p=Start-Process $installer -ArgumentList '/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART','/SP-',"/DIR=$testDir",'/GROUP=SoopaDriveTool Install Check' -Wait -PassThru
   if($p.ExitCode -ne 0){throw "Installer failed: $($p.ExitCode)"}

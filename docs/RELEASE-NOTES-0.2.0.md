@@ -2,7 +2,7 @@
 
 Adds the requested cloning choices, quick/thorough wiping, dependent Apply chains, live activity and full available SMART reports.
 
-- **Clone modes:** byte-exact whole disk; filesystem-aware used-file NTFS volume; Windows-aware UEFI cloning of an attached inactive Windows installation. WIM modes use third-disk scratch storage, preserve source read-only state and validate resources during capture/apply. Windows mode configures destination EFI/BCD; independent boot/hardware qualification remains outstanding.
+- **Clone modes:** byte-exact whole disk; filesystem-aware used-file NTFS volume; Windows-aware UEFI cloning of an attached inactive Windows installation. WIM modes use third-disk scratch storage, preserve source read-only state and validate resources during capture/apply. Windows mode preserves the original Windows drive letter in the destination offline hive and configures destination EFI/BCD; independent boot/hardware qualification remains outstanding.
 - **Wiping:** quick partition reset; full zero overwrite; cryptographic-random overwrite; three-pass random/ones/zeros. Thorough modes verify full read-back after every pass. Quick reset leaves file contents recoverable. These are not firmware sanitize or SSD remapped-cell erasure guarantees.
 - **Action chains:** preview and Apply dependent delete → delete → create → rename steps on the same disk. Newly created partitions can be referenced by later steps. Identity/layout and every operation’s result are checked; unexpected changes stop later steps.
 - **Activity:** current/completed/upcoming/skipped steps, real percentages where exposed, indeterminate Windows phases where no percentage exists, byte throughput/ETA for raw I/O, elapsed time, event journals, exports and rotating facts/messages.

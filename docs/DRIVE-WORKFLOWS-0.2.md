@@ -22,6 +22,8 @@ Full SMART collection uses [smartmontools 7.5](https://github.com/smartmontools/
 
 The filesystem/Windows modes use temporary WIM staging rather than trying to relocate opaque filesystem blocks. Original free-space bytes are not copied. Windows imaging exclusions apply (for example paging/hibernation files, recycle-bin content and volume metadata); use byte-exact mode when those bytes must be retained. Current source encryption and the running system disk are blocked. A filesystem-aware volume clone is not a bootable OS clone unless Windows-aware mode is selected and all its checks succeed.
 
+The applied destination SYSTEM hive keeps the source installation’s Windows drive letter: matching source volume identifiers are replaced with the new destination identifier. The host registry is read for identifiers, while writes are confined to a uniquely mounted destination hive, which is unloaded afterward. An ambiguous original letter stops the operation instead of guessing. This follows the Windows [persistent mount-name database](https://learn.microsoft.com/en-us/windows-hardware/drivers/storage/supporting-mount-manager-requests-in-a-storage-class-driver) and [offline hive load](https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/reg-load)/[unload](https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/reg-unload) mechanisms.
+
 Windows-aware cloning does not guarantee activation, TPM/BitLocker binding, all OEM recovery layouts, dissimilar-hardware boot or every firmware’s behavior. Independent destination boot qualification is still required. No claim of a successfully booted full Windows clone is made from a layout-only or fixture test.
 
 ## Wipe choices

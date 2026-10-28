@@ -1,4 +1,5 @@
 using System.Runtime.InteropServices;
+using Microsoft.Win32;
 using System.Text;
 using System.Text.Json;
 using SoopaDriveTool.Core;
@@ -37,7 +38,9 @@ public static class FileSystemCloneEngine
             await Tool(SystemTool("dism.exe"),["/English","/Apply-Image","/ImageFile:"+image,"/Index:1","/ApplyDir:"+volume+@":\","/CheckIntegrity","/Verify","/EA"],"Applying used files",40,45);
             if(windows)
             {
-                progress?.Report(new("Configuring UEFI boot",85,"Building the destination EFI/BCD files. The current host firmware boot order is not changed."));
+                progress?.Report(new("Preserving Windows drive letter",85,"Remapping the cloned SYSTEM hive to the destination volume identifier."));
+                await RemapOfflineWindowsVolumeAsync(source with{Partitions=[p]},target,volume!.Value);
+                progress?.Report(new("Configuring UEFI boot",86,"Building the destination EFI/BCD files. The current host firmware boot order is not changed."));
                 await Tool(SystemTool("bcdboot.exe"),[volume+@":\Windows","/s",efi+":","/f","UEFI","/c","/v"],"Configuring UEFI boot",85,5);
                 var efiLoader=RuntimeInformation.OSArchitecture==Architecture.Arm64?@"EFI\Boot\bootaa64.efi":@"EFI\Boot\bootx64.efi";
                 if(!File.Exists(Path.Combine(efi+@":\",efiLoader))||!File.Exists(Path.Combine(efi+@":\",@"EFI\Microsoft\Boot\BCD")))throw new IOException("Destination boot-file checks failed.");
@@ -63,6 +66,38 @@ public static class FileSystemCloneEngine
         }
         async Task Revalidate(){var now=await StorageService.InventoryAsync();OperationPolicy.Validate(op,now.Single(d=>d.Number==source.Number),now.Single(d=>d.Number==target.Number));}
         async Task Tool(string exe,string[] args,string phase,double start,double span){progress?.Report(new(phase,start,phase+"…"));var result=await ProcessTool.RunAsync(exe,args,phase,progress,start,span);if(result.ExitCode!=0)throw new IOException($"{Path.GetFileName(exe)} failed ({result.ExitCode}). {result.Error} {result.Output}");}
+    }
+    // Change only the destination's offline hive. Preserve its original Windows
+    // letter rather than guessing C: or clearing every other drive mapping.
+    internal static async Task RemapOfflineWindowsVolumeAsync(DiskInfo source,DiskInfo target,char destinationLetter)
+    {
+        var disks=await StorageService.InventoryAsync();
+        var actualSource=disks.Single(d=>d.Number==source.Number);var actualTarget=disks.Single(d=>d.Number==target.Number);
+        if(!StorageService.IsAdmin||source.Number==target.Number||actualSource.Protected||actualTarget.Protected||actualSource.Identity!=source.Identity||actualTarget.Identity!=target.Identity||actualTarget.ReadOnly)throw new IOException("Offline Windows mapping target is no longer safe.");
+        var sourcePartition=source.Partitions.Single(p=>p.Letter.Length==1&&File.Exists(Path.Combine(p.Letter+@":\",@"Windows\System32\Config\SYSTEM")));
+        // Use the explicitly selected source volume, not any Windows directory on
+        // another partition. The caller supplies a source record filtered to it.
+        var liveSource=actualSource.Partitions.SingleOrDefault(p=>p.Number==sourcePartition.Number);
+        if(liveSource==null||liveSource.Offset!=sourcePartition.Offset||liveSource.Size!=sourcePartition.Size||liveSource.Letter!=sourcePartition.Letter)throw new IOException("The selected source volume changed before offline registry mapping.");
+        var targetPartition=actualTarget.Partitions.Single(p=>p.Letter==destinationLetter.ToString()&&p.FileSystem=="NTFS");
+        var hive=Path.Combine(targetPartition.Letter+@":\",@"Windows\System32\Config\SYSTEM");BackupEngine.RejectExistingAncestorLinks(hive);
+        if(!File.Exists(hive))throw new IOException("The applied destination SYSTEM hive is missing.");
+        using var mappings=Registry.LocalMachine.OpenSubKey("SYSTEM\\MountedDevices")??throw new IOException("Windows volume identifiers are unavailable.");
+        byte[] Map(string letter)=>mappings.GetValue(@"\DosDevices\"+letter+":") as byte[]??throw new IOException("No persistent identifier for volume "+letter+".");
+        var from=Map(sourcePartition.Letter);var to=Map(targetPartition.Letter);
+        if(from.SequenceEqual(to)||from.Length==0||to.Length==0)throw new IOException("Source and destination volume identifiers are not distinct.");
+        var name="SoopaDriveTool_Offline_"+Guid.NewGuid().ToString("N");var key=@"HKLM\"+name;bool loaded=false;
+        async Task Reg(params string[] args){var result=await ProcessTool.RunAsync(SystemTool("reg.exe"),args);if(result.ExitCode!=0)throw new IOException("Offline registry operation failed: "+result.Error+result.Output);}
+        try
+        {
+            await Reg("load",key,hive);loaded=true;
+            using var offline=Registry.LocalMachine.OpenSubKey(name+"\\MountedDevices",true)??throw new IOException("The offline Windows image has no drive-letter mappings.");
+            var matching=offline.GetValueNames().Where(n=>offline.GetValue(n) is byte[] data&&data.SequenceEqual(from)).ToArray();
+            if(matching.Count(n=>n.StartsWith(@"\DosDevices\",StringComparison.OrdinalIgnoreCase)&&n.Length==14)!=1)throw new IOException("The original Windows drive letter cannot be identified unambiguously. Use a byte-exact clone or qualify this image manually.");
+            foreach(var value in matching)offline.SetValue(value,to,RegistryValueKind.Binary);
+            offline.Flush();
+        }
+        finally{if(loaded)await Reg("unload",key);}
     }
     internal record LayoutLetters(string Windows,string Efi,string Recovery);
     internal static async Task<LayoutLetters> CreateDestinationLayoutAsync(DiskOperation op,DiskInfo target,bool recovery)

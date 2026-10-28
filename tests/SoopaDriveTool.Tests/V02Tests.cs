@@ -1,4 +1,5 @@
 using System.IO;
+using Microsoft.Win32;
 using System.Text.Json;
 using SoopaDriveTool.Core;
 using SoopaDriveTool.Windows;
@@ -69,11 +70,43 @@ partial class Program
             var op=DiskOperation.For(source,OperationKind.CloneDisk) with{CloneMode=CloneMode.WindowsUefi,TargetDiskNumber=number,TargetIdentity=target.Identity,TargetLayout=target.Layout};
             var letters=await FileSystemCloneEngine.CreateDestinationLayoutAsync(op,target,false);var after=(await StorageService.InventoryAsync()).Single(d=>d.Number==number);
             Check(after.Style=="GPT"&&after.Partitions.Any(p=>p.FileSystem=="FAT32")&&after.Partitions.Any(p=>p.FileSystem=="NTFS")&&after.Partitions.Any(p=>p.Type=="Reserved"),"Windows-aware destination builds actual GPT / EFI / MSR / NTFS layout");
+            await OfflineMappingCheck(source,after,letters.Windows[0]);
             var firmwareBefore=await StorageService.PowerShellAsync("bcdedit.exe /enum firmware");var system=Environment.GetFolderPath(Environment.SpecialFolder.Windows);var boot=await ProcessTool.RunAsync(Path.Combine(system,"System32","bcdboot.exe"),[system,"/s",letters.Efi+":","/f","UEFI","/c","/v"]);
             Check(boot.ExitCode==0&&File.Exists(Path.Combine(letters.Efi+@":\",@"EFI\Microsoft\Boot\BCD")),"BCDBoot writes a real BCD store only to the explicit disposable EFI target");
             var firmwareAfter=await StorageService.PowerShellAsync("bcdedit.exe /enum firmware");Check(firmwareBefore==firmwareAfter,"Explicit-target BCDBoot preserves the host firmware boot entries");
         }
         finally{await StorageService.PowerShellAsync($"Dismount-DiskImage -ImagePath '{file.Replace("'","''")}' -ErrorAction SilentlyContinue | Out-Null");}
+    }
+    static async Task OfflineMappingCheck(DiskInfo source,DiskInfo target,char destinationLetter)
+    {
+        var sourceLetter=source.Partitions.Single(p=>p.FileSystem=="NTFS").Letter;
+        var sourceConfig=Path.Combine(sourceLetter+@":\",@"Windows\System32\Config");Directory.CreateDirectory(sourceConfig);
+        var sourceHive=Path.Combine(sourceConfig,"SYSTEM");await File.WriteAllTextAsync(sourceHive,"Fixture marker; source must stay unchanged");
+        var destinationConfig=Path.Combine(destinationLetter+@":\",@"Windows\System32\Config");Directory.CreateDirectory(destinationConfig);var destinationHive=Path.Combine(destinationConfig,"SYSTEM");
+        var fixture="SoopaDriveTool_Test_"+Guid.NewGuid().ToString("N");
+        var hostBefore=await StorageService.PowerShellAsync("reg query HKLM\\SYSTEM\\MountedDevices");
+        using var host=Registry.LocalMachine.OpenSubKey("SYSTEM\\MountedDevices")!;
+        var from=(byte[])host.GetValue(@"\DosDevices\"+sourceLetter+":")!;var to=(byte[])host.GetValue(@"\DosDevices\"+destinationLetter+":")!;
+        try
+        {
+            using(var key=Registry.LocalMachine.CreateSubKey(fixture))
+            using(var maps=key.CreateSubKey("MountedDevices")){maps.SetValue(@"\DosDevices\C:",from,RegistryValueKind.Binary);maps.SetValue(@"\??\Volume{00000000-0000-0000-0000-000000000001}",from,RegistryValueKind.Binary);maps.SetValue("Unrelated",new byte[]{1,2,3},RegistryValueKind.Binary);}
+            var reg=Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows),"System32","reg.exe");
+            var saved=await ProcessTool.RunAsync(reg,["save",@"HKLM\"+fixture,destinationHive,"/y"]);if(saved.ExitCode!=0)throw new IOException(saved.Output+saved.Error);
+            Registry.LocalMachine.DeleteSubKeyTree(fixture);await FileSystemCloneEngine.RemapOfflineWindowsVolumeAsync(source,target,destinationLetter);
+            var load=await ProcessTool.RunAsync(reg,["load",@"HKLM\"+fixture,destinationHive]);if(load.ExitCode!=0)throw new IOException(load.Output+load.Error);
+            try
+            {
+                using var key=Registry.LocalMachine.OpenSubKey(fixture+"\\MountedDevices")!;
+                Check(((byte[])key.GetValue(@"\DosDevices\C:")!).SequenceEqual(to)&&((byte[])key.GetValue(@"\??\Volume{00000000-0000-0000-0000-000000000001}")!).SequenceEqual(to),"Offline Windows drive letter and volume aliases are remapped to the destination identifier");
+                Check(((byte[])key.GetValue("Unrelated")!).SequenceEqual(new byte[]{1,2,3}),"Offline remap preserves unrelated drive mappings");
+            }
+            finally{var unload=await ProcessTool.RunAsync(reg,["unload",@"HKLM\"+fixture]);if(unload.ExitCode!=0)throw new IOException(unload.Output+unload.Error);}
+            Check(hostBefore==await StorageService.PowerShellAsync("reg query HKLM\\SYSTEM\\MountedDevices")&&await File.ReadAllTextAsync(sourceHive)=="Fixture marker; source must stay unchanged","Offline remap leaves the host mapping registry and source hive unchanged");
+            using var root=Registry.LocalMachine.OpenSubKey("SOFTWARE");
+            Check(!Registry.LocalMachine.GetSubKeyNames().Any(n=>n.StartsWith("SoopaDriveTool_Offline_")),"Destination registry hive is unloaded after remapping");
+        }
+        finally{try{Registry.LocalMachine.DeleteSubKeyTree(fixture,false);}catch{}File.Delete(sourceHive);}
     }
     sealed class CollectProgress(List<DriveProgress> target):IProgress<DriveProgress>{public void Report(DriveProgress value)=>target.Add(value);}
 }

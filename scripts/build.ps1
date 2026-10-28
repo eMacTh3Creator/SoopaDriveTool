@@ -45,6 +45,6 @@ try{
  $arch=$Runtime.Replace('win-','');$portable=Join-Path $output "SoopaDriveTool-$Version-$arch-Portable.zip"
  if(Test-Path $portable){Remove-Item $portable}
  Compress-Archive "$publish\*" $portable -CompressionLevel Optimal
- Get-ChildItem $output -File | Where-Object {$_.Extension -in '.exe','.zip'} | Sort-Object Name | ForEach-Object {"$((Get-FileHash $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant())  $($_.Name)"} | Set-Content "$output\SHA256SUMS.txt"
+ Get-ChildItem $output -File | Where-Object {$_.Extension -in '.exe','.zip' -and $_.Name -like "SoopaDriveTool-$Version-*"} | Sort-Object Name | ForEach-Object {"$((Get-FileHash $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant())  $($_.Name)"} | Set-Content "$output\SHA256SUMS.txt"
  Write-Host "Built $Runtime packages: $output"
 }finally{Pop-Location}
