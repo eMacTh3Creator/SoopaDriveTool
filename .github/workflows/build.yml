@@ -1,0 +1,56 @@
+name: Windows builds and verification
+on:
+  push:
+    branches: [main]
+    paths-ignore: ['website/**', '**.md']
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runtime: win-x64
+            runner: windows-latest
+          - runtime: win-arm64
+            runner: windows-11-arm
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - name: Locate installer compiler
+        shell: pwsh
+        run: |
+          if (!(Test-Path 'C:\Program Files (x86)\Inno Setup 6\ISCC.exe')) {
+            $uri='https://github.com/jrsoftware/issrc/releases/download/is-6_7_4/innosetup-6.7.4.exe'
+            Invoke-WebRequest $uri -OutFile "$env:RUNNER_TEMP\inno.exe"
+            if ((Get-FileHash "$env:RUNNER_TEMP\inno.exe").Hash.ToLowerInvariant() -ne 'a549929319f9120716677c685535ca4671e4b937b5fdc87e2585f32d8eb30e8c') { throw 'Inno Setup checksum mismatch' }
+            $signature=Get-AuthenticodeSignature "$env:RUNNER_TEMP\inno.exe"
+            if ($signature.Status -ne 'Valid' -or $signature.SignerCertificate.Subject -notmatch 'Pyrsys') { throw 'Invalid compiler signature' }
+            $p=Start-Process "$env:RUNNER_TEMP\inno.exe" '/VERYSILENT /SUPPRESSMSGBOXES /NORESTART /SP-' -Wait -PassThru
+            if ($p.ExitCode -ne 0) {throw 'Compiler installation failed'}
+          }
+      - name: Build installer and portable package
+        shell: pwsh
+        run: ./scripts/build.ps1 -Runtime ${{ matrix.runtime }}
+      - name: Run behavioral and disposable VHD integration tests
+        shell: pwsh
+        run: ./scripts/test.ps1 -Runtime ${{ matrix.runtime }} -Integration
+      - name: Install, render, and uninstall package
+        shell: pwsh
+        run: ./scripts/check-installer.ps1 -Runtime ${{ matrix.runtime }}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: SoopaDriveTool-${{ matrix.runtime }}
+          path: |
+            artifacts/${{ matrix.runtime }}/*.exe
+            artifacts/${{ matrix.runtime }}/*.zip
+            artifacts/${{ matrix.runtime }}/SHA256SUMS.txt
+            artifacts/${{ matrix.runtime }}/*-check.json
+            artifacts/${{ matrix.runtime }}/*-preview.png

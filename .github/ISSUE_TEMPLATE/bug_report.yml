@@ -1,0 +1,23 @@
+name: Bug report
+description: Report a reproducible problem without private disk data.
+body:
+  - type: markdown
+    attributes:
+      value: Do not attach disk images, recovery keys, serial numbers, or private filenames.
+  - type: input
+    id: version
+    attributes:
+      label: App version and Windows architecture
+      placeholder: 0.1.0, Windows 11 ARM64
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce and expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: result
+    attributes:
+      label: Actual behavior and redacted error
