@@ -89,11 +89,11 @@ partial class Program
         var from=(byte[])host.GetValue(@"\DosDevices\"+sourceLetter+":")!;var to=(byte[])host.GetValue(@"\DosDevices\"+destinationLetter+":")!;
         try
         {
-            using(var key=Registry.LocalMachine.CreateSubKey(fixture))
+            using(var key=Registry.LocalMachine.CreateSubKey("SOFTWARE\\"+fixture))
             using(var maps=key.CreateSubKey("MountedDevices")){maps.SetValue(@"\DosDevices\C:",from,RegistryValueKind.Binary);maps.SetValue(@"\??\Volume{00000000-0000-0000-0000-000000000001}",from,RegistryValueKind.Binary);maps.SetValue("Unrelated",new byte[]{1,2,3},RegistryValueKind.Binary);}
             var reg=Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows),"System32","reg.exe");
-            var saved=await ProcessTool.RunAsync(reg,["save",@"HKLM\"+fixture,destinationHive,"/y"]);if(saved.ExitCode!=0)throw new IOException(saved.Output+saved.Error);
-            Registry.LocalMachine.DeleteSubKeyTree(fixture);await FileSystemCloneEngine.RemapOfflineWindowsVolumeAsync(source,target,destinationLetter);
+            var saved=await ProcessTool.RunAsync(reg,["save",@"HKLM\SOFTWARE\"+fixture,destinationHive,"/y"]);if(saved.ExitCode!=0)throw new IOException(saved.Output+saved.Error);
+            Registry.LocalMachine.DeleteSubKeyTree("SOFTWARE\\"+fixture);await FileSystemCloneEngine.RemapOfflineWindowsVolumeAsync(source,target,destinationLetter);
             var load=await ProcessTool.RunAsync(reg,["load",@"HKLM\"+fixture,destinationHive]);if(load.ExitCode!=0)throw new IOException(load.Output+load.Error);
             try
             {
@@ -103,10 +103,9 @@ partial class Program
             }
             finally{var unload=await ProcessTool.RunAsync(reg,["unload",@"HKLM\"+fixture]);if(unload.ExitCode!=0)throw new IOException(unload.Output+unload.Error);}
             Check(hostBefore==await StorageService.PowerShellAsync("reg query HKLM\\SYSTEM\\MountedDevices")&&await File.ReadAllTextAsync(sourceHive)=="Fixture marker; source must stay unchanged","Offline remap leaves the host mapping registry and source hive unchanged");
-            using var root=Registry.LocalMachine.OpenSubKey("SOFTWARE");
             Check(!Registry.LocalMachine.GetSubKeyNames().Any(n=>n.StartsWith("SoopaDriveTool_Offline_")),"Destination registry hive is unloaded after remapping");
         }
-        finally{try{Registry.LocalMachine.DeleteSubKeyTree(fixture,false);}catch{}File.Delete(sourceHive);}
+        finally{try{Registry.LocalMachine.DeleteSubKeyTree("SOFTWARE\\"+fixture,false);}catch{}File.Delete(sourceHive);}
     }
     sealed class CollectProgress(List<DriveProgress> target):IProgress<DriveProgress>{public void Report(DriveProgress value)=>target.Add(value);}
 }
