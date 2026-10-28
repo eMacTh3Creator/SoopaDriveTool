@@ -1,0 +1,63 @@
+PASS: Valid data partition operation
+PASS: Boot disk is protected
+PASS: Disk replacement rejected
+PASS: Layout changes rejected
+PASS: BitLocker changes rejected
+PASS: Unknown encryption rejected
+PASS: Online raw operations rejected
+PASS: System drive letter rejected
+PASS: Unknown operations rejected
+PASS: Missing partition selection rejected
+PASS: Control characters rejected
+PASS: Mismatched clone capacity rejected
+PASS: Snapshot SHA-256 verification
+PASS: File restore content
+PASS: Binary restore content
+PASS: Unchanged content deduplicated
+PASS: New content produces one new object
+PASS: Earlier snapshot remains verifiable
+PASS: Existing restore files protected
+PASS: Nested repository rejected
+PASS: Unsafe path rejected: ../evil
+PASS: Unsafe path rejected: /root
+PASS: Unsafe path rejected: a/../b
+PASS: Unsafe path rejected: a\b
+PASS: Unsafe path rejected: C:/evil
+PASS: Unsafe path rejected: a:stream
+PASS: Unsafe path rejected: CON.txt
+PASS: Unsafe path rejected: file.
+PASS: Unsafe path rejected: a//b
+PASS: Corrupt compressed object rejected
+PASS: Malicious manifest rejected before restore
+PASS: MBR partition decode
+PASS: Invalid MBR signature rejected
+PASS: Out-of-range MBR rejected
+PASS: CRC32 reference vector
+PASS: Valid GPT header/table CRC and partition decode
+PASS: Corrupt GPT header CRC rejected
+PASS: Corrupt GPT table CRC rejected
+PASS: DiskSpd unit conversion and p99 parsing
+PASS: Live storage inventory
+PASS: Backend blocks system disk mutations
+PASS: Disposable VHD identity
+PASS: Disposable VHD identity
+PASS: Initialize GPT through backend
+PASS: Create + format NTFS partition
+PASS: 1 MiB partition alignment
+PASS: Resize partition to 128 MiB
+PASS: Resize preserves file content
+PASS: Volume rename
+PASS: Filesystem scan
+PASS: Live native DiskSpd real-world workloads
+PASS: Benchmark temporary data removed
+PASS: Running benchmark can be cancelled
+PASS: Cancelled benchmark releases file handles and removes temporary data
+PASS: Verified full raw disk image
+PASS: Raw clone and full target read-back verification
+PASS: Zero-overwrite and full read-back verification
+PASS: Raw image restore and full read-back verification
+PASS: Image restore recovers original file bytes
+PASS: Delete data partition
+PASS: Create exFAT partition
+PASS: Disposable VHDs detached; original disk count restored
+ALL 62 CHECKS PASSED

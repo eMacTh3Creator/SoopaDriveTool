@@ -1,0 +1,9 @@
+{
+  "Utc": "2026-10-28T20:35:34.7862153Z",
+  "Installer": "Passed",
+  "InstalledRender": "Passed",
+  "EngineMachine": "0x8664",
+  "Uninstall": "Passed",
+  "AppMachine": "0x8664",
+  "Runtime": "win-x64"
+}

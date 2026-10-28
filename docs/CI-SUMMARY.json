@@ -1,0 +1,15 @@
+{
+  "url": "https://github.com/eMacTh3Creator/SoopaDriveTool/actions/runs/40764168975",
+  "source_commit": "87675ba9a4e37ac03e3e2a5c2840ad932a3e7070",
+  "conclusion": "success",
+  "jobs": [
+    {
+      "name": "build (win-arm64, windows-11-arm)",
+      "conclusion": "success"
+    },
+    {
+      "name": "build (win-x64, windows-latest)",
+      "conclusion": "success"
+    }
+  ]
+}

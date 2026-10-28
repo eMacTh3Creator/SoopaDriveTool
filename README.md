@@ -1,5 +1,7 @@
 # SoopaDriveTool
 
+[![Windows builds](https://github.com/eMacTh3Creator/SoopaDriveTool/actions/workflows/build.yml/badge.svg)](https://github.com/eMacTh3Creator/SoopaDriveTool/actions/workflows/build.yml)
+
 An original Windows drive workspace for **ARM64 and x64**. Modern WPF interface, native Microsoft DiskSpd benchmarks, data-disk partition operations, verified disk images/clones, and compressed versioned file backups.
 
 **0.1.0 development preview — unsigned.** Advanced commercial-suite parity is still in progress. Evaluate destructive operations on disposable data disks. The running system disk is protected.

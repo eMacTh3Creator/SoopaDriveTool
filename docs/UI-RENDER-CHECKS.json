@@ -1,0 +1,47 @@
+[
+  {
+    "ExitCode": 0,
+    "Page": "Overview",
+    "Bytes": 145228
+  },
+  {
+    "ExitCode": 0,
+    "Page": "Disk manager",
+    "Bytes": 145851
+  },
+  {
+    "ExitCode": 0,
+    "Page": "Benchmark",
+    "Bytes": 112909
+  },
+  {
+    "ExitCode": 0,
+    "Page": "Backup & restore",
+    "Bytes": 109625
+  },
+  {
+    "ExitCode": 0,
+    "Page": "Clone & image",
+    "Bytes": 155353
+  },
+  {
+    "ExitCode": 0,
+    "Page": "Recovery inspector",
+    "Bytes": 83052
+  },
+  {
+    "ExitCode": 0,
+    "Page": "Health",
+    "Bytes": 110899
+  },
+  {
+    "ExitCode": 0,
+    "Page": "Activity",
+    "Bytes": 67905
+  },
+  {
+    "ExitCode": 0,
+    "Page": "About & roadmap",
+    "Bytes": 127604
+  }
+]
