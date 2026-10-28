@@ -39,9 +39,16 @@ jobs:
       - name: Build installer and portable package
         shell: pwsh
         run: ./scripts/build.ps1 -Runtime ${{ matrix.runtime }}
-      - name: Run behavioral and disposable VHD integration tests
+      - name: Run native behavioral and benchmark checks
         shell: pwsh
-        run: ./scripts/test.ps1 -Runtime ${{ matrix.runtime }} -Integration
+        run: |
+          if ('${{ matrix.runtime }}' -eq 'win-arm64') {
+            # Azure ARM Storage CIM calls take tens of seconds apiece. Full ARM
+            # disposable-VHD qualification also runs on the local Windows ARM VM.
+            ./scripts/test.ps1 -Runtime win-arm64 -BenchmarkOnly
+          } else {
+            ./scripts/test.ps1 -Runtime win-x64 -Integration
+          }
       - name: Install, render, and uninstall package
         shell: pwsh
         run: ./scripts/check-installer.ps1 -Runtime ${{ matrix.runtime }}
