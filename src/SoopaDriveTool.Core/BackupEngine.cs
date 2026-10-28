@@ -15,7 +15,7 @@ public static partial class BackupEngine
         if(!Directory.Exists(source)) throw new DirectoryNotFoundException(source);
         if(IsInside(repository,source)||IsInside(source,repository)) throw new IOException("Source and backup repository must be separate folders, with neither inside the other.");
         RejectLinks(source); RejectExistingAncestorLinks(repository);
-        Directory.CreateDirectory(Path.Combine(repository,"objects"));
+        Directory.CreateDirectory(Path.Combine(repository,"objects"));RejectExistingAncestorLinks(Path.Combine(repository,"objects"));
         var entries=new List<BackupEntry>();
         foreach(var file in EnumerateSafe(source))
         {
@@ -45,6 +45,7 @@ public static partial class BackupEngine
             finally { if(File.Exists(tmp)) File.Delete(tmp); }
         }
         var manifest=Path.Combine(repository,"snapshots",DateTime.UtcNow.ToString("yyyyMMdd-HHmmss-fff")+"-"+Guid.NewGuid().ToString("N")[..8]+".json");
+        RejectExistingAncestorLinks(Path.GetDirectoryName(manifest)!);
         await Data.SaveAsync(manifest,new BackupManifest(1,DateTime.UtcNow,source,entries));
         return manifest;
     }

@@ -4,6 +4,7 @@ using System.Text;
 using System.Text.Json;
 using SoopaDriveTool.Core;
 using SoopaDriveTool.Windows;
+class ImmediateProgress(Action<string> callback):IProgress<string>{public void Report(string value)=>callback(value);}
 class Program
 {
     static int passed;
@@ -69,7 +70,9 @@ class Program
             await Apply(OperationKind.ResizePartition,edit:o=>o with{Bytes=128L*1024*1024},partition:true);Check((await Current()).Partitions.Last(p=>p.Letter.Length>0).Size==128L*1024*1024,"Resize partition to 128 MiB");Check(File.ReadAllBytes(content).SequenceEqual(payload),"Resize preserves file content");
             await Apply(OperationKind.SetLabel,edit:o=>o with{Value="SOOPATEST"},partition:true);Check((await Current()).Partitions.Any(p=>p.Label=="SOOPATEST"),"Volume rename");
             await Apply(OperationKind.CheckFileSystem,partition:true);Check(true,"Filesystem scan");
-            var benchmark=await BenchmarkService.RunAsync(Path.GetTempPath(),64,1,1,"Real world",false,false,null,CancellationToken.None);Check(benchmark.Results.Count==4&&benchmark.Results.All(x=>x.MBps>0&&x.Iops>0),"Live native DiskSpd real-world workloads");Check(!Directory.GetDirectories(Path.GetTempPath(),".soopadrivetool-*").Any(),"Benchmark temporary data removed");
+            var benchmarkFolder=Path.Combine(root,"benchmark");Directory.CreateDirectory(benchmarkFolder);var benchmark=await BenchmarkService.RunAsync(benchmarkFolder,64,1,1,"Real world",false,false,null,CancellationToken.None);Check(benchmark.Results.Count==4&&benchmark.Results.All(x=>x.MBps>0&&x.Iops>0),"Live native DiskSpd real-world workloads");Check(!Directory.GetDirectories(benchmarkFolder,".soopadrivetool-*").Any(),"Benchmark temporary data removed");
+            using(var stop=new CancellationTokenSource()){await RejectAsync(()=>BenchmarkService.RunAsync(benchmarkFolder,64,5,1,"Real world",false,false,new ImmediateProgress(s=>{if(s.Contains("pass"))stop.CancelAfter(250);}),stop.Token),"Running benchmark can be cancelled");}
+            Check(!Directory.GetDirectories(benchmarkFolder,".soopadrivetool-*").Any(),"Cancelled benchmark releases file handles and removes temporary data");
             await Apply(OperationKind.Offline);await Apply(OperationKind.Offline,index:1);
             var image=Path.Combine(root,"disk.sdi");await Apply(OperationKind.BackupImage,edit:o=>o with{Value=image});Check(File.Exists(image)&&File.Exists(image+".json"),"Verified full raw disk image");
             disk=await Current();var target=await Current(1);await StorageService.ExecuteAsync(DiskOperation.For(disk,OperationKind.CloneDisk) with{TargetDiskNumber=target.Number,TargetIdentity=target.Identity,TargetLayout=target.Layout});Check(true,"Raw clone and full target read-back verification");

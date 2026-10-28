@@ -33,7 +33,7 @@ public static class BenchmarkService
                     var start=new ProcessStartInfo(engine){UseShellExecute=false,CreateNoWindow=true,RedirectStandardOutput=true,RedirectStandardError=true};
                     var args=new List<string>{$"-b{p.BlockBytes}",$"-o{p.QueueDepth}",$"-t{p.Threads}",$"-d{seconds}","-W1","-C0","-Sh","-L","-Rxml","-w"+(mode=="Read"?"0":mode=="Write"?"100":"30")};if(p.Random)args.Add("-r4K");else args.Add("-s");if(!zero)args.Add("-Z1M");args.Add(file);foreach(var a in args)start.ArgumentList.Add(a);
                     using var process=Process.Start(start)??throw new IOException("Could not start DiskSpd.");var output=process.StandardOutput.ReadToEndAsync(ct);var error=process.StandardError.ReadToEndAsync(ct);
-                    try{await process.WaitForExitAsync(ct);}catch{try{process.Kill(true);}catch{}throw;}
+                    try{await process.WaitForExitAsync(ct);}catch{try{process.Kill(true);await process.WaitForExitAsync();}catch{}throw;}
                     var text=await output;var err=await error;if(process.ExitCode!=0)throw new IOException("DiskSpd: "+err+" "+text);
                     measurements.Add(Parse(text,p.Name,mode));
                 }
