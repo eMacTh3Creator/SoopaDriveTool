@@ -5,7 +5,7 @@ using SoopaDriveTool.Windows;
 
 // This harness runs only against disposable, explicitly fingerprinted lab disks.
 // It calls the same QueueRunner and StorageService used by the desktop Apply button.
-record CloneJob(int Source,int Target,string SourceIdentity,string TargetIdentity,string FixtureId,string Mode,string Workspace,long ExpectedDiskBytes);
+record CloneJob(int Source,int Target,string SourceIdentity,string TargetIdentity,string FixtureId,string Mode,string Workspace,long ExpectedDiskBytes,long TargetBytes=0);
 class Program
 {
     static async Task<int> Main(string[] args)
@@ -18,15 +18,16 @@ class Program
             if(!Environment.MachineName.Equals("SDTLAB",StringComparison.OrdinalIgnoreCase))throw new InvalidOperationException("Run this destructive qualification harness only inside the dedicated SDTLab VM.");
             var job=JsonSerializer.Deserialize<CloneJob>(await File.ReadAllTextAsync(args[1]),Data.Json)??throw new IOException("Missing job.");
             var disks=await StorageService.InventoryAsync();var source=disks.Single(d=>d.Number==job.Source);var target=disks.Single(d=>d.Number==job.Target);
-            if(source.Protected||target.Protected||source.Number==target.Number||job.ExpectedDiskBytes<64L*1024*1024*1024||job.ExpectedDiskBytes>512L*1024*1024*1024||source.Size!=job.ExpectedDiskBytes||target.Size!=source.Size||source.Identity!=job.SourceIdentity||target.Identity!=job.TargetIdentity)throw new InvalidOperationException("Disposable source/target fingerprints do not match.");
-            var partition=source.Partitions.Single(p=>p.FileSystem=="NTFS"&&p.Letter.Length==1&&File.Exists(Path.Combine(p.Letter+@":\","SoopaQualification","fixture-id.txt")));
-            var marker=await File.ReadAllTextAsync(Path.Combine(partition.Letter+@":\","SoopaQualification","fixture-id.txt"));
+            var mode=Enum.Parse<CloneMode>(job.Mode);bool live=mode==CloneMode.WindowsLiveUefi;
+            if(source.Protected&&!live||target.Protected||source.Number==target.Number||job.ExpectedDiskBytes<64L*1024*1024*1024||job.ExpectedDiskBytes>512L*1024*1024*1024||source.Size!=job.ExpectedDiskBytes||target.Size!=(job.TargetBytes==0?source.Size:job.TargetBytes)||source.Identity!=job.SourceIdentity||target.Identity!=job.TargetIdentity)throw new InvalidOperationException("Disposable source/target fingerprints do not match.");
+            var partition=source.Partitions.Single(p=>p.FileSystem=="NTFS"&&p.Letter.Length==1&&File.Exists(Path.Combine(p.Letter+@":\",live?"SoopaLiveQualification":"SoopaQualification","fixture-id.txt")));
+            var marker=await File.ReadAllTextAsync(Path.Combine(partition.Letter+@":\",live?"SoopaLiveQualification":"SoopaQualification","fixture-id.txt"));
             if(!Guid.TryParse(job.FixtureId,out _)||marker.Trim()!=job.FixtureId)throw new IOException("Source fixture identity does not match.");
-            var mode=Enum.Parse<CloneMode>(job.Mode);if(mode is not (CloneMode.WindowsUefi or CloneMode.ByteExact))throw new IOException("Unsupported qualification mode.");
+            if(mode is not (CloneMode.WindowsUefi or CloneMode.WindowsLiveUefi or CloneMode.ByteExact or CloneMode.ByteExactGrow))throw new IOException("Unsupported qualification mode.");
             var operations=new List<DiskOperation>();
-            if(mode==CloneMode.ByteExact)
+            if(mode is CloneMode.ByteExact or CloneMode.ByteExactGrow)
             {if(!source.Offline)operations.Add(DiskOperation.For(source,OperationKind.Offline));if(!target.Offline)operations.Add(DiskOperation.For(target,OperationKind.Offline));}
-            var clone=DiskOperation.For(source,OperationKind.CloneDisk,mode==CloneMode.WindowsUefi?partition:null) with{CloneMode=mode,TargetDiskNumber=target.Number,TargetIdentity=target.Identity,TargetLayout=target.Layout,Workspace=job.Workspace};operations.Add(clone);
+            var clone=DiskOperation.For(source,OperationKind.CloneDisk,mode is CloneMode.WindowsUefi or CloneMode.WindowsLiveUefi?partition:null) with{CloneMode=mode,TargetDiskNumber=target.Number,TargetIdentity=target.Identity,TargetLayout=target.Layout,Workspace=job.Workspace};operations.Add(clone);
             var activity=new RunActivity{Steps=operations.Select(o=>new StepActivity{Description=o.Description}).ToList()};
             string last="";double lastPercent=-10;
             try

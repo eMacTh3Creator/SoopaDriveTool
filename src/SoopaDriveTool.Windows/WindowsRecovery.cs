@@ -20,12 +20,12 @@ internal static class WindowsRecovery
         return new(offset,path.Replace('/', '\\'));
     }
     internal static long ReserveBytes(long imageBytes)=>Math.Max(1024L*1024*1024,checked(((imageBytes+300L*1024*1024+1048575)/1048576)*1048576));
-    internal static async Task<string?> FindAsync(DiskInfo source,PartitionInfo windows)
+    internal static async Task<string?> FindAsync(DiskInfo source,PartitionInfo windows,bool allowRunning=false)
     {
-        var request=Convert.ToBase64String(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(source,Data.Json)));
+        var request=Convert.ToBase64String(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(new{source.Number,source.UniqueId,source.Serial,source.Size,AllowRunning=allowRunning&&source.IsBoot&&windows.IsBoot},Data.Json)));
         var json=await StorageService.PowerShellAsync("$r=[Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('"+request+"'))|ConvertFrom-Json; "+"""
         $d=Get-Disk -Number $r.Number
-        if($d.IsBoot -or $d.IsSystem -or [string]$d.UniqueId -cne $r.UniqueId -or [string]$d.SerialNumber -cne $r.Serial -or [long]$d.Size -ne $r.Size){throw 'Recovery source changed or is the running system'}
+        if((($d.IsBoot -or $d.IsSystem) -and !$r.AllowRunning) -or [string]$d.UniqueId -cne $r.UniqueId -or [string]$d.SerialNumber -cne $r.Serial -or [long]$d.Size -ne $r.Size){throw 'Recovery source changed or is the running system'}
         $volumes=@(Get-Partition -DiskNumber $d.Number | Where-Object GptType -eq '{DE94BBA4-06D1-4D40-A16A-BFD50179D6AC}' | ForEach-Object {
           $p=$_; $v=$p|Get-Volume -ErrorAction Stop
           if($v){[pscustomobject]@{Offset=[long]$p.Offset;Root=[string]$v.Path}}

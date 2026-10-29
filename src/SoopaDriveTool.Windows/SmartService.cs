@@ -5,6 +5,14 @@ using SoopaDriveTool.Core;
 namespace SoopaDriveTool.Windows;
 public static class SmartService
 {
+    public static async Task<string> SelfTestAsync(DiskInfo disk,string type,string transport="auto")
+    {
+        if(type is not ("short" or "long" or "conveyance" or "abort"))throw new IOException("Unknown self-test.");
+        await ReadAsync(disk,transport); // integrity and device identity checks
+        string dir=Path.Combine(AppContext.BaseDirectory,"Tools","smartmontools");var args=new List<string>{"-B",Path.Combine(dir,"drivedb.h"),"-d",transport};if(type=="abort")args.Add("-X");else{args.Add("-t");args.Add(type);}args.Add("/dev/pd"+disk.Number);
+        var result=await ProcessTool.RunAsync(Path.Combine(dir,"smartctl.exe"),args);if((result.ExitCode&3)!=0)throw new IOException("The controller did not accept the self-test command: "+result.Output+result.Error);
+        return result.Output+result.Error+"\nRefresh SMART to see actual test status and completion; submitting a test is not a health pass.";
+    }
     public static async Task<SmartReport> ReadAsync(DiskInfo disk,string deviceType="auto")
     {
         if(!StorageService.IsAdmin)throw new UnauthorizedAccessException("Restart as administrator for full SMART/device-log access.");
@@ -21,6 +29,6 @@ public static class SmartService
         if(result.Output.TrimStart().StartsWith('{')==false)throw new IOException("SMART collector did not return JSON. "+result.Error+" "+result.Output);
         if((result.ExitCode&1)!=0)throw new IOException("SMART collector command/configuration error: "+result.Output);
         var report=SmartReport.Parse(result.Output,result.ExitCode,disk.Number,disk.Serial);
-        var after=(await StorageService.InventoryAsync()).Single(d=>d.Number==disk.Number);if(after.Identity!=before.Identity)throw new IOException("Drive identity changed during SMART collection; report discarded.");return report;
+        var after=(await StorageService.InventoryAsync()).Single(d=>d.Number==disk.Number);if(after.Identity!=before.Identity)throw new IOException("Drive identity changed during SMART collection; report discarded.");await DiagnosticsService.SaveTemperatureAsync(disk,report);return report;
     }
 }

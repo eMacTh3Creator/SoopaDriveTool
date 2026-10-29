@@ -16,4 +16,10 @@ $disks=@(Get-Disk | ForEach-Object {
  })
  [ordered]@{Number=[int]$d.Number;Name=[string]$d.FriendlyName;UniqueId=[string]$d.UniqueId;Serial=[string]$d.SerialNumber;Size=[long]$d.Size;SectorSize=[int]$d.LogicalSectorSize;Style=[string]$d.PartitionStyle;Bus=[string]$d.BusType;Health=[string]$d.HealthStatus;IsBoot=[bool]$d.IsBoot;IsSystem=[bool]$d.IsSystem;Offline=[bool]$d.IsOffline;ReadOnly=[bool]$d.IsReadOnly;Partitions=$parts}
 })
+# Get-Disk omits legacy dynamic disks; keep them visible through their native
+# volume extents rather than silently dropping them from the workspace.
+$known=@($disks|ForEach-Object {$_.Number})
+foreach($legacy in @(Get-CimInstance Win32_DiskDrive|Where-Object {[int]$_.Index -notin $known})){
+ $disks+=[ordered]@{Number=[int]$legacy.Index;Name=[string]$legacy.Model;UniqueId=[string]$legacy.PNPDeviceID;Serial=[string]$legacy.SerialNumber;Size=[long]$legacy.Size;SectorSize=[int]$legacy.BytesPerSector;Style='Dynamic';Bus=[string]$legacy.InterfaceType;Health='Unknown';Offline=$false;ReadOnly=$false;Partitions=@()}
+}
 ConvertTo-Json -InputObject $disks -Depth 8 -Compress

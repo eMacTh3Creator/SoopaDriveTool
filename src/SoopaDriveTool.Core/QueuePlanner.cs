@@ -2,7 +2,7 @@ namespace SoopaDriveTool.Core;
 public static class QueuePlanner
 {
     public const long MiB=1024*1024;
-    public static bool Opaque(DiskOperation o)=>o.Kind is OperationKind.RestoreImage or OperationKind.CloneDisk;
+    public static bool Opaque(DiskOperation o)=>o.Kind is OperationKind.RestoreImage or OperationKind.CloneDisk or OperationKind.MovePartition or OperationKind.ConvertTable or OperationKind.SetPartitionKind or OperationKind.SplitPartition or OperationKind.MergePartition or OperationKind.ChangeFileSystem or OperationKind.ChangeClusterSize or OperationKind.RedistributeSpace or OperationKind.ConvertDynamic;
     public static List<DiskInfo> Project(IEnumerable<DiskInfo> initial,IReadOnlyList<DiskOperation> operations)
     {
         var result=initial.ToDictionary(d=>d.Number);var closed=new HashSet<int>();
@@ -59,17 +59,26 @@ public static class QueuePlanner
         void Replace(PartitionInfo replacement){parts.Remove(p!);parts.Add(replacement);}
     }
     public static void AssertUnchanged(DiskInfo expected,DiskInfo actual)
-    {if(expected.Identity!=actual.Identity||expected.Layout!=actual.Layout||expected.Protected!=actual.Protected)throw new InvalidOperationException("Disk identity/layout changed outside the verified chain. The remaining steps were stopped.");}
+    {if(expected.StableIdentity!=actual.StableIdentity||expected.NativeIdentity.Length>0&&expected.NativeIdentity!=actual.NativeIdentity||expected.Layout!=actual.Layout||expected.Protected!=actual.Protected)throw new InvalidOperationException("Disk identity/layout changed outside the verified chain. The remaining steps were stopped.");}
     public static PartitionInfo? VerifyTransition(DiskInfo before,DiskInfo after,DiskOperation op)
     {
-        if(before.Identity!=after.Identity||after.Protected)throw new InvalidOperationException("Disk identity or protection changed during the operation.");
+        if(op.Kind==OperationKind.ConvertDynamic)
+        {
+            if(before.NativeIdentity.Length!=64||before.NativeIdentity!=after.NativeIdentity||before.Size!=after.Size||before.SectorSize!=after.SectorSize||after.Protected||op.Value=="Dynamic"&&after.Style!="Dynamic"||op.Value=="Basic"&&!after.Offline)throw new InvalidOperationException("Dynamic conversion device identity or resulting state could not be verified.");return null;
+        }
+        if(before.Identity!=after.Identity||after.Protected&&!(op.Kind==OperationKind.CloneDisk&&op.CloneMode==CloneMode.WindowsLiveUefi&&before.Protected))throw new InvalidOperationException("Disk identity or protection changed during the operation.");
         bool Same(PartitionInfo a,PartitionInfo b)=>a.Number==b.Number&&a.Offset==b.Offset&&a.Size==b.Size&&a.Type==b.Type&&(before.Offline||after.Offline||a.Letter==b.Letter&&a.Label==b.Label&&a.FileSystem==b.FileSystem);
         var partition=before.Partitions.SingleOrDefault(p=>p.Number==op.PartitionNumber);PartitionInfo? created=null;
         var unaffected=before.Partitions.Where(p=>p.Number!=op.PartitionNumber||op.PartitionNumber==0).ToList();
-        if(op.Kind is OperationKind.QuickWipeDisk or OperationKind.WipeDisk or OperationKind.InitializeGpt or OperationKind.InitializeMbr or OperationKind.RestoreImage or OperationKind.CloneDisk)unaffected=[];
+        if(op.Kind is OperationKind.QuickWipeDisk or OperationKind.WipeDisk or OperationKind.InitializeGpt or OperationKind.InitializeMbr or OperationKind.RestoreImage or OperationKind.CloneDisk or OperationKind.ConvertTable or OperationKind.SetPartitionKind or OperationKind.MergePartition or OperationKind.RedistributeSpace or OperationKind.ConvertDynamic)unaffected=[];
         foreach(var p in unaffected)if(!after.Partitions.Any(a=>Same(a,p)))throw new InvalidOperationException("An unrelated partition changed; the remaining queue was stopped.");
         switch(op.Kind)
         {
+            case OperationKind.MovePartition:if(!after.Partitions.Any(p=>p.Offset==op.Offset&&p.Size==partition!.Size))throw new InvalidOperationException("Moved partition location was not verified.");break;
+            case OperationKind.ConvertTable:if(after.Style!=op.Value)throw new InvalidOperationException("Converted partition table was not verified.");break;
+            case OperationKind.SplitPartition:if(!after.Partitions.Any(p=>p.Offset==partition!.Offset&&p.Size==op.Bytes)||after.Partitions.Count!=before.Partitions.Count+1)throw new InvalidOperationException("Partition split was not verified.");break;
+            case OperationKind.ChangeFileSystem:if(!after.Partitions.Any(p=>p.Offset==partition!.Offset&&p.FileSystem==op.FileSystem))throw new InvalidOperationException("Filesystem conversion was not verified.");break;
+            case OperationKind.MergePartition:var merged=before.Partitions.Single(p=>p.Number==op.TargetPartitionNumber);if(!after.Partitions.Any(p=>p.Offset==partition!.Offset&&p.Size==partition.Size+merged.Size)||after.Partitions.Any(p=>p.Offset==merged.Offset))throw new InvalidOperationException("Partition merge was not verified.");break;
             case OperationKind.CreatePartition:
                 created=after.Partitions.SingleOrDefault(p=>!before.Partitions.Any(b=>b.Number==p.Number)&&p.Offset==op.Offset&&p.Size==op.Bytes&&p.FileSystem==op.FileSystem&&p.Label==op.Value)??throw new InvalidOperationException("Created partition did not match the reviewed plan.");
                 if(after.Partitions.Count!=before.Partitions.Count+1&&!(before.Style=="GPT"&&before.Partitions.Count==0&&after.Partitions.Count==2&&after.Partitions.Any(p=>p.Protected&&p.Offset+p.Size==16*MiB)))throw new InvalidOperationException("Unexpected partition count after creation.");break;

@@ -31,3 +31,8 @@ SMART collection runs smartctl 7.5 (smartmontools) as a separate executable, und
 
 
 WIM capture and verification invoke unmodified wimlib-imagex 1.14.5 as a separate executable (GNU GPL version 3 or later), with its libwim-15.dll and upstream license notices. They are not linked into the MIT-licensed application. Full corresponding upstream source and build instructions are included in Licenses/wimlib-1.14.5.tar.gz; license texts and Windows build documentation are in Licenses/wimlib. Upstream: https://wimlib.net/. The bundled executable and library match the selected ARM64/x64 application architecture. Upstream labels its ARM64 builds experimental; this release's executed tests and remaining qualification limits are recorded in the validation report.
+
+Native recovery components:
+- nlohmann/json 3.12.0, MIT license; https://github.com/nlohmann/json
+- Brotli 1.2.1 decoder, MIT license; https://github.com/google/brotli
+License texts are included in Licenses/native. Microsoft Windows ADK/WinPE boot files are supplied by the user's installed ADK; they are not distributed in the app installer or public repository.

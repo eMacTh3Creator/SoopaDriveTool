@@ -34,7 +34,12 @@ public static class StorageService
         using var s=Assembly.GetExecutingAssembly().GetManifestResourceStream($"SoopaDriveTool.Scripts.{name}.ps1")??Assembly.GetExecutingAssembly().GetManifestResourceNames().Where(n=>n.EndsWith($".{name}.ps1")).Select(n=>Assembly.GetExecutingAssembly().GetManifestResourceStream(n)).First()!;
         using var r=new StreamReader(s);return r.ReadToEnd();
     }
-    public static async Task<List<DiskInfo>> InventoryAsync(CancellationToken ct=default)=>JsonSerializer.Deserialize<List<DiskInfo>>(await PowerShellAsync(Script("Inventory"),ct),Data.Json)??[];
+    public static async Task<List<DiskInfo>> InventoryAsync(CancellationToken ct=default)
+    {
+        var disks=JsonSerializer.Deserialize<List<DiskInfo>>(await PowerShellAsync(Script("Inventory"),ct),Data.Json)??[];
+        if(IsAdmin)for(int i=0;i<disks.Count;i++){try{if(disks[i].Style=="Dynamic")disks[i]=DynamicDiskService.Inspect(disks[i]);disks[i]=disks[i] with{NativeIdentity=DiskAccess.Fingerprint(disks[i].Number)};}catch(System.ComponentModel.Win32Exception){/* controller did not expose direct descriptors */}}
+        return disks;
+    }
     public static async Task<string> HealthAsync(CancellationToken ct=default)=>await PowerShellAsync("$r=@(Get-PhysicalDisk | ForEach-Object { $p=$_; try { $c=$p | Get-StorageReliabilityCounter -ErrorAction Stop; [pscustomobject]@{Name=$p.FriendlyName;Health=[string]$p.HealthStatus;Temperature=$c.Temperature;Wear=$c.Wear;PowerOnHours=$c.PowerOnHours;ReadErrors=$c.ReadErrorsTotal;WriteErrors=$c.WriteErrorsTotal} } catch { [pscustomobject]@{Name=$p.FriendlyName;Health=[string]$p.HealthStatus;Note='Controller did not expose reliability counters'} } }); ConvertTo-Json -InputObject $r -Depth 5",ct);
     public static async Task<string> LimitsAsync(DiskInfo d,PartitionInfo p)=>await PowerShellAsync($"Get-PartitionSupportedSize -DiskNumber {d.Number} -PartitionNumber {p.Number} | Select-Object SizeMin,SizeMax | ConvertTo-Json");
     public static Task<string> ExecuteAsync(DiskOperation op,IProgress<string>? progress=null)=>ExecuteDetailedAsync(op,new TextProgress(progress));
@@ -47,7 +52,9 @@ public static class StorageService
         var all=await InventoryAsync();var d=all.SingleOrDefault(d=>d.Number==op.DiskNumber)??throw new IOException("Disk disconnected.");var target=all.SingleOrDefault(d=>d.Number==op.TargetDiskNumber);
         OperationPolicy.Validate(op,d,target);
         if(op.Kind==OperationKind.CreatePartition&&op.Offset==0)op=op with{Offset=QueuePlanner.Allocate(d,op.Bytes)};
-        if(op.Kind==OperationKind.CloneDisk&&op.CloneMode!=CloneMode.ByteExact)return await FileSystemCloneEngine.ExecuteAsync(op,d,target!,progress);
+        if(op.Kind==OperationKind.ConvertDynamic)return await DynamicDiskService.ConvertAsync(op,d,progress);
+        if(AdvancedPartitionService.Handles(op.Kind))return await AdvancedPartitionService.ExecuteAsync(op,d,progress);
+        if(op.Kind==OperationKind.CloneDisk&&op.CloneMode is not (CloneMode.ByteExact or CloneMode.ByteExactGrow))return await FileSystemCloneEngine.ExecuteAsync(op,d,target!,progress);
         if(op.Kind is OperationKind.BackupImage or OperationKind.RestoreImage or OperationKind.CloneDisk or OperationKind.WipeDisk)
         {
             var result=await RawDiskEngine.ExecuteAsync(op,d,target,progress);

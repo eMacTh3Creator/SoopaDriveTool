@@ -8,16 +8,7 @@ namespace SoopaDriveTool.Windows;
 public record ImageMetadata(int Version,long Length,int SectorSize,string Sha256,DateTime CreatedUtc);
 public static class RawDiskEngine
 {
-    [DllImport("kernel32.dll",CharSet=CharSet.Unicode,SetLastError=true)]static extern SafeFileHandle CreateFile(string name,uint access,uint share,IntPtr security,uint creation,uint flags,IntPtr template);
-    [DllImport("kernel32.dll",SetLastError=true)]static extern bool DeviceIoControl(SafeFileHandle handle,uint code,IntPtr input,int inputSize,byte[] output,int outputSize,out int returned,IntPtr overlap);
-    static FileStream Open(DiskInfo d,bool write)
-    {
-        var h=CreateFile(@"\\.\PhysicalDrive"+d.Number,write?0xC0000000u:0x80000000u,3,IntPtr.Zero,3,0,IntPtr.Zero);
-        if(h.IsInvalid)throw new System.ComponentModel.Win32Exception(Marshal.GetLastWin32Error());
-        var bytes=new byte[8];
-        if(!DeviceIoControl(h,0x7405c,IntPtr.Zero,0,bytes,8,out _,IntPtr.Zero)||BitConverter.ToInt64(bytes)!=d.Size){h.Dispose();throw new IOException("Raw disk size could not be validated.");}
-        return new FileStream(h,write?FileAccess.ReadWrite:FileAccess.Read,1024*1024,false);
-    }
+    static DiskAccess.BoundDiskStream Open(DiskInfo d,bool write)=>DiskAccess.Open(d,write);
     static async Task ValidateAgain(DiskOperation op)
     {var all=await StorageService.InventoryAsync();OperationPolicy.Validate(op,all.Single(d=>d.Number==op.DiskNumber),all.SingleOrDefault(d=>d.Number==op.TargetDiskNumber));}
     static async Task SafeImagePath(string path,int sourceDisk)
@@ -48,33 +39,35 @@ public static class RawDiskEngine
             if(meta.Version!=1||meta.Length!=disk.Size||meta.SectorSize!=disk.SectorSize)throw new IOException("Image and target size/sector size must match exactly.");
             await using var input=new FileStream(op.Value,FileMode.Open,FileAccess.Read,FileShare.Read,1024*1024,true);
             if(input.Length!=meta.Length||await Hash(input,meta.Length,progress,0,25)!=meta.Sha256)throw new IOException("Image checksum failed. Target was not changed.");
-            input.Position=0;await ValidateAgain(op);await using(var output=Open(disk,true))await Copy(input,output,meta.Length,progress,25,40);
-            await using(var verify=Open(disk,false))if(await Hash(verify,disk.Size,progress,65,35)!=meta.Sha256)throw new IOException("Restore read-back checksum failed. Target may contain a partial image.");return "Image restored and full target read-back verified. Disk remains offline.";
+            input.Position=0;await ValidateAgain(op);await using var output=Open(disk,true);await Copy(input,output,meta.Length,progress,25,40);
+            output.Position=0;if(await Hash(output,disk.Size,progress,65,35)!=meta.Sha256)throw new IOException("Restore read-back checksum failed. Target may contain a partial image.");return "Image restored and full target read-back verified. Disk remains offline.";
         }
         if(op.Kind==OperationKind.CloneDisk)
         {
-            await ValidateAgain(op);string hash;await using(var input=Open(disk,false))await using(var output=Open(target!,true))hash=await Copy(input,output,disk.Size,progress,0,55);
-            await using(var verify=Open(target!,false))if(await Hash(verify,target!.Size,progress,55,45)!=hash)throw new IOException("Clone read-back checksum failed. Target may be incomplete.");
+            await ValidateAgain(op);string hash;await using var input=Open(disk,false);await using var output=Open(target!,true);hash=await Copy(input,output,disk.Size,progress,0,55);
+            output.Position=0;if(await Hash(output,disk.Size,progress,55,45)!=hash)throw new IOException("Clone read-back checksum failed. Target may be incomplete.");
+            if(op.CloneMode==CloneMode.ByteExactGrow&&target!.Size>disk.Size){var table=DiskTables.Read(output,disk.SectorSize);if(table.Style=="GPT"){DiskTables.Write(output,table);output.Flush();if(DiskTables.Read(output,disk.SectorSize).RecoveredFromBackup)throw new IOException("Relocated GPT verification failed.");}return "All source sectors copied and hash-verified; redundant GPT metadata relocated to the larger disk boundary. Extra capacity is unallocated. Disconnect the source before using its identical clone.";}
             return "Byte-exact clone complete and full read-back verified. Both disks remain offline. Disconnect the source before bringing its identical clone online.";
         }
         if(op.Kind==OperationKind.WipeDisk)
         {
             await ValidateAgain(op);int passes=op.WipeMode==WipeMode.ThreePass?3:1;var b=new byte[1024*1024];
+            await using var output=Open(disk,true);
             for(int pass=0;pass<passes;pass++)
             {
                 string pattern=op.WipeMode==WipeMode.ThreePass?(pass==0?"Random":pass==1?"Ones":"Zero"):op.WipeMode==WipeMode.Random?"Random":"Zero";
                 using var digest=IncrementalHash.CreateHash(HashAlgorithmName.SHA256);var meter=new Meter(progress,$"Overwrite pass {pass+1}/{passes} ({pattern})",100.0*pass/passes,50.0/passes,disk.Size);long done=0;
-                await using(var output=Open(disk,true))
+                output.Position=0;
                 {
                     while(done<disk.Size)
                     {
                         int n=(int)Math.Min(b.Length,disk.Size-done);if(pattern=="Random")RandomNumberGenerator.Fill(b.AsSpan(0,n));else b.AsSpan(0,n).Fill(pattern=="Ones"?(byte)255:(byte)0);
                         digest.AppendData(b,0,n);await output.WriteAsync(b.AsMemory(0,n));done+=n;meter.Report(done);
                     }
-                    output.Flush(true);
+                    output.Flush();
                 }
                 var expected=Convert.ToHexString(digest.GetHashAndReset()).ToLowerInvariant();
-                await using(var verify=Open(disk,false))if(await Hash(verify,disk.Size,progress,100.0*pass/passes+50.0/passes,50.0/passes,$"Verify pass {pass+1}/{passes}")!=expected)throw new IOException("Overwrite read-back hash failed.");
+                output.Position=0;if(await Hash(output,disk.Size,progress,100.0*pass/passes+50.0/passes,50.0/passes,$"Verify pass {pass+1}/{passes}")!=expected)throw new IOException("Overwrite read-back hash failed.");
             }
             return $"{passes}-pass overwrite completed with full read-back verification after every pass. This erases user-addressable sectors; it is not firmware sanitize or guaranteed SSD remapped-cell erasure.";
         }
@@ -90,10 +83,10 @@ public static class RawDiskEngine
             progress?.Report(new(phase,start+span*done/total,$"{100.0*done/total:0.0}% · {Data.Size(done)} / {Data.Size(total)} · {Data.Size((long)speed)}/s · remaining {eta}",done,total,speed));
         }
     }
-    static async Task<string> Copy(Stream input,FileStream output,long length,IProgress<DriveProgress>? progress,double start,double span)
+    static async Task<string> Copy(Stream input,Stream output,long length,IProgress<DriveProgress>? progress,double start,double span)
     {
         using var hash=IncrementalHash.CreateHash(HashAlgorithmName.SHA256);var b=new byte[1024*1024];long done=0;var meter=new Meter(progress,"Copying sectors",start,span,length);
-        while(done<length){int n=(int)Math.Min(b.Length,length-done);await input.ReadExactlyAsync(b.AsMemory(0,n));hash.AppendData(b,0,n);await output.WriteAsync(b.AsMemory(0,n));done+=n;meter.Report(done);}output.Flush(true);return Convert.ToHexString(hash.GetHashAndReset()).ToLowerInvariant();
+        while(done<length){int n=(int)Math.Min(b.Length,length-done);await input.ReadExactlyAsync(b.AsMemory(0,n));hash.AppendData(b,0,n);await output.WriteAsync(b.AsMemory(0,n));done+=n;meter.Report(done);}output.Flush();return Convert.ToHexString(hash.GetHashAndReset()).ToLowerInvariant();
     }
     static async Task<string> Hash(Stream input,long length,IProgress<DriveProgress>? progress,double start,double span,string phase="Read-back verification")
     {

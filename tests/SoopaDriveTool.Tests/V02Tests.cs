@@ -31,6 +31,8 @@ partial class Program
         Reject(()=>QueuePlanner.AssertUnchanged(d,d with{Partitions=[d.Partitions[0] with{Label="External"},d.Partitions[1]]}),"External rename is detected between steps");
         var after=d with{Partitions=[d.Partitions[1]]};QueuePlanner.VerifyTransition(d,after,ops[0]);Check(true,"Deletion transition verifies unaffected partitions");
         Reject(()=>QueuePlanner.VerifyTransition(d,after with{Partitions=[d.Partitions[1] with{Size=10}]},ops[0]),"Unexpected unrelated geometry change stops a chain");
+        QueuePlanner.AssertUnchanged(d,d with{NativeIdentity=new string('a',64)});Check(true,"Elevation can add native hardware binding to a standard-user plan without discarding it");
+        Reject(()=>QueuePlanner.AssertUnchanged(d with{NativeIdentity=new string('a',64)},d with{NativeIdentity=new string('b',64)}),"A changed native device descriptor stops an already bound plan");
         var target=d with{Number=9,UniqueId="other",Size=256L*1024*1024,Partitions=[]};
         var c=DiskOperation.For(d,OperationKind.CloneDisk,d.Partitions[0]) with{CloneMode=CloneMode.FileSystem,TargetDiskNumber=9,TargetIdentity=target.Identity,TargetLayout=target.Layout};OperationPolicy.Validate(c,d,target);Check(true,"Filesystem-aware clone permits a smaller destination with sufficient used capacity");
         Reject(()=>OperationPolicy.Validate(c with{CloneMode=CloneMode.ByteExact},d,target),"Byte-exact mode does not silently become a smaller-target clone");

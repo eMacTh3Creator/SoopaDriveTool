@@ -11,7 +11,7 @@ public static class FileSystemCloneEngine
     static string Payload(object value)=>Convert.ToBase64String(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(value,Data.Json)));
     public static async Task<string> ExecuteAsync(DiskOperation op,DiskInfo source,DiskInfo target,IProgress<DriveProgress>? progress)
     {
-        var p=source.Partitions.Single(p=>p.Number==op.PartitionNumber);var root=p.Letter+@":\";bool windows=op.CloneMode==CloneMode.WindowsUefi;
+        var p=source.Partitions.Single(p=>p.Number==op.PartitionNumber);var root=p.Letter+@":\";bool live=op.CloneMode==CloneMode.WindowsLiveUefi,windows=op.CloneMode is CloneMode.WindowsUefi or CloneMode.WindowsLiveUefi;
         if(windows)
         {
             if(!File.Exists(Path.Combine(root,@"Windows\System32\Config\SYSTEM"))||!File.Exists(Path.Combine(root,@"Windows\System32\Config\BCD-Template")))throw new IOException("The selected volume is not a complete offline Windows installation.");
@@ -22,31 +22,36 @@ public static class FileSystemCloneEngine
         var workspace=Path.GetFullPath(string.IsNullOrWhiteSpace(op.Workspace)?Path.GetTempPath():op.Workspace);BackupEngine.RejectExistingAncestorLinks(workspace);
         if(!Directory.Exists(workspace)||workspace.StartsWith(@"\\"))throw new IOException("Choose an existing local scratch folder for the WIM staging file.");
         char drive=char.ToUpperInvariant(Path.GetPathRoot(workspace)![0]);var workspaceDisk=int.Parse(await StorageService.PowerShellAsync($"(Get-Partition -DriveLetter '{drive}').DiskNumber"));
-        if(workspaceDisk==source.Number||workspaceDisk==target.Number)throw new IOException("The WIM scratch folder must be on a third disk, separate from source and destination.");
+        if(workspaceDisk==target.Number||workspaceDisk==source.Number&&!live)throw new IOException("The WIM scratch folder must be separate from the destination. In inactive-source modes it must also be on a third disk; live VSS mode can use free space on the source.");
         long used=p.Size-p.Free;if(new DriveInfo(Path.GetPathRoot(workspace)!).AvailableFreeSpace<used+512L*1024*1024)throw new IOException("Not enough scratch space for the used-file WIM capture.");
-        var staging=Path.Combine(workspace,"SoopaDriveTool-Clone-"+Guid.NewGuid().ToString("N"));Directory.CreateDirectory(staging);var image=Path.Combine(staging,"clone.wim");bool sourceMadeReadOnly=false;string? recovery=null;char? efi=null,volume=null,recoveryLetter=null;bool targetTouched=false;
+        var staging=Path.Combine(workspace,"SoopaDriveTool-Clone-"+Guid.NewGuid().ToString("N"));Directory.CreateDirectory(staging);var image=Path.Combine(staging,"clone.wim");bool sourceMadeReadOnly=false;string? recovery=null;char? efi=null,volume=null,recoveryLetter=null;bool targetTouched=false;VssSession? snapshot=null;string captureRoot=root;
         try
         {
             await Revalidate();
-            progress?.Report(new("Protecting source",0,"Temporarily making the source disk read-only for a stable capture."));
-            if(!source.ReadOnly){await StorageService.PowerShellAsync($"Set-Disk -Number {source.Number} -IsReadOnly $true");sourceMadeReadOnly=true;}
+            progress?.Report(new("Protecting source",0,live?"The source stays online and writable; capture will use an application-consistent VSS snapshot.":"Temporarily making the source disk read-only for a stable capture."));
+            if(!live&&!source.ReadOnly){await StorageService.PowerShellAsync($"Set-Disk -Number {source.Number} -IsReadOnly $true");sourceMadeReadOnly=true;}
             long recoveryBytes=0;
             if(windows)
             {
                 progress?.Report(new("Finding Windows recovery",0,"Checking the selected source disk's registered and hidden recovery locations."));
-                recovery=await WindowsRecovery.FindAsync(source,p);
+                recovery=await WindowsRecovery.FindAsync(source,p,live);
                 if(recovery!=null)recoveryBytes=WindowsRecovery.ReserveBytes(new FileInfo(recovery).Length);
                 if(target.Size<used+recoveryBytes+300L*1024*1024)throw new IOException("The destination cannot hold the Windows files, EFI layout and recovery image with servicing space.");
             }
+            if(live)
+            {
+                var volumes=new List<string>{VssSession.VolumeForPath(root)};if(recovery!=null)volumes.Add(VssSession.VolumeForPath(recovery));
+                snapshot=await VssSession.CreateAsync(volumes,progress);captureRoot=snapshot.PathFor(root);if(recovery!=null)recovery=snapshot.PathFor(recovery);
+            }
             var wim=Path.Combine(AppContext.BaseDirectory,"Tools","wimlib","wimlib-imagex.exe");
             if(!File.Exists(wim)||!File.Exists(Path.Combine(Path.GetDirectoryName(wim)!,"libwim-15.dll")))throw new IOException("The bundled WIM capture engine is missing. Reinstall the complete application package.");
-            await Tool(wim,["capture",root,image,"SoopaDriveTool clone","--compress=XPRESS","--check","--strict-acls","--rpfix","--threads="+Math.Clamp(Environment.ProcessorCount,1,4)],"Capturing used files",0,30);
+            await Tool(wim,["capture",captureRoot,image,"SoopaDriveTool clone","--compress=XPRESS","--check","--strict-acls",windows?"--norpfix":"--rpfix","--threads="+Math.Clamp(Environment.ProcessorCount,1,4)],"Capturing used files",0,30);
             await Tool(wim,["verify",image],"Verifying captured image",30,5);
-            var protect=source with{ReadOnly=true};var current=await StorageService.InventoryAsync();QueuePlanner.AssertUnchanged(protect,current.Single(d=>d.Number==source.Number));QueuePlanner.AssertUnchanged(target,current.Single(d=>d.Number==target.Number));
+            var protect=source with{ReadOnly=live?source.ReadOnly:true};var current=await StorageService.InventoryAsync();QueuePlanner.AssertUnchanged(protect,current.Single(d=>d.Number==source.Number));QueuePlanner.AssertUnchanged(target,current.Single(d=>d.Number==target.Number));
             progress?.Report(new("Preparing destination",35,"Creating fresh partition identifiers and the destination filesystem layout."));
             var letters=await CreateDestinationLayoutAsync(op,target,recovery!=null,recoveryBytes);
             targetTouched=true;volume=letters.Windows[0];if(letters.Efi.Length>0)efi=letters.Efi[0];if(letters.Recovery.Length>0)recoveryLetter=letters.Recovery[0];
-            await Tool(SystemTool("dism.exe"),["/English","/Apply-Image","/ImageFile:"+image,"/Index:1","/ApplyDir:"+volume+@":\","/CheckIntegrity","/Verify","/EA"],"Applying used files",40,45);
+            await Tool(SystemTool("dism.exe"),["/English","/Apply-Image","/ImageFile:"+image,"/Index:1","/ApplyDir:"+volume+@":\","/CheckIntegrity","/Verify","/EA",windows?"/NoRpFix":"/English"],"Applying used files",40,45);
             if(windows)
             {
                 progress?.Report(new("Preserving Windows drive letter",85,"Remapping the cloned SYSTEM hive to the destination volume identifier."));
@@ -67,11 +72,13 @@ public static class FileSystemCloneEngine
             await StorageService.PowerShellAsync($"$scan=Repair-Volume -DriveLetter '{volume}' -Scan -ErrorAction Stop; if($scan -and [string]$scan -ne 'NoErrorsFound'){{throw ('NTFS scan result: '+[string]$scan)}}");
             var after=(await StorageService.InventoryAsync()).Single(d=>d.Number==target.Number);
             if(after.Identity!=target.Identity||after.Protected||after.Style!="GPT"||!after.Partitions.Any(p=>p.Letter==volume.ToString()&&p.FileSystem=="NTFS"))throw new IOException("Destination layout verification failed.");
+            if(snapshot!=null)await snapshot.CompleteAsync();
             progress?.Report(new("Verified",100,windows?"Windows image, NTFS layout, EFI loader and BCD store verified. Independent boot testing is still required.":"Used-file data clone applied and verified."));
-            return windows?"Offline Windows-aware clone complete: fresh GPT/EFI/MSR/Windows layout, verified WIM resources, EFI loader and BCD store. Disconnect the source and independently boot-test the destination. Hardware binding, BitLocker, activation and all firmware configurations are not guaranteed.":"Filesystem-aware NTFS clone complete. Used files were captured into a verified WIM archive and applied with DISM integrity verification; unused sectors were not copied.";
+            return windows?(live?"Live VSS Windows-aware clone complete: ":"Offline Windows-aware clone complete: ")+" fresh GPT/EFI/MSR/Windows layout, verified WIM resources, EFI loader and BCD store. Disconnect the source and independently boot-test the destination. Hardware binding, BitLocker, activation and all firmware configurations are not guaranteed.":"Filesystem-aware NTFS clone complete. Used files were captured into a verified WIM archive and applied with DISM integrity verification; unused sectors were not copied.";
         }
         finally
         {
+            if(snapshot!=null)await snapshot.DisposeAsync();
             if(sourceMadeReadOnly)
             {var now=(await StorageService.InventoryAsync()).SingleOrDefault(d=>d.Number==source.Number);if(now?.Identity==source.Identity)await StorageService.PowerShellAsync($"Set-Disk -Number {source.Number} -IsReadOnly $false");}
             if(targetTouched)foreach(var letter in new[]{efi,recoveryLetter}.Where(l=>l.HasValue))
@@ -87,7 +94,7 @@ public static class FileSystemCloneEngine
     {
         var disks=await StorageService.InventoryAsync();
         var actualSource=disks.Single(d=>d.Number==source.Number);var actualTarget=disks.Single(d=>d.Number==target.Number);
-        if(!StorageService.IsAdmin||source.Number==target.Number||actualSource.Protected||actualTarget.Protected||actualSource.Identity!=source.Identity||actualTarget.Identity!=target.Identity||actualTarget.ReadOnly)throw new IOException("Offline Windows mapping target is no longer safe.");
+        if(!StorageService.IsAdmin||source.Number==target.Number||actualTarget.Protected||actualSource.Identity!=source.Identity||actualTarget.Identity!=target.Identity||actualTarget.ReadOnly)throw new IOException("Offline Windows mapping target is no longer safe.");
         var sourcePartition=source.Partitions.Single(p=>p.Letter.Length==1&&File.Exists(Path.Combine(p.Letter+@":\",@"Windows\System32\Config\SYSTEM")));
         // Use the explicitly selected source volume, not any Windows directory on
         // another partition. The caller supplies a source record filtered to it.
@@ -118,7 +125,7 @@ public static class FileSystemCloneEngine
     {
         if(!StorageService.IsAdmin||target.Protected||target.ReadOnly||op.TargetDiskNumber!=target.Number||op.TargetIdentity!=target.Identity||op.TargetLayout!=target.Layout)throw new InvalidOperationException("Unvalidated clone layout request.");
         var current=(await StorageService.InventoryAsync()).Single(d=>d.Number==target.Number);QueuePlanner.AssertUnchanged(target,current);
-        var request=Payload(new{Source=op.DiskNumber,Target=target.Number,Expected=target,Windows=op.CloneMode==CloneMode.WindowsUefi,Recovery=recovery,RecoveryBytes=recovery?Math.Max(1024L*1024*1024,recoveryBytes):0});
+        var request=Payload(new{Source=op.DiskNumber,Target=target.Number,Expected=target,Windows=op.CloneMode is CloneMode.WindowsUefi or CloneMode.WindowsLiveUefi,Recovery=recovery,RecoveryBytes=recovery?Math.Max(1024L*1024*1024,recoveryBytes):0});
         var json=await StorageService.PowerShellAsync("$r=[Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('"+request+"'))|ConvertFrom-Json; "+PrepareScript);
         return JsonSerializer.Deserialize<LayoutLetters>(json,Data.Json)??throw new IOException("Destination layout was not returned.");
     }

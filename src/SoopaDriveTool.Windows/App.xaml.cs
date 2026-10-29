@@ -11,6 +11,8 @@ public partial class App:Application
         base.OnStartup(e);ShutdownMode=ShutdownMode.OnExplicitShutdown;
         try
         {
+            Preferences.Load();
+            if(e.Args.Length==2&&e.Args[0]=="--vault-job"){await BackupScheduleService.RunJobAsync(e.Args[1]);Shutdown(0);return;}
             if(e.Args.Length>=2 && e.Args[0]=="--backup-job")
             {
                 var job=JsonSerializer.Deserialize<BackupJob>(await File.ReadAllTextAsync(e.Args[1]),Data.Json)??throw new IOException("Invalid job");
@@ -34,6 +36,7 @@ public partial class App:Application
                 pending=JsonSerializer.Deserialize<PendingPlan>(await File.ReadAllTextAsync(path),Data.Json)??throw new IOException("Invalid pending plan.");
                 QueuePlanner.Project(pending.Baselines,pending.Operations);File.Delete(path);
             }
+            await Preferences.ReconcileActivityAsync();
             ShutdownMode=ShutdownMode.OnMainWindowClose;MainWindow=new MainWindow(restoredPlan:pending);MainWindow.Show();
         }
         catch(Exception ex)

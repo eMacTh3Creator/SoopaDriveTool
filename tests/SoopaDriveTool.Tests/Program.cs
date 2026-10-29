@@ -44,6 +44,11 @@ partial class Program
 
             var xml="<Results><Profile><TimeSpans><TimeSpan><Duration>2</Duration></TimeSpan></TimeSpans></Profile><TimeSpan><TestTimeSeconds>2</TestTimeSeconds><Thread><Target><BytesCount>2000000</BytesCount><IOCount>500</IOCount></Target></Thread><Latency><AverageTotalMilliseconds>0.5</AverageTotalMilliseconds><Bucket><Percentile>99</Percentile><TotalMilliseconds>1.2</TotalMilliseconds></Bucket></Latency></TimeSpan></Results>";var result=BenchmarkService.Parse(xml,"test","Read");Check(result.MBps==1&&result.Iops==250&&result.P99Ms==1.2,"DiskSpd unit conversion and p99 parsing");
             V02CoreTests();
+            if(args.Contains("--native-store-only")){await NativeStoreCheck(root);Console.WriteLine($"ALL {passed} CHECKS PASSED");return 0;}
+            if(args.Contains("--metadata-only")){await MetadataAclCheck(root);Console.WriteLine($"ALL {passed} CHECKS PASSED");return 0;}
+            if(args.Length==2&&args[0]=="--build-recovery-iso"){if(Environment.MachineName!="SDTLAB")throw new Exception("Spare only");await RecoveryMediaService.BuildIsoAsync(args[1],RecoveryMediaService.DefaultAdk,[],new CollectProgress([]));Console.WriteLine("RECOVERY ISO BUILT");return 0;}
+            if(args.Contains("--advanced-only")){await V10AdvancedChecks(root);Console.WriteLine($"ALL {passed} CHECKS PASSED");return 0;}
+            if(args.Contains("--snapshot-only")){await V10SnapshotChecks(root);Console.WriteLine($"ALL {passed} CHECKS PASSED");return 0;}
             if(args.Contains("--uefi-only")){await UefiLayoutChecks(root,Disk(),false);Console.WriteLine($"ALL {passed} CHECKS PASSED");return 0;}
             if(args.Contains("--benchmark-only"))await BenchmarkChecks(root);
             if(args.Contains("--integration"))await Integration(root);

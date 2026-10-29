@@ -35,6 +35,7 @@ if((Get-FileHash "$wimDir\wimlib-imagex.exe").Hash.ToLowerInvariant() -ne $wimAr
 $wimSource=Join-Path $tools 'wimlib-1.14.5.tar.gz'
 if(!(Test-Path $wimSource)){Invoke-WebRequest $wim.source_url -OutFile $wimSource -UseBasicParsing}
 if((Get-FileHash $wimSource).Hash.ToLowerInvariant() -ne $wim.source_sha256){throw 'WIM corresponding-source checksum mismatch'}
+& "$PSScriptRoot\build-native.ps1" -Runtime $Runtime
 $output=Join-Path $root "artifacts\$Runtime";$publish=Join-Path $output 'publish';New-Item -ItemType Directory -Force $output | Out-Null
 if(Test-Path $publish){Remove-Item $publish -Recurse -Force}
 Push-Location $root
@@ -43,6 +44,9 @@ try{
  if($LASTEXITCODE -ne 0){throw 'Publish failed'}
  if(!(Test-Path "$publish\Tools\diskspd.exe")){throw 'Native benchmark engine missing from publish output'}
  Copy-Item "$root\LICENSE","$root\THIRD-PARTY-NOTICES.txt" $publish
+ New-Item -ItemType Directory -Force "$publish\Licenses\native"|Out-Null
+ Copy-Item "$root\.tools\native\$Runtime\json-LICENSE.MIT","$root\.tools\native\$Runtime\LICENSE" "$publish\Licenses\native" -Force
+ if(!(Test-Path "$publish\Tools\SoopaNative.exe") -or !(Test-Path "$publish\Tools\SoopaRecovery.exe")){throw 'Native snapshot/recovery components missing'}
  $guide=(Get-Content "$root\docs\PACKAGE-README.txt" -Raw).Replace('@APP_VERSION@',$Version);[IO.File]::WriteAllText("$publish\README.md",$guide,[Text.UTF8Encoding]::new($false))
  Copy-Item "$root\docs\Smartmontools-COPYING.txt" $publish
  New-Item -ItemType Directory -Force "$publish\Licenses"|Out-Null

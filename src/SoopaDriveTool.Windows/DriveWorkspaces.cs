@@ -23,25 +23,26 @@ public partial class MainWindow
     }
     void Clone()
     {
-        Note("Byte-exact copies include every sector. Filesystem-aware and Windows-aware copies use verified WIM capture/apply, so unused sectors are skipped and smaller destinations can fit. The currently running system disk remains protected.");
-        var source=DiskPicker(true,"source");var target=DiskPicker(true,"target");var partition=new ComboBox{DisplayMemberPath="Display"};
-        var mode=Choices("Byte-exact whole disk","Filesystem-aware NTFS volume","Windows-aware UEFI (inactive installation)");
-        var workspace=new TextBox{Text=Path.GetTempPath(),IsReadOnly=true};var help=T("",13,Muted);var p=Stack(T("Choose the clone you need",21,Ink,true),T("Clone method",12,Muted,false,new Thickness(0,18,0,0)),mode,help,T("Source disk",12,Muted,false,new Thickness(0,18,0,0)),source,T("Source volume (filesystem / Windows modes)",12,Muted),partition,T("Destination disk · all destination data is replaced",12,Muted),target,T("WIM scratch folder on a third disk (filesystem / Windows modes)",12,Muted),workspace,Btn("Choose scratch folder…",()=>workspace.Text=PickFolder("Choose scratch storage, separate from source and destination")??workspace.Text));
-        void Update(){partition.ItemsSource=(source.SelectedItem as DiskInfo)?.Partitions.Where(x=>!x.Protected&&x.FileSystem=="NTFS").ToList();if(partition.Items.Count>0)partition.SelectedIndex=0;}
-        source.SelectionChanged+=(_,_)=>Update();Update();mode.SelectionChanged+=(_,_)=>Describe();Describe();
-        void Describe(){help.Text=mode.SelectedIndex switch{0=>"Exact source-size and sector-size match required. Both disks are taken offline by visible queued steps. All copied sectors are read back and hash-verified.",1=>"Copies one mounted, unencrypted NTFS volume into a fresh GPT/NTFS destination using DISM. The source is temporarily read-only. This is a used-file clone, not an exact copy of free space.",_=>"Select an inactive Windows installation on an attached data disk. Rebuilds GPT + EFI + MSR + Windows, copies WinRE when available, and configures destination BCD without changing host firmware order. Live running-OS migration and an independent boot guarantee are not provided."};}
+        Note("Byte-exact copies include every sector. Filesystem-aware and Windows-aware copies use verified WIM capture/apply, so unused sectors are skipped and smaller destinations can fit. Live Windows mode reads the running system through VSS; all destination writes remain subject to protection and identity checks.");
+        int tabStart=body.Children.Count;
+        var source=DiskPicker(false,"source");var target=DiskPicker(true,"target");var partition=new ComboBox{DisplayMemberPath="Display"};
+        var mode=Choices("Byte-exact whole disk","Filesystem-aware NTFS volume","Windows-aware UEFI (inactive installation)","Live Windows UEFI (consistent VSS snapshot)","All sectors to larger disk (relocate GPT)");
+        var workspace=new TextBox{Text=Path.GetTempPath(),IsReadOnly=true};var help=T("",13,Muted);var p=Stack(T("Choose the clone you need",21,Ink,true),T("Clone method",12,Muted,false,new Thickness(0,18,0,0)),mode,help,T("Source disk",12,Muted,false,new Thickness(0,18,0,0)),source,T("Source volume (filesystem / Windows modes)",12,Muted),partition,T("Destination disk · all destination data is replaced",12,Muted),target,T("WIM scratch folder (separate from destination; live mode can use source free space)",12,Muted),workspace,Btn("Choose scratch folder…",()=>workspace.Text=PickFolder("Choose scratch storage, separate from source and destination")??workspace.Text));
+        void Update(){partition.ItemsSource=(source.SelectedItem as DiskInfo)?.Partitions.Where(x=>(!x.Protected||mode.SelectedIndex==3&&x.IsBoot)&&x.FileSystem=="NTFS").ToList();if(partition.Items.Count>0)partition.SelectedIndex=0;}
+        source.SelectionChanged+=(_,_)=>Update();Update();mode.SelectionChanged+=(_,_)=>{Update();Describe();};Describe();
+        void Describe(){help.Text=mode.SelectedIndex switch{4=>"Copies and verifies every source sector to an equal or larger destination, then rebuilds the GPT backup at the new disk boundary. Extra capacity remains unallocated. Disconnect the source before booting its clone.",0=>"Exact source-size and sector-size match required. Both disks are taken offline by visible queued steps. All copied sectors are read back and hash-verified.",1=>"Copies one mounted, unencrypted NTFS volume into a fresh GPT/NTFS destination using DISM. The source is temporarily read-only. This is a used-file clone, not an exact copy of free space.",3=>"Reads the running Windows volume through a writer-verified VSS snapshot. The source remains online and writable. Builds a bootable UEFI destination with fresh identifiers; all destination data is replaced.",_=>"Select an inactive Windows installation on an attached data disk. Rebuilds GPT + EFI + MSR + Windows, copies WinRE when available, and configures destination BCD without changing host firmware order. Independent boot testing is required for each hardware configuration."};}
         p.Children.Add(Btn("Add clone to the action chain",()=>PrepareBatch(()=>
         {
             if(source.SelectedItem is not DiskInfo s||target.SelectedItem is not DiskInfo t)throw new IOException("Select source and destination data disks.");if(s.Number==t.Number)throw new IOException("Choose a different destination.");
             var selected=(CloneMode)mode.SelectedIndex;
-            if(selected==CloneMode.ByteExact)
+            if(selected is CloneMode.ByteExact or CloneMode.ByteExactGrow)
             {
                 if(!s.Offline)AddWithoutNavigate(DiskOperation.For(s,OperationKind.Offline));
                 if(!t.Offline)AddWithoutNavigate(DiskOperation.For(t,OperationKind.Offline));
                 var projection=QueuePlanner.Project(disks,queue);s=projection.Single(d=>d.Number==s.Number);t=projection.Single(d=>d.Number==t.Number);
             }
-            var part=selected==CloneMode.ByteExact?null:partition.SelectedItem as PartitionInfo;
-            if(selected!=CloneMode.ByteExact&&part==null)throw new IOException("Select a mounted NTFS source volume.");
+            var part=selected is CloneMode.ByteExact or CloneMode.ByteExactGrow?null:partition.SelectedItem as PartitionInfo;
+            if(selected is not (CloneMode.ByteExact or CloneMode.ByteExactGrow)&&part==null)throw new IOException("Select a mounted NTFS source volume.");
             var op=DiskOperation.For(s,OperationKind.CloneDisk,part) with{CloneMode=selected,TargetDiskNumber=t.Number,TargetIdentity=t.Identity,TargetLayout=t.Layout,Workspace=workspace.Text};Queue(op,s,t);
         }),true));body.Children.Add(Card(p));
         var disk=DiskPicker(true,"image");var image=Stack(T("Disk images",20,Ink,true),T("Selected data disk",12,Muted,false,new Thickness(0,16,0,0)),disk);var actions=new WrapPanel();
@@ -54,7 +55,7 @@ public partial class MainWindow
             if(quick&&d.Offline){AddWithoutNavigate(DiskOperation.For(d,OperationKind.Online));d=QueuePlanner.Project(disks,queue).Single(x=>x.Number==d.Number);}
             if(!quick&&!d.Offline){AddWithoutNavigate(DiskOperation.For(d,OperationKind.Offline));d=QueuePlanner.Project(disks,queue).Single(x=>x.Number==d.Number);}
             Queue(DiskOperation.For(d,quick?OperationKind.QuickWipeDisk:OperationKind.WipeDisk) with{WipeMode=wipe.SelectedIndex switch{2=>WipeMode.Random,3=>WipeMode.ThreePass,_=>WipeMode.Zero}},d);
-        }),true))));QueuePanel();
+        }),true))));ProtectedImages();TabWorkspace(tabStart,("Clone",1),("Raw images",1),("Wipe drive",1),("Protected images",1));QueuePanel();
     }
     void AddWithoutNavigate(DiskOperation op)
     {
@@ -64,7 +65,7 @@ public partial class MainWindow
     void Health()
     {
         Note("Full SMART means all attributes, counters and logs the drive and its connection expose. USB bridges, RAID controllers and VMs can hide data; unavailable information is never treated as a health pass. Collection does not start self-tests or change firmware settings.");
-        var disk=DiskPicker();var transport=Choices("auto","sat","sat,12","sat,16","scsi","nvme","sntasmedia","sntjmicron","sntrealtek");var output=new StackPanel();var controls=Stack(T("SMART & drive condition report",21,Ink,true),T("Select drive",12,Muted,false,new Thickness(0,18,0,0)),disk,T("Transport override (normally auto)",12,Muted),transport,Btn("Read full SMART and logs",async()=>{if(disk.SelectedItem is not DiskInfo d)throw new IOException("Select a drive.");await Work("Reading device SMART attributes and logs",async()=>{smartReport=await SmartService.ReadAsync(d,(string)transport.SelectedItem);Draw();});},true));body.Children.Add(Card(controls));body.Children.Add(output);Draw();
+        var disk=DiskPicker();var transport=Choices("auto","sat","sat,12","sat,16","scsi","nvme","sntasmedia","sntjmicron","sntrealtek");var output=new StackPanel();var controls=Stack(T("SMART & drive condition report",21,Ink,true),T("Select drive",12,Muted,false,new Thickness(0,18,0,0)),disk,T("Transport override (normally auto)",12,Muted),transport,Btn("Read full SMART and logs",async()=>{if(disk.SelectedItem is not DiskInfo d)throw new IOException("Select a drive.");await Work("Reading device SMART attributes and logs",async()=>{smartReport=await SmartService.ReadAsync(d,(string)transport.SelectedItem);Draw();});},true));body.Children.Add(Card(controls));body.Children.Add(output);Draw();int diagnosticStart=body.Children.Count;DiagnosticActions(disk,transport);TabWorkspace(diagnosticStart,("Tests & temperature",1),("Surface scan",1),("Device erase",1),("Free-space wipe",1),("Topology",1));
         void Draw()
         {
             output.Children.Clear();if(smartReport==null)return;var r=smartReport;var p=Stack(T($"{r.Model} · {r.Overall}",21,r.Overall=="FAILING"?B("#B34545"):Ink,true),T($"Serial: {r.Serial} · Firmware: {r.Firmware} · {r.Protocol} · Collected {r.CollectedUtc:u}",12,Muted,false,new Thickness(0,12,0,14)),T(r.Coverage,13,Muted));
@@ -81,13 +82,13 @@ public partial class MainWindow
     }
     void StartActivityTimer(){activityTimer.Tick-=ActivityTick;activityTimer.Tick+=ActivityTick;activityTimer.Start();}
     void StopActivityTimer()=>activityTimer.Stop();
-    void ActivityTick(object? sender,EventArgs e){if(runFact!=null)runFact.Text=RunActivity.WaitingNotes[Random.Shared.Next(RunActivity.WaitingNotes.Length)];RefreshRunDisplay();}
+    void ActivityTick(object? sender,EventArgs e){if(runFact!=null&&Preferences.Current.WaitingFacts)runFact.Text=RunActivity.WaitingNotes[Random.Shared.Next(RunActivity.WaitingNotes.Length)];RefreshRunDisplay();}
     void Activity()
     {
         Note("Live step progress and the remaining chain are shown here. A missing device percentage is shown as indeterminate. Completed steps are verified before dependent steps begin. Activity is saved locally for export.");
         if(activeRun!=null)
         {
-            runHeading=T("",21,Ink,true);runStep=T("",15,Accent,true,new Thickness(0,16,0,10));runMessage=T("",13,Muted);runElapsed=T("",12,Muted,false,new Thickness(0,12,0,12));runFact=T(RunActivity.WaitingNotes[0],12,Muted,false,new Thickness(0,18,0,0));
+            runHeading=T("",21,Ink,true);runStep=T("",15,Accent,true,new Thickness(0,16,0,10));runMessage=T("",13,Muted);runElapsed=T("",12,Muted,false,new Thickness(0,12,0,12));runFact=T(Preferences.Current.WaitingFacts?RunActivity.WaitingNotes[0]:"",12,Muted,false,new Thickness(0,18,0,0));
             overallBar=new ProgressBar{Height=10,Minimum=0,Maximum=100,Margin=new Thickness(0,14,0,6)};stepBar=new ProgressBar{Height=7,Minimum=0,Maximum=100,Margin=new Thickness(0,12,0,10)};runSteps=new StackPanel();runEvents=new StackPanel();
             body.Children.Add(Card(Stack(runHeading,overallBar,runStep,stepBar,runMessage,runElapsed,runFact)));body.Children.Add(Card(Stack(T("Steps · completed / current / next",17,Ink,true),runSteps)));body.Children.Add(Card(Stack(T("Detailed event log",17,Ink,true),runEvents,Btn("Export this run…",()=>{var d=new SaveFileDialog{Filter="JSON activity report|*.json",FileName="SoopaDriveTool-run-"+activeRun.Id};if(d.ShowDialog(this)==true)File.WriteAllText(d.FileName,JsonSerializer.Serialize(activeRun,Data.Json));}))));RefreshRunDisplay();
         }
