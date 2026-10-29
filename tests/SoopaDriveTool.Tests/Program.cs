@@ -53,6 +53,7 @@ partial class Program
             if(args.Length==2&&args[0]=="--dynamic-fixture"){await DynamicFixture(args[1]);Console.WriteLine($"ALL {passed} CHECKS PASSED");return 0;}
             if(args.Contains("--migration-only")){await V10MigrationChecks(root);Console.WriteLine($"ALL {passed} CHECKS PASSED");return 0;}
             if(args.Contains("--advanced-only")){await V10AdvancedChecks(root);Console.WriteLine($"ALL {passed} CHECKS PASSED");return 0;}
+            if(args.Length==2&&args[0]=="--scheduled-fixture"){await VerifyScheduledFixture(args[1]);Console.WriteLine($"ALL {passed} CHECKS PASSED");return 0;}
             if(args.Contains("--snapshot-only")){await V10SnapshotChecks(root);Console.WriteLine($"ALL {passed} CHECKS PASSED");return 0;}
             if(args.Contains("--uefi-only")){await UefiLayoutChecks(root,Disk(),false);Console.WriteLine($"ALL {passed} CHECKS PASSED");return 0;}
             if(args.Contains("--benchmark-only"))await BenchmarkChecks(root);
