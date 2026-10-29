@@ -1,14 +1,16 @@
-# SoopaDriveTool 0.2.1 validation
+# SoopaDriveTool 0.2.1 test results
+
+This is a historical test report. See [0.3.0 test results](VALIDATION-0.3.0.md) for the current release.
 
 Application sources: [`105dc5e6af742803f77ddc774728225b04862a0d`](https://github.com/eMacTh3Creator/SoopaDriveTool/commit/105dc5e6af742803f77ddc774728225b04862a0d). This remains an unsigned development preview. Documentation and site changes after that commit do not change the compiled application inputs.
 
-## Full Windows clone boot qualification
+## Windows clone boot tests
 
 **Both Windows-aware UEFI and byte-exact clones booted independently on Windows 11 ARM64. Each destination passed two distinct cold boots with only its own cloned disk attached.**
 
 The source was a privately prepared, independently booted Windows 11 Pro for Workstations ARM64 installation, build 26200.9711, on a 256 GiB disk. Controlled fixtures covered a local account, profile document, NTFS alternate stream and security descriptor, registry marker, binary payload and installed SoopaDriveTool 0.2.0. Repeated temporary installer extractions and development caches were removed from this disposable source before the final capture; its used allocation was approximately 127.3 GiB. Windows, installed applications, user profiles and the controlled fixtures remained. No working-user disk was used as a clone destination.
 
-The source disk identifiers were made distinct from the lab host and its Windows mapping/boot configuration was repaired and boot-checked as fixture preparation. A fixed VHD containing the source sectors was then attached through Windows' native virtual-disk driver. This preparation is not counted as a SoopaDriveTool clone. The actual destination disks were created by the production `QueueRunner`, `FileSystemCloneEngine` and `RawDiskEngine` through the guarded qualification harness.
+The source disk identifiers were made distinct from the lab host and its Windows mapping/boot configuration was repaired and boot-checked as fixture preparation. A fixed VHD containing the source sectors was then attached through Windows' native virtual-disk driver. This preparation is not counted as a SoopaDriveTool clone. The destination disks were created by the production `QueueRunner`, `FileSystemCloneEngine` and `RawDiskEngine` through the guarded qualification harness.
 
 Windows-aware mode captured/applied the full selected NTFS volume, created fresh GPT identifiers and EFI/MSR/Windows/recovery layout, remapped the destination SYSTEM hive, and built destination boot files. Byte-exact mode copied all 256 GiB and passed complete target read-back SHA-256 verification. The raw disk and partition identifiers intentionally remained duplicated.
 
@@ -33,14 +35,14 @@ The final ARM64 installer also upgraded the independently booted clone from 0.2.
 
 The recovery sizing follows Microsoft's [Windows RE guidance](https://learn.microsoft.com/en-us/windows-hardware/manufacture/desktop/deploy-windows-re?view=windows-11). EFI boot preparation follows [BCDBoot's explicit-target workflow](https://learn.microsoft.com/en-us/windows-hardware/manufacture/desktop/bcdboot-command-line-options-techref-di?view=windows-11).
 
-## Other executed checks
+## Other tests
 
 | Environment | Result | Scope |
 |---|---|---|
 | Local Windows 11 ARM64 VM | **123 passed** | Full safety, backup, parser, benchmark and disposable-VHD integration suite, including hidden recovery discovery and offline hive/EFI checks. |
 | Native x64 CI | **123 passed; installer passed** | Full integration suite; install, render and uninstall. |
 | Native ARM64 CI | **75 passed; installer passed** | Core, report/parser and live native benchmark/cancellation checks; install, render and uninstall. |
-| Actual ARM64 release portable package | **Passed** | Nine workspace renders; background backup success, snapshot verification and failure reporting; all tracked build inputs matched. |
+| Actual ARM64 release portable package | **Passed** | Nine screen renders; background backup success, snapshot verification and failure reporting; all tracked build inputs matched. |
 | Website | **Passed locally** | Hidden-browser 1280px and 390px checks, no horizontal overflow, all six images loaded, no console warnings/errors. Publication is verified separately. |
 
 Packages are the exact artifacts from [native CI run 40810726511](https://github.com/eMacTh3Creator/SoopaDriveTool/actions/runs/40810726511). Bundled engine/source checksums, framework versions and build provenance accompany the release.
@@ -53,7 +55,7 @@ Packages are the exact artifacts from [native CI run 40810726511](https://github
 - [Source input comparison](SOURCE-BUILD-CHECK-0.2.1.json), [packaged UI](UI-RENDER-CHECKS-0.2.1.json), [background backup](BACKUP-JOB-CHECK-0.2.1.json)
 - [Build provenance](BUILD-PROVENANCE-0.2.1.json), [site checks](SITE-CHECK-0.2.1.json), and [publication checks](https://github.com/eMacTh3Creator/SoopaDriveTool/blob/main/docs/PUBLICATION-CHECK-0.2.1.json)
 
-## Remaining qualification
+## Not tested for this release
 
 Full OS boot qualification is **ARM64 on Parallels UEFI**. Native x64 integration tests do not establish x64 OS boot. Physical controllers/devices, 4Kn, USB bridges, hot-unplug/power failure, activation, Windows Hello/TPM binding, encrypted sources and dissimilar hardware remain unqualified. A matching recovery-image hash alone does not establish a separate Windows RE boot. The currently running OS cannot be cloned, and no WinPE recovery environment is shipped.
 

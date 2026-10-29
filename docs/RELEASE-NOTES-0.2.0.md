@@ -1,15 +1,19 @@
-# SoopaDriveTool 0.2.0 — drive workflows preview
+# SoopaDriveTool 0.2.0
 
-Adds the requested cloning choices, quick/thorough wiping, dependent Apply chains, live activity and full available SMART reports.
+Version 0.2.0 added clone modes, disk wiping, queued partition changes, activity logs, and SMART reports. These notes describe that release; see the [current guide](USER-GUIDE.md) for later changes.
 
-- **Clone modes:** byte-exact whole disk; filesystem-aware used-file NTFS volume; Windows-aware UEFI cloning of an attached inactive Windows installation. WIM modes use third-disk scratch storage, preserve source read-only state and validate resources during capture/apply. Windows mode preserves the original Windows drive letter in the destination offline hive and configures destination EFI/BCD; independent boot/hardware qualification remains outstanding.
-- **Wiping:** quick partition reset; full zero overwrite; cryptographic-random overwrite; three-pass random/ones/zeros. Thorough modes verify full read-back after every pass. Quick reset leaves file contents recoverable. These are not firmware sanitize or SSD remapped-cell erasure guarantees.
-- **Action chains:** preview and Apply dependent delete → delete → create → rename steps on the same disk. Newly created partitions can be referenced by later steps. Identity/layout and every operation’s result are checked; unexpected changes stop later steps.
-- **Activity:** current/completed/upcoming/skipped steps, real percentages where exposed, indeterminate Windows phases where no percentage exists, byte throughput/ETA for raw I/O, elapsed time, event journals, exports and rotating facts/messages.
-- **SMART:** all available ATA/NVMe/SCSI attributes, counters and extended logs; preserved original JSON/text; health-bitfield handling; serial-identity warnings; JSON/CSV/text/printable HTML exports. Unavailable or partial data is explicit and never called healthy by default.
+## Added
 
-The application and DiskSpd are native ARM64/x64. The separate GPL smartctl collector is x64 and uses Windows emulation on ARM; its license and complete corresponding source archive are included. No smartd service is installed.
+- **Clone modes:** exact-sector disk copy, used-file NTFS copy, and Windows UEFI cloning from an attached inactive installation. File-based modes use scratch space on a third disk and verify WIM resources during capture and apply. Windows mode preserves the installation's drive mapping and creates destination EFI/BCD files.
+- **Wiping:** quick partition reset, zero overwrite, random overwrite, and a three-pass random/ones/zeroes overwrite. Full-disk overwrites verify the entire destination after each pass.
+- **Queued operations:** prepare a delete → delete → create → rename sequence, review the layout, then Apply. Later operations can reference a newly created partition. Identity/layout changes stop the queue.
+- **Activity:** completed, current, upcoming, and skipped steps; tool-reported progress; throughput and ETA for raw I/O; elapsed time; journals; exports; and optional waiting messages.
+- **SMART:** available ATA/NVMe/SCSI attributes, counters, and logs, plus original JSON/text. Exports include JSON, CSV, text, and printable HTML. Reports distinguish unavailable, partial, and failing results.
 
-**Unsigned development preview.** The current system/boot disk stays protected. Live OS migration, independent Windows-clone boot qualification, physical controller/SMART coverage, firmware sanitize, and power-loss/hot-unplug qualification remain outstanding. Applied action chains cannot automatically roll back. Keep independent verified backups and evaluate destructive actions on disposable data disks.
+The app and DiskSpd are native ARM64/x64. The separate smartctl collector uses x64 emulation on ARM. Its GPL license and corresponding source are included; no smartd service is installed.
 
-[Detailed workflows and research](https://github.com/eMacTh3Creator/SoopaDriveTool/blob/main/docs/DRIVE-WORKFLOWS-0.2.md) · [Validation](https://github.com/eMacTh3Creator/SoopaDriveTool/blob/main/docs/VALIDATION-0.2.md)
+## Limits in this release
+
+The installers were unsigned. Live Windows cloning and independent clone boot tests were not yet completed. Physical controllers, firmware erasure, power interruption, and hot-unplug behavior were untested. Quick reset left file contents recoverable; overwrites did not establish erasure of remapped SSD cells. Applied queue steps could not be automatically rolled back.
+
+[Clone and wipe details](DRIVE-WORKFLOWS-0.2.md) · [0.2.0 test results](VALIDATION-0.2.md)

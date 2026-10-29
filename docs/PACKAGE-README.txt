@@ -1,5 +1,5 @@
 SoopaDriveTool
-Version @APP_VERSION@ - unsigned storage suite preview
+Version @APP_VERSION@ - unsigned preview
 Windows 11 ARM64 and x64
 
 Start SoopaDriveTool.exe. The .NET runtime is included. Restart as administrator
@@ -25,7 +25,7 @@ Disconnect the source before independently boot-testing the destination.
 BitLocker, TPM/Windows Hello, activation and dissimilar hardware need separate
 qualification. The running Windows disk cannot be overwritten or repartitioned.
 
-Protected backups and images
+Encrypted backups and images
 AES-256-GCM authenticated encryption, compressed/deduplicated chunks, encrypted
 file names, full/incremental/differential restore points, retention, exclusions,
 passphrase rotation and selective restore. NTFS permissions, streams, hardlinks,
@@ -34,7 +34,7 @@ VSS backs up open local files and the running Windows volume consistently.
 Network repositories use the Windows account's existing share permissions.
 Daily, weekly, hourly and logon schedules support logged-on-user or installed
 SYSTEM execution; schedule secrets use Windows DPAPI and restricted job folders.
-Keep passphrases separately: there is no recovery backdoor.
+Keep passphrases separately: the application cannot recover a lost passphrase.
 
 Protected raw images support verified desktop restore and read-only VHD browsing
 (512-byte images up to 2040 GiB). Export WIM resources for selective extraction.
@@ -63,7 +63,7 @@ hardware/firmware; a completion report is not a certified purge.
 
 SMART exports retain all device-exposed attributes, errors and self-test history
 in JSON, CSV, text and printable HTML. Missing data remains unavailable. A
-submitted self-test is not a health pass. Benchmarks run real native DiskSpd
+submitted self-test is not a health pass. Benchmarks run native DiskSpd
 workloads, including custom block/queue/thread/read-mix profiles and history.
 
 Application source is MIT licensed. Third-party components retain their own
@@ -71,7 +71,7 @@ licenses; see THIRD-PARTY-NOTICES.txt and Licenses/. Standalone wimlib-imagex
 1.14.5 is GPLv3+; upstream labels ARM64 builds experimental. Complete wimlib
 and smartmontools corresponding source archives are included.
 
-Source, supported conditions and current validation:
+Source, user guide and test results:
 https://github.com/eMacTh3Creator/SoopaDriveTool
 https://github.com/eMacTh3Creator/SoopaDriveTool/blob/main/docs/VALIDATION-0.3.0.md
 https://github.com/eMacTh3Creator/SoopaDriveTool/releases

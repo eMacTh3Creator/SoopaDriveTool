@@ -1,12 +1,12 @@
-# SoopaDriveTool 0.2 — cloning, wiping, queues and drive reports
+# Clone modes, wiping, queues, and SMART in the 0.2 series
 
-Research/update date: October 28, 2026. This update implements the requested drive-workflow expansion. It remains an unsigned development preview.
+Written October 28, 2026. This page describes the features introduced in the 0.2 series, including the 0.2.1 cloning changes. For the current release, use the [user guide](USER-GUIDE.md) and [test report](VALIDATION-0.3.0.md).
 
 ## Reference workflows
 
-[EaseUS Disk Copy’s manual](https://www.easeus.com/disk-copy/clone-disk-manual.html) distinguishes layout-preserving cloning, destination resizing and sector-level copying. Its [user guide](https://www.easeus.com/tutorial/disk-copy-user-guide.html) explains why a used-data clone may fit a smaller destination while a sector copy has different capacity requirements. This is the basis for offering visibly different clone modes rather than labeling every copy “OS aware.”
+[EaseUS Disk Copy’s manual](https://www.easeus.com/disk-copy/clone-disk-manual.html) distinguishes layout-preserving cloning, destination resizing and sector-level copying. Its [user guide](https://www.easeus.com/tutorial/disk-copy-user-guide.html) explains why a used-data clone may fit a smaller destination while a sector copy has different capacity requirements. The clone choices therefore distinguish sector copies from file-based and Windows-aware copies.
 
-[Paragon’s documentation](https://www.paragon-software.com/home/hdm-windows/) treats operating-system migration, disk/partition copies, and recovery as separate capabilities. Its [copy workflow example](https://kb.paragon-software.com/article/1598) also shows selective/resize/raw choices followed by preview and Apply. SoopaDriveTool now has a projected action chain with dependent partition references.
+[Paragon’s documentation](https://www.paragon-software.com/home/hdm-windows/) treats operating-system migration, disk/partition copies, and recovery as separate capabilities. Its [copy workflow example](https://kb.paragon-software.com/article/1598) also shows selective/resize/raw choices followed by preview and Apply. The operation queue supports references to partitions that an earlier step will create.
 
 The Windows-aware implementation follows Microsoft’s [WIM capture/apply workflow](https://learn.microsoft.com/en-us/windows-hardware/manufacture/desktop/capture-and-apply-windows-using-a-single-wim?view=windows-11) and [BCDBoot](https://learn.microsoft.com/en-us/windows-hardware/manufacture/desktop/bcdboot-command-line-options-techref-di?view=windows-11). A specified destination EFI partition keeps BCDBoot from changing the current host’s firmware boot entry.
 
@@ -24,7 +24,7 @@ The filesystem/Windows modes use temporary WIM staging rather than trying to rel
 
 The applied destination SYSTEM hive keeps the source installation’s Windows drive letter: matching source volume identifiers are replaced with the new destination identifier. The host registry is read for identifiers, while writes are confined to a uniquely mounted destination hive, which is unloaded afterward. An ambiguous original letter stops the operation instead of guessing. This follows the Windows [persistent mount-name database](https://learn.microsoft.com/en-us/windows-hardware/drivers/storage/supporting-mount-manager-requests-in-a-storage-class-driver) and [offline hive load](https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/reg-load)/[unload](https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/reg-unload) mechanisms.
 
-Windows-aware cloning does not guarantee activation, TPM/BitLocker binding, all OEM recovery layouts, dissimilar-hardware boot or every firmware’s behavior. Version 0.2.1 passed independent Windows-aware and byte-exact ARM64 VM cold boots; see the [current validation](VALIDATION-0.2.1.md). Every real migration still needs its own destination boot check. x64 OS boot and physical hardware remain unqualified.
+Windows-aware cloning does not guarantee activation, TPM/BitLocker binding, all OEM recovery layouts, dissimilar-hardware boot or every firmware’s behavior. Version 0.2.1 passed independent Windows-aware and byte-exact ARM64 VM cold boots; see the [0.2.1 test results](VALIDATION-0.2.1.md). Each migration still needs a destination boot check. x64 OS boot and physical hardware remain unqualified.
 
 ## Wipe choices
 
@@ -49,11 +49,11 @@ Queue execution is sequential, not transactional. If a later operation fails, ea
 
 ## Live activity
 
-The activity workspace shows overall completed-step percentage, the active phase, an exact step percentage where available, bytes copied/verified, throughput and estimated time remaining for raw I/O, completed/current/pending/skipped steps, timestamped events, elapsed time and rotating lighthearted messages/facts.
+The activity screen shows overall completed-step percentage, the active phase, an exact step percentage where available, bytes copied/verified, throughput and estimated time remaining for raw I/O, completed/current/pending/skipped steps, timestamped events, elapsed time and rotating lighthearted messages/facts.
 
-Percentages are not fabricated for Windows commands that expose no progress. Those phases use an indeterminate bar and an explicit explanation. Overall percentage is based on reviewed steps, not a prediction of total wall-clock time. WIM scanning reports file counts without a guessed percentage. Capture, archive-integrity/resource verification and DISM apply report measured tool progress; raw progress derives from actual bytes processed. Events are throttled and journals are saved after each step and at failure/completion.
+Windows commands that do not provide progress use an indeterminate bar with an explanation. Overall percentage is based on reviewed steps, not a prediction of total wall-clock time. WIM scanning reports file counts without a guessed percentage. Capture, archive-integrity/resource verification and DISM apply report measured tool progress; raw progress derives from actual bytes processed. Events are throttled and journals are saved after each step and at failure/completion.
 
-Run exports include disk model, serial, identity hash, steps, states and event details. Reports stay local unless the user explicitly saves/shares them.
+Run exports include disk model, serial, identity hash, steps, states, and event details. Reports stay local unless you save or share them.
 
 ## Full SMART and resale reports
 
@@ -63,10 +63,10 @@ ATA reports include normalized/current/worst/threshold/raw attributes and failur
 
 Export formats: complete JSON, full-field CSV, plaintext and printable standalone HTML with identity, collection time, health flags, attribute tables, all fields, original text and original JSON. HTML escapes device-provided strings. Serial mismatches between Windows inventory and SMART are flagged for physical-label verification.
 
-SMART access depends on the controller/USB bridge and device firmware. Unavailable access is not called healthy, incomplete commands produce a partial report, and drive-reported failure stays visible. These reports record condition at collection time; they are not warranties or predictions of remaining life.
+SMART access depends on the controller/USB bridge and device firmware. Unavailable access and incomplete results are marked explicitly. Drive-reported failures remain visible. These reports record condition at collection time; they are not warranties or predictions of remaining life.
 
 The collector is a separate GPL executable. The exact upstream corresponding-source archive and GPL license are included with packages. Windows ARM runs the x64 smartctl executable through Windows emulation; the application and DiskSpd remain native ARM64. No smartd service is installed.
 
-## Qualification boundaries
+## Test scope
 
-Tests use owned disposable VHD files for destructive actions and synthetic ATA/NVMe/SCSI payloads for report coverage. A VM often exposes no physical SMART attributes. Full Windows-aware and byte-exact ARM64 VM boot checks are recorded for 0.2.1. Physical controller coverage, x64 OS boot and dissimilar hardware still require qualification. See the release validation report for actual executed checks and any remaining failures.
+Tests use owned disposable VHD files for destructive actions and synthetic ATA/NVMe/SCSI payloads for report coverage. A VM often exposes no physical SMART attributes. Full Windows-aware and byte-exact ARM64 VM boot checks are recorded for 0.2.1. Physical controller coverage, x64 OS boot and dissimilar hardware still require qualification. See the versioned test reports for the checks completed and remaining limits.

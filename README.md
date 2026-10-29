@@ -2,47 +2,68 @@
 
 [![Windows builds](https://github.com/eMacTh3Creator/SoopaDriveTool/actions/workflows/build.yml/badge.svg)](https://github.com/eMacTh3Creator/SoopaDriveTool/actions/workflows/build.yml)
 
-A native Windows 11 drive workspace for **ARM64 and x64**, with partition management, Windows migration, encrypted backup, bootable recovery, real storage benchmarks and full available SMART reports.
+SoopaDriveTool is an open-source disk utility for Windows 11. It manages partitions, clones drives, creates backups, runs storage benchmarks, and exports SMART reports. Builds are available for ARM64 and x64.
 
-**0.3.0 storage suite preview — unsigned.** Prepare operations, review the projected layout and targets, then Apply. Activity follows each step through verification, with percentages when the engine can measure progress, throughput, elapsed time, next steps and optional waiting facts.
+[Website](https://emacth3creator.github.io/SoopaDriveTool/) · [User guide](docs/USER-GUIDE.md) · [Release notes](docs/RELEASE-NOTES-0.3.0.md) · [Test results](docs/VALIDATION-0.3.0.md)
 
-[Download](https://github.com/eMacTh3Creator/SoopaDriveTool/releases) · [Website](https://emacth3creator.github.io/SoopaDriveTool/) · [User guide](docs/USER-GUIDE.md) · [Validation](docs/VALIDATION-0.3.0.md) · [Feature coverage](docs/COMPLETION-MATRIX.md)
+## Download
+
+Version **0.3.0** is an unsigned preview. Windows may show a publisher or SmartScreen warning.
+
+| Windows PC | Installer | Portable |
+|---|---|---|
+| ARM64, including Snapdragon PCs and Windows VMs on Apple Silicon | [ARM64 installer](https://github.com/eMacTh3Creator/SoopaDriveTool/releases/download/v0.3.0/SoopaDriveTool-0.3.0-arm64-Setup.exe) | [ARM64 ZIP](https://github.com/eMacTh3Creator/SoopaDriveTool/releases/download/v0.3.0/SoopaDriveTool-0.3.0-arm64-Portable.zip) |
+| 64-bit Intel or AMD | [x64 installer](https://github.com/eMacTh3Creator/SoopaDriveTool/releases/download/v0.3.0/SoopaDriveTool-0.3.0-x64-Setup.exe) | [x64 ZIP](https://github.com/eMacTh3Creator/SoopaDriveTool/releases/download/v0.3.0/SoopaDriveTool-0.3.0-x64-Portable.zip) |
+
+The .NET runtime is included. Extract the portable ZIP before running it. [Release checksums](https://github.com/eMacTh3Creator/SoopaDriveTool/releases/download/v0.3.0/SHA256SUMS.txt) are available for each download.
 
 ## Features
 
-- **Partition management:** initialize, create, delete, rename, format, resize, move, split, merge and redistribute space; convert nonempty GPT/MBR, primary/logical, eligible basic/dynamic simple NTFS volumes, filesystems and allocation units. Stage dependent chains such as delete → delete → create → rename before applying.
-- **Cloning:** byte-exact, larger-target GPT relocation, used-file NTFS, inactive Windows UEFI and live VSS Windows migration. Windows modes create fresh boot partitions, preserve Windows drive mappings and configure available recovery images.
-- **Protected backups:** AES-256-GCM encrypted content and manifests, compressed/deduplicated chunks, full/incremental/differential points, exclusions, retention, passphrase rotation, selective restore and NTFS metadata. VSS reads open local files consistently. User/SYSTEM schedules use DPAPI-protected credentials.
-- **Disk and Windows images:** protected versioned raw and VSS Windows images, full resource verification and disk read-back; read-only VHD browsing and selective extraction from exported WIM images.
-- **Recovery media:** build architecture-matched WinPE ISO/USB media using an installed Microsoft ADK; optional signed drivers. The native recovery app restores images, clones disks, verifies overwrites, requests eligible ATA erasure and repairs UEFI boot files with an EFI backup.
-- **Recovery:** backup-GPT reconstruction, lost partition discovery, supported NTFS/FAT deleted-file recovery, PNG/JPEG/PDF carving, byte preview/export and reviewed sector editing with original-byte backups.
-- **Drive preparation:** quick partition reset; full zero/random or three-pass overwrite with complete read-back; free-space overwrite; eligible controller-native NVMe/ATA erase requests.
-- **Diagnostics:** full device-exposed SMART attributes, errors, wear and self-test history; JSON/CSV/text/printable HTML exports, self-test requests, temperature history, surface maps and storage topology.
-- **Benchmarks:** native Microsoft DiskSpd, standard or custom block/queue/thread/read-mix workloads, latency/IOPS/throughput, saved profiles, history comparisons and exports.
-- Light/dark/system themes, compact layout, accessible input labels, local journals and interrupted-operation detection. Interface instructions are English.
+- **Partitions:** create, delete, format, rename, resize, move, split, and merge partitions. Redistribute free space and convert supported partition tables, volume types, filesystems, and allocation sizes.
+- **Queued changes:** prepare several operations against a preview of the disk layout, then review and apply them together. Later steps can refer to a partition created earlier in the queue.
+- **Cloning:** copy every sector, copy used NTFS files, or migrate a Windows UEFI installation. Windows cloning supports inactive installations and the running system through Volume Shadow Copy Service (VSS).
+- **Backups and images:** create encrypted full, incremental, or differential backups. Set exclusions, retention rules, and schedules; restore selected files or complete disk and Windows images.
+- **Recovery:** build WinPE recovery media, restore images, repair UEFI boot files, find lost partitions, and recover supported deleted-file candidates. Recovery tools include file previews and a sector editor.
+- **Wiping:** reset partition metadata, overwrite a disk with zeroes or random data, run a three-pass overwrite, or overwrite free space. Full-disk overwrites include read-back verification. Firmware erase is available on eligible devices.
+- **Drive health:** view the SMART attributes, error logs, wear counters, and self-test history exposed by the drive. Export JSON, CSV, text, or printable HTML reports for maintenance and resale records.
+- **Benchmarks:** run Microsoft DiskSpd workloads, configure access patterns and queue depth, compare saved runs, and export throughput, IOPS, and latency results.
 
-## Supported conditions
+The activity screen shows the current operation, completed and remaining steps, elapsed time, and progress when the engine provides it. Light, dark, and system themes are available. The interface is in English.
 
-Windows 11 on Snapdragon/Apple Silicon uses ARM64; Intel/AMD Windows uses x64. The runtime is bundled. Start normally for benchmarks and file backups; restart as administrator within the app for disk changes. Pending chains survive that restart and must be reviewed again.
+See [supported operations and test coverage](docs/COMPLETION-MATRIX.md) for the conditions attached to each feature.
 
-The running Windows disk is protected from partition changes and raw writes; live migration reads it through VSS. BitLocker/unknown encryption blocks partition changes. Used-file/Windows migration needs separate scratch storage. Byte-exact mode requires matching geometry; the explicit larger-target mode relocates GPT metadata. Disconnect the original before independently booting its clone.
+## Before changing a disk
 
-Conversions enforce filesystem and layout constraints. Dynamic-to-basic preserves single contiguous NTFS volumes and requires a restart; spanned/striped/mirrored layouts require migration. Read-only VHD browsing supports 512-byte raw images up to 2040 GiB. Deleted-file recovery supports the documented filesystem cases; fragmented carving, compressed/EFS NTFS recovery and multi-disk reconstruction are not claimed.
+Start normally for benchmarks and file backups. Use **Restart as administrator** in the app when an operation needs elevated access. Pending changes are retained through that restart and must be reviewed again.
 
-Recovery-media creation requires Microsoft's Windows ADK Deployment Tools plus matching WinPE add-on. Microsoft boot files are supplied by that installation. Physical firmware erase, dissimilar-hardware migration, x64 OS recovery boots, USB bridges and high-DPI/accessibility coverage require further hardware qualification. A SMART report or controller completion is not a warranty or certified purge. See the exact [test evidence and limits](docs/VALIDATION-0.3.0.md).
+Keep a separate, verified backup before changing partitions or replacing a disk. If a queued step fails, later steps stop; changes already made are not automatically undone. Quick reset removes partition metadata and leaves file contents recoverable.
 
-## Build
+The running Windows disk is protected from partition changes and raw writes. Live Windows cloning reads it through VSS. BitLocker and unknown encryption states block partition changes. File-based and Windows cloning require scratch space on a separate disk. Disconnect the source before booting its clone.
 
-Use a Windows host with stable .NET 10, Visual Studio C++ Build Tools/Windows SDK, and Inno Setup 6.7+. 7-Zip is used to extract pinned smartmontools when it is not already staged.
+Recovery-media creation requires Microsoft's Windows ADK Deployment Tools and the matching WinPE add-on. Microsoft boot files are supplied by your ADK installation.
+
+ARM64 Windows clones, image restores, and boot repair have passed independent Secure Boot tests in spare VMs. Physical firmware erasure, x64 recovery boots, USB/4Kn hardware, power interruption, and migration between different hardware still need testing. VM benchmark results do not measure physical-drive performance. See the [validation report](docs/VALIDATION-0.3.0.md) for the full scope and remaining limits.
+
+## Build from source
+
+Use a Windows host with .NET 10, Visual Studio C++ Build Tools and the Windows SDK, and Inno Setup 6.7 or later. The build uses 7-Zip to extract smartmontools when it has not already been staged.
 
 ```powershell
 ./scripts/build.ps1 -Runtime win-arm64
 ./scripts/build.ps1 -Runtime win-x64
 ./scripts/test.ps1 -Runtime win-arm64
-# Administrator; creates/deletes its own disposable VHDs:
+# Run as administrator. This creates and deletes temporary test VHDs.
 ./scripts/test.ps1 -Runtime win-arm64 -Integration
 ```
 
-Native storage/recovery hosts link the static MSVC runtime. Build dependencies and standalone engines are pinned by SHA-256 in `scripts/dependencies.json`. Complete smartmontools/wimlib corresponding source and licenses ship with packages. The SMART collector uses x64 emulation on ARM; the app, DiskSpd, VSS requester and recovery host are native. No persistent service, account or telemetry is required.
+Dependency versions and SHA-256 hashes are recorded in `scripts/dependencies.json`. The native components use the static MSVC runtime. The app, DiskSpd, VSS requester, and recovery host run natively on the selected architecture; the SMART collector uses x64 emulation on ARM64.
 
-GitHub Actions builds/tests both architectures and deploys the buildless GitHub Pages website. Releases are published explicitly. [Security](SECURITY.md) · [Third-party notices](THIRD-PARTY-NOTICES.txt) · [Original research](docs/RESEARCH-AND-PLAN.md)
+GitHub Actions builds and checks both architectures. A separate workflow deploys the website to GitHub Pages. Publishing a release is a manual step.
+
+## Report a problem
+
+Use [GitHub Issues](https://github.com/eMacTh3Creator/SoopaDriveTool/issues) for bugs and feature requests. Include the app version, Windows version, architecture, operation, and relevant log output. Remove serial numbers, personal paths, and credentials before posting. For vulnerabilities, see [SECURITY.md](SECURITY.md).
+
+## License
+
+The application source is [MIT-licensed](LICENSE). Bundled components have their own licenses, listed in [Third-party notices](THIRD-PARTY-NOTICES.txt). Packages include the corresponding smartmontools and wimlib source archives.

@@ -1,11 +1,30 @@
-# Full Windows clone qualification
+# Windows clone boot tests
 
-This manual destructive harness calls the production QueueRunner and clone backends. It is separate from automated disposable-VHD integration tests. It runs clones only on a dedicated Windows machine named `SDTLAB` and requires explicitly bound source/destination identity fingerprints and a GUID fixture marker. Never rename a working computer to bypass that guard.
+This manual test harness calls the production `QueueRunner` and clone engines. It is separate from the automated temporary-VHD integration tests. Clone tests run only on a dedicated Windows machine named `SDTLAB`, with explicit source/destination fingerprints and a GUID fixture marker. Do not rename a working computer to bypass the guard.
 
-Prepare an inactive, independently booted Windows source on a disposable virtual disk. Add a controlled local-user document, alternate data stream, owner/ACL, registry marker, binary hash fixture and installed application. Shut it down cleanly. Attach it to the lab with distinct disk/partition identifiers and no source disk attached elsewhere. Windows-aware mode needs a third local scratch disk with adequate free space.
+## Prepare the lab
 
-Publish this project self-contained for the lab architecture. `--inventory <private-output.json>` records actual identities. `--clone <private-job.json> <private-activity.json>` requires Source, Target, SourceIdentity, TargetIdentity, FixtureId, Mode (`WindowsUefi` or `ByteExact`), Workspace and ExpectedDiskBytes. The expected size must match both disks and be between 64 and 512 GiB. The selected source must contain `SoopaQualification/fixture-id.txt` with the supplied marker. The raw mode queues the required source/destination offline steps before cloning.
+Use a disposable virtual disk containing an inactive Windows installation that has already booted independently. Add a test account and document, alternate data stream, ownership/permissions, registry marker, binary hash fixture, and installed application. Shut Windows down cleanly.
 
-After cloning, shut down the lab, detach the destination and boot it in a separate VM with **only that disk attached**. Verify Windows reaches the running OS, maps its system volume correctly, preserves fixture hashes, the user SID/owner/ACL and alternate stream, retains the registry marker, and runs the installed application. Repeat after a clean shutdown. Record recovery-image hash/registration separately from a real Windows RE boot. Compare GPT identifiers: Windows-aware mode should create fresh identifiers; byte-exact mode should preserve them.
+Attach the disk to the lab with identifiers distinct from the lab host. It must not be attached to another running VM. Windows-aware cloning also needs a third local scratch disk with enough free space.
 
-Keep disk images, credentials, full inventory, user SIDs, private paths, registry hives and raw diagnostic traces private. Publish only sanitized results, timestamps, code-input hashes, aggregate geometry and test fixture hashes. Component tests and hypervisor disk copies do not count as production full-clone boot qualification. A successful ARM64 guest boot does not qualify x64 OS boot, physical firmware, encrypted disks or dissimilar hardware.
+## Run a clone
+
+Publish the test project as self-contained for the lab's architecture.
+
+- `--inventory <private-output.json>` records disk identities.
+- `--clone <private-job.json> <private-activity.json>` runs the clone.
+
+The job requires `Source`, `Target`, `SourceIdentity`, `TargetIdentity`, `FixtureId`, `Mode` (`WindowsUefi` or `ByteExact`), `Workspace`, and `ExpectedDiskBytes`. The expected size must match both disks and be between 64 and 512 GiB. The source must contain `SoopaQualification/fixture-id.txt` with the supplied marker. Byte-exact mode queues the source/destination offline steps before cloning.
+
+## Check the destination
+
+Shut down the lab, detach the destination, and boot it in a separate VM with only that disk attached. Check Windows startup, system drive mapping, fixture hashes, account SID, ownership/permissions, alternate stream, registry marker, and application launch. Repeat after a clean shutdown.
+
+Record the recovery-image hash and registration separately from a Windows RE boot test. Windows-aware mode should create new GPT identifiers; byte-exact mode should preserve them.
+
+## Record results
+
+Keep images, credentials, inventories, user SIDs, private paths, registry hives, and raw traces private. Public results should contain only sanitized timestamps, code hashes, disk geometry, fixture hashes, and test outcomes.
+
+Component checks and hypervisor disk copies do not establish that the production clone boots. An ARM64 VM boot does not establish x64 boot, physical-device compatibility, encrypted-source support, or migration to different hardware.

@@ -1,79 +1,138 @@
-# Using SoopaDriveTool 0.3
+# SoopaDriveTool user guide
 
-Install the ARM64 edition on Windows on ARM, or x64 on Intel/AMD Windows 11. The runtime and native engines are included. Administrator access is needed for drive changes, raw reads, SMART and VSS. Use **Restart as administrator** inside the app; review the restored pending chain before applying it.
+This guide covers version 0.3.0 on Windows 11. Install ARM64 on Windows on ARM, or x64 on Intel/AMD PCs. The .NET runtime and required engines are included.
 
-## Organize a disk
+Drive changes, raw reads, SMART, and VSS need administrator access. Choose **Restart as administrator** inside the app. Pending operations are retained, but you must review them again before applying.
 
-Open **Disk manager**, select a data disk and partition, then choose an operation. **Advanced partition tools** adds move, split, merge, space redistribution, GPT/MBR, primary/logical, filesystem/allocation-unit and basic/dynamic conversion. The running Windows disk, its boot/recovery partitions and unknown encryption states are protected.
+## Manage partitions
 
-To combine several actions, queue each operation against the projected layout. For example, delete two partitions, create one larger partition, select that pending partition and rename it. Nothing changes until **Review & apply**. Removing a step also removes its dependent successors. After Apply, Activity shows completed, active and pending steps. If a step fails, the chain stops; earlier disk changes remain applied.
+Open **Disk manager**, select a data disk and partition, then choose an operation. **Advanced partition tools** includes moving, splitting, merging, space redistribution, and conversion of partition tables, volume types, filesystems, and allocation sizes.
 
-Partition movement and conversions need checkpoint storage on another physical disk. Moving a partition copies its bytes with durable overlap checkpoints, then commits verified metadata. An interrupted move is resumed only after an explicit review of its saved checkpoint. Filesystem/allocation-unit migration captures and verifies a WIM before formatting; its recovery archive is retained on failure. Unsupported metadata, file sizes or target capacity stop a conversion before formatting.
+The running Windows disk, its boot/recovery partitions, and partitions with unknown encryption states are protected from ordinary changes.
 
-Dynamic-to-basic conversion supports contiguous, single-disk NTFS volumes. The converted disk stays offline until Windows restarts and unloads the old dynamic metadata. Multi-disk, mirrored or striped volumes need migration to separate basic storage.
+### Queue several changes
+
+Prepare each operation against the previewed disk layout. For example:
+
+1. Delete two partitions.
+2. Create a larger partition in the resulting free space.
+3. Select the pending partition and rename it.
+4. Choose **Review & apply**, check the disk and operations, then Apply.
+
+No disk changes are made while preparing the queue. Removing a step also removes every step after it. Activity shows completed, active, and pending steps. If a step fails, the queue stops; earlier changes remain applied.
+
+### Moves and conversions
+
+Partition moves and conversions need checkpoint storage on another physical disk. A move saves checkpoints while copying, then commits the verified metadata. After an interruption, you must review the saved checkpoint before resuming.
+
+Filesystem and allocation-size changes capture and verify a WIM archive before formatting. The archive is retained if the operation fails. Unsupported metadata, file sizes, or insufficient destination capacity stop the conversion before formatting.
+
+Dynamic-to-basic conversion supports contiguous, single-disk NTFS volumes. The disk stays offline until Windows restarts and unloads the old dynamic metadata. Multi-disk, mirrored, or striped volumes require migration to separate basic storage.
 
 ## Clone a drive
 
-Open **Clone & image → Clone & wipe** and choose the source, destination and clone mode. Confirm the destination identity carefully: its contents are replaced.
+Open **Clone & image → Clone & wipe**. Choose the source, destination, and clone mode. The destination's contents will be replaced.
 
-| Mode | What is copied | Requirements |
+| Mode | What it copies | Requirements |
 |---|---|---|
-| Byte-exact | Every source sector, including unused/deleted data | Offline disks, equal disk/sector sizes; complete SHA-256 destination read-back |
-| Byte clone to larger disk | Source sectors plus relocated backup GPT | Destination at least as large and equal sector size; partition expansion is a separate operation |
-| Filesystem-aware NTFS | Used files through verified WIM capture/apply | Mounted unencrypted NTFS source; scratch on a third disk |
-| Windows-aware UEFI | Selected inactive Windows installation, fresh boot layout and available WinRE | Matching Windows architecture, unencrypted NTFS, separate scratch storage |
-| Live Windows VSS | Running Windows from a consistent snapshot with writer status | Administrator, unencrypted NTFS; source remains online; separate destination and sufficient scratch |
+| Byte-exact | Every source sector, including unused and deleted-data areas | Offline disks with equal disk and sector sizes. The entire destination is read back and checked with SHA-256. |
+| Byte clone to larger disk | Source sectors, with backup GPT metadata relocated | Destination at least as large as the source, with the same sector size. Expanding partitions is a separate operation. |
+| Filesystem-aware NTFS | Used files through WIM capture and apply | Mounted, unencrypted NTFS source and scratch space on a third disk. |
+| Windows-aware UEFI | An inactive Windows installation with a new boot layout and available WinRE image | Matching Windows architecture, unencrypted NTFS, and separate scratch storage. |
+| Live Windows VSS | The running Windows installation from a VSS snapshot, with writer status | Administrator access, unencrypted NTFS, a separate destination, and sufficient scratch space. The source stays online. |
 
-Windows-aware modes preserve Windows volume mappings and create fresh disk/partition identities. Available WinRE is copied and registered; a one-time helper completes WinRE activation on the destination's first Windows startup and removes its service after success. Its result is retained at `Windows\System32\SoopaDriveToolRecoveryOnce.json`.
+Windows-aware modes preserve drive mappings and create new disk/partition identifiers. If WinRE is available, it is copied and registered. A temporary helper completes WinRE activation on the destination's first startup, then removes its service. Its result is saved to `Windows\System32\SoopaDriveToolRecoveryOnce.json`.
 
-Disconnect the original before booting the clone. TPM/Windows Hello, activation, BitLocker and dissimilar hardware require their own checks. A verified copy completes the disk operation; only an independent boot establishes that Windows starts on the intended machine.
+Disconnect the source before booting the clone. Check password sign-in, applications, and files on the destination. Activation, Windows Hello/TPM binding, BitLocker, and different hardware may need additional setup. Copy verification alone does not confirm that Windows will boot on the intended PC.
 
 ## Back up files
 
-In **Backup & restore**, choose source and repository, encryption, policy, exclusions, metadata and retention. New encrypted repositories require a passphrase of at least 12 characters. File names/manifests and content are encrypted; each bounded packet is authenticated. There is no password-recovery backdoor.
+In **Backup & restore**, choose the source, repository, encryption settings, policy, exclusions, metadata options, and retention.
 
-Full, incremental and differential points are independently restorable. Incremental/differential points reuse authenticated content chunks. Retention removes old points and only unreferenced objects. Do not edit or copy repository files while a backup, restore or maintenance operation holds its lock.
+New encrypted repositories need a passphrase of at least 12 characters. File contents, filenames, and manifests are encrypted, and every packet is authenticated. Keep the passphrase separately; the application cannot recover it.
 
-Use VSS for consistent reads of open local files and application writers. Network repositories use the executing Windows account's existing share access; VSS does not snapshot a remote source. NTFS owner/DACL, streams, links, hardlinks and timestamps are retained when supported. A different target filesystem may not represent all NTFS metadata.
+Full, incremental, and differential restore points can each be restored independently. Incremental and differential points reuse authenticated content chunks. Retention removes old points and objects no longer referenced by the remaining points. Do not edit or copy repository files while an operation holds the repository lock.
 
-Load restore points, browse their entries, select files/folders or leave the selection empty for a complete restore. Restore into a new/empty folder, then inspect its verified content. Passphrase rotation rewraps the repository key; saved schedules must be updated with the new passphrase.
+Use VSS to read open local files and coordinate application writers. VSS does not snapshot a remote source. A network repository uses the executing Windows account's share access.
 
-Schedules support daily, weekly Sunday, hourly and logon execution. Logged-on-user jobs run with that user's access. Installed SYSTEM jobs can run before login, require administrator access and an app in Program Files, and need machine-account access to network shares. Secrets use Windows DPAPI and restricted job folders. The schedule panel runs, disables/enables and removes jobs, and shows their last recorded result.
+NTFS ownership, permissions, named streams, links, hardlinks, and timestamps are retained where supported. A different destination filesystem may not support all of that metadata.
 
-Uninstall removes the installed application's scheduled tasks and retains backup/preferences data. Recreate schedules after reinstalling.
+### Restore files
 
-Automation can create a schedule with `SoopaDriveTool.exe --schedule-create request.json result.json`. The request fields are `Source`, `Repository`, `Options` (`Encrypted`, `Exclusions`, `Policy`, `KeepLatest`, `PreserveMetadata`), `Vss`, `SystemAccount`, `Frequency`, `Time` (`HH:mm`) and `Passphrase`. Protect and remove the plaintext request after use. The result identifies the restricted job file; it does not contain the passphrase.
+Load the restore points and browse their entries. Select files/folders, or leave the selection empty to restore everything. Restore to a new or empty folder and inspect the result.
 
-## Back up or restore Windows and disk images
+Changing a repository passphrase rewraps its key. Update any saved schedules with the new passphrase.
 
-In **Clone & image → Protected images**, select offline raw capture or live VSS Windows capture. Use a repository and Windows-image scratch folder on another physical disk. Images share the protected repository format and can use full/incremental/differential restore points.
+### Schedule a backup
 
-Raw restore verifies the archive before opening the destination for writes, then reads back all restored sectors. The selected destination must be offline and fit the image. Read-only browsing makes a separate temporary VHD with fresh identifiers, verifies its bytes, and reattaches it read-only. This supports 512-byte raw images up to 2040 GiB. Detach the VHD before deleting it.
+Schedules can run daily, every Sunday, hourly, or at logon. A logged-on-user task runs with that user's access. An installed SYSTEM task can run before login and requires administrator access, an executable in Program Files, and suitable machine-account access to network shares.
 
-Export a Windows image's verified resources to an empty folder before extracting an individual relative path from its WIM. Full Windows restoration uses the native recovery environment.
+Secrets are protected with Windows DPAPI and restricted job folders. The schedule panel can run, enable, disable, and remove jobs, and shows their last recorded result.
 
-## Create and use recovery media
+Uninstall removes the app's scheduled tasks and retains backup and preference data. Recreate schedules after reinstalling.
 
-Install Microsoft's Windows ADK Deployment Tools and matching WinPE add-on. In **Recovery media**, choose an ISO destination and any signed storage/network driver folders. Build the ISO, then optionally write a selected USB data disk. The USB operation replaces that disk and verifies every copied file. Microsoft boot files come from your ADK installation.
+For automation, run `SoopaDriveTool.exe --schedule-create request.json result.json`. The request accepts `Source`, `Repository`, `Options` (`Encrypted`, `Exclusions`, `Policy`, `KeepLatest`, `PreserveMetadata`), `Vss`, `SystemAccount`, `Frequency`, `Time` (`HH:mm`), and `Passphrase`. The request contains plaintext secrets: protect it and remove it after use. The result identifies the restricted job file and does not contain the passphrase.
 
-Boot architecture-matched media and test that it sees the required disks. Keep images/passphrases on separate storage. The native app supports protected raw restore, Windows image restore to a fresh GPT/EFI/MSR/Windows/recovery layout, exact disk clone, verified overwrite, eligible ATA erase and UEFI boot repair. Review the destination and type its exact **DISK N** phrase. During a disk operation, shutdown is blocked.
+## Create or restore disk images
 
-Windows restoration verifies/decrypts its resources before preparing the destination. Its `restore-<snapshot ID>` staging folder contains plaintext Windows/recovery archives, even when the repository is encrypted. A failed restore retains this folder for retry; the next attempt checks every retained archive against the authenticated manifest before touching the destination. Incomplete or damaged archives require removing that staging folder and retrying. Successful restoration removes the staging folder. Treat retained archives as sensitive data and use suitably protected storage.
+Open **Clone & image → Protected images**. Choose offline raw capture or live Windows capture through VSS. Keep the repository and Windows-image scratch folder on another physical disk. Images use the encrypted repository format and support full, incremental, and differential restore points.
 
-UEFI repair first copies and hashes the original EFI files to an owned backup folder on the chosen Windows volume. When it finds a standard Windows RE image on that disk, it registers the image (or preserves an already registered location) and stages one-time activation on the next startup. Multiple recovery images require resolving the ambiguous layout first; a missing recovery image is reported explicitly. Shut down and independently boot the restored destination with the source disconnected, then verify Windows RE status.
+Raw restore verifies the archive before opening the destination for writing, then reads back every restored sector. The destination must be offline and large enough for the image.
+
+Read-only browsing creates a separate temporary VHD with new identifiers, verifies it, and reattaches it read-only. It supports 512-byte raw images up to 2040 GiB. Detach the VHD before deleting it.
+
+To extract individual files from a Windows image, export its verified resources to an empty folder, then select a relative path from the WIM. Restoring a complete Windows installation requires the recovery environment.
+
+## Create recovery media
+
+Install Microsoft's Windows ADK Deployment Tools and the matching WinPE add-on. In **Recovery media**, choose an ISO destination and any signed storage/network driver folders. Build the ISO, then optionally write it to a selected USB data disk. This replaces the USB disk's contents and verifies every copied file.
+
+Microsoft boot files come from your ADK installation. Use media that matches the Windows architecture and test that it boots and can access the required disks. Keep images and passphrases on separate storage.
+
+The recovery app supports encrypted raw restore, Windows image restore, exact disk clone, verified overwrite, eligible ATA erase, and UEFI boot repair. Review the destination and type its exact **DISK N** phrase. Shutdown is blocked while a disk operation is running.
+
+### Restore Windows
+
+Windows restoration creates a new GPT/EFI/MSR/Windows/recovery layout. It verifies and decrypts the image resources before preparing the destination.
+
+The repository's `restore-<snapshot ID>` staging folder contains **unencrypted Windows and recovery archives**, even for an encrypted backup. A failed restore retains this folder for another attempt. Before touching the destination, the next attempt checks every retained archive against the authenticated manifest. If an archive is incomplete or damaged, remove the staging folder and retry.
+
+Successful restoration removes the staging folder. Treat retained archives as sensitive data and protect the repository storage accordingly.
+
+### Repair UEFI boot files
+
+Repair first copies the original EFI files to a backup folder on the chosen Windows volume and verifies each copy against its source.
+
+If a standard WinRE image is found on the same disk, repair registers it or keeps its existing registration, then prepares activation for the next startup. Multiple possible recovery images must be resolved first; a missing image is reported.
+
+After restoration or repair, shut down and boot the destination independently with the source disconnected. Check Windows RE status as well as normal Windows startup.
 
 ## Recover partitions and files
 
-Open **Recovery inspector** and choose a physical disk or raw image. Lost-partition discovery reads NTFS/exFAT/FAT signatures and geometry. Applying a candidate or rebuilding primary GPT requires review and saves original table sectors. Sector editing retains original bytes and rejects a changed preview hash.
+Open **Recovery inspector** and select a physical disk or raw image. Lost-partition scanning reads NTFS, exFAT, and FAT signatures and geometry. Adding a candidate or rebuilding primary GPT requires review and saves the original partition-table sectors.
 
-Deleted NTFS recovery reads supported MFT records and data runs; FAT32 recovery reads supported deleted entries. Signature carving finds contiguous PNG/JPEG/PDF candidates. Preview/export to another disk and inspect the results. Reused clusters, fragmentation, compression and encryption can prevent recovery; a candidate is not a recovery guarantee.
+Sector edits save the original bytes and reject a preview whose hash has changed.
 
-## Measure, diagnose and erase
+Deleted-file recovery reads supported NTFS MFT records/data runs and FAT32 directory entries. Signature carving finds contiguous PNG, JPEG, and PDF candidates. Preview and export results to another disk. Reused clusters, fragmentation, compression, and encryption can prevent recovery.
 
-**Benchmark** runs standard or custom DiskSpd profiles with the chosen block size, queue depth, threads, access pattern and read mix. Compare like settings. VM speeds describe the virtual storage path and are not physical-drive performance claims.
+## Run benchmarks
 
-**Health** reads full available SMART attributes, error and self-test logs. Export JSON, CSV, text or printable HTML for reconditioning/resale records. Missing values stay unavailable; failing flags remain visible. Device self-tests run in firmware, can affect performance and must be checked later for actual results. Temperature history, read-surface maps and topology are separate views.
+**Benchmark** runs standard or custom DiskSpd profiles. Choose the block size, queue depth, thread count, access pattern, and read percentage. Use matching settings when comparing runs.
 
-Quick reset removes partition metadata and leaves file data recoverable. Thorough overwrite verifies every pass. Free-space overwrite retains allocated files and a 256 MiB reserve. NVMe crypto/block erase and WinPE ATA erase require eligible direct devices and driver/firmware support. Controller completion does not establish certified erasure of remapped cells.
+VM results describe the virtual storage path; they do not establish physical-drive performance.
 
-Activity journals and interrupted-run records are local. Review checkpoints and the actual disk after an interruption; disk writes never resume automatically. See [validation and hardware limits](VALIDATION-0.3.0.md).
+## Check drive health
+
+**Health** reads the SMART attributes, error logs, and self-test history exposed by the device. Export JSON, CSV, text, or printable HTML for maintenance or resale records. Missing data is marked unavailable, and reported failures remain visible.
+
+Device self-tests run in firmware and may affect performance. Check the later result to confirm completion. Temperature history, read-surface maps, and storage topology are separate views.
+
+## Wipe a disk or free space
+
+Quick reset removes partition metadata and leaves file contents recoverable. Disk overwrite modes verify each pass. Free-space overwrite preserves allocated files and leaves a 256 MiB reserve.
+
+NVMe crypto/block erase and WinPE ATA erase require an eligible direct device and driver/firmware support. A controller's successful response does not certify erasure of remapped cells.
+
+## Review interrupted operations
+
+Activity journals and interruption records stay local. After an interruption, inspect the actual disk and any saved checkpoints. Disk writes never resume automatically. See [test results and remaining limits](VALIDATION-0.3.0.md).
