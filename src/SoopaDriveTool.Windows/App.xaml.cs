@@ -12,6 +12,7 @@ public partial class App:Application
         try
         {
             Preferences.Load();
+            if(e.Args.Length==1&&e.Args[0]=="--remove-installed-schedules"){await BackupScheduleService.RemoveInstalledSchedulesAsync();Shutdown(0);return;}
             if(e.Args.Length==3&&e.Args[0]=="--schedule-create")
             {
                 BackupEngine.RejectExistingAncestorLinks(e.Args[1]);BackupEngine.RejectExistingAncestorLinks(e.Args[2]);

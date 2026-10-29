@@ -53,6 +53,13 @@ public static class BackupScheduleService
     public static async Task SetEnabledAsync(VaultBackupJob job,bool enabled){Validate(job);await TaskCommand(["/Change","/TN","SoopaDriveTool-"+job.Id,enabled?"/ENABLE":"/DISABLE"]);await Data.SaveAsync(JobPath(job),job with{Enabled=enabled});}
     public static async Task RunNowAsync(VaultBackupJob job){Validate(job);await TaskCommand(["/Run","/TN","SoopaDriveTool-"+job.Id]);}
     public static async Task DeleteAsync(VaultBackupJob job){Validate(job);await TaskCommand(["/Delete","/TN","SoopaDriveTool-"+job.Id,"/F"]);File.Delete(JobPath(job));}
+    public static async Task RemoveInstalledSchedulesAsync()
+    {
+        if(!StorageService.IsAdmin)throw new UnauthorizedAccessException("Administrator access is required to remove installed backup schedules.");
+        string executable=Environment.ProcessPath??throw new IOException("Cannot identify the installed application.");
+        string encoded=Convert.ToBase64String(Encoding.UTF8.GetBytes(Path.GetFullPath(executable)));
+        await StorageService.PowerShellAsync("$exe=[Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('"+encoded+"'));foreach($task in @(Get-ScheduledTask -TaskName 'SoopaDriveTool-*' -ErrorAction SilentlyContinue)){if(@($task.Actions|Where-Object {$_.Execute.Trim([char]34) -ieq $exe}).Count -gt 0){$task|Unregister-ScheduledTask -Confirm:$false -ErrorAction Stop}}");
+    }
     public static async Task RunJobAsync(string path)
     {
         path=Path.GetFullPath(path);BackupEngine.RejectExistingAncestorLinks(path);if(new FileInfo(path).Length>1024*1024)throw new IOException("Invalid backup job length.");var job=JsonSerializer.Deserialize<VaultBackupJob>(await File.ReadAllTextAsync(path),Data.Json)??throw new IOException("Missing backup job.");Validate(job);if(path!=Path.GetFullPath(JobPath(job)))throw new IOException("Job is outside the protected schedule folder.");

@@ -52,3 +52,5 @@ Name: "{group}\SoopaDriveTool"; Filename: "{app}\SoopaDriveTool.exe"
 Name: "{autodesktop}\SoopaDriveTool"; Filename: "{app}\SoopaDriveTool.exe"; Tasks: desktopicon
 [Tasks]
 Name: "desktopicon"; Description: "Create a desktop shortcut"; GroupDescription: "Shortcuts:"; Flags: unchecked
+[UninstallRun]
+Filename: "{app}\SoopaDriveTool.exe"; Parameters: "--remove-installed-schedules"; Flags: runhidden waituntilterminated; RunOnceId: "RemoveInstalledBackupSchedules"
