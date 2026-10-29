@@ -40,6 +40,8 @@ Load restore points, browse their entries, select files/folders or leave the sel
 
 Schedules support daily, weekly Sunday, hourly and logon execution. Logged-on-user jobs run with that user's access. Installed SYSTEM jobs can run before login, require administrator access and an app in Program Files, and need machine-account access to network shares. Secrets use Windows DPAPI and restricted job folders. The schedule panel runs, disables/enables and removes jobs, and shows their last recorded result.
 
+Uninstall removes the installed application's scheduled tasks and retains backup/preferences data. Recreate schedules after reinstalling.
+
 Automation can create a schedule with `SoopaDriveTool.exe --schedule-create request.json result.json`. The request fields are `Source`, `Repository`, `Options` (`Encrypted`, `Exclusions`, `Policy`, `KeepLatest`, `PreserveMetadata`), `Vss`, `SystemAccount`, `Frequency`, `Time` (`HH:mm`) and `Passphrase`. Protect and remove the plaintext request after use. The result identifies the restricted job file; it does not contain the passphrase.
 
 ## Back up or restore Windows and disk images
@@ -58,7 +60,7 @@ Boot architecture-matched media and test that it sees the required disks. Keep i
 
 Windows restoration verifies/decrypts its resources before preparing the destination. Its `restore-<snapshot ID>` staging folder contains plaintext Windows/recovery archives, even when the repository is encrypted. A failed restore retains this folder for retry; the next attempt checks every retained archive against the authenticated manifest before touching the destination. Incomplete or damaged archives require removing that staging folder and retrying. Successful restoration removes the staging folder. Treat retained archives as sensitive data and use suitably protected storage.
 
-UEFI repair first copies and hashes the original EFI files to an owned backup folder on the chosen Windows volume. Shut down and independently boot the restored destination with the source disconnected.
+UEFI repair first copies and hashes the original EFI files to an owned backup folder on the chosen Windows volume. When it finds a standard Windows RE image on that disk, it registers the image (or preserves an already registered location) and stages one-time activation on the next startup. Multiple recovery images require resolving the ambiguous layout first; a missing recovery image is reported explicitly. Shut down and independently boot the restored destination with the source disconnected, then verify Windows RE status.
 
 ## Recover partitions and files
 

@@ -1,0 +1,120 @@
+{
+  "Schema": 1,
+  "Version": "0.3.0",
+  "VerifiedUtc": "2026-10-29T11:52:42.628834+00:00",
+  "CompiledSourceCommit": "f6419139124b98e08b4f10445d40a8de88c9d8e0",
+  "HostedCI": {
+    "conclusion": "success",
+    "headSha": "f6419139124b98e08b4f10445d40a8de88c9d8e0",
+    "status": "completed",
+    "url": "https://github.com/eMacTh3Creator/SoopaDriveTool/actions/runs/40865256351"
+  },
+  "Packages": [
+    {
+      "Name": "SoopaDriveTool-0.3.0-arm64-Portable.zip",
+      "Bytes": 65862519,
+      "Sha256": "914951e15ee00ff09d95b74916ec8669a02ecf830f0e6d8be806ce1401feed5f"
+    },
+    {
+      "Name": "SoopaDriveTool-0.3.0-arm64-Setup.exe",
+      "Bytes": 56704156,
+      "Sha256": "7dfbd3c9f8136311db3d4f0211ecff70d4375693d4855457afe00fcc2546d6f5"
+    },
+    {
+      "Name": "SoopaDriveTool-0.3.0-x64-Portable.zip",
+      "Bytes": 70949010,
+      "Sha256": "0a89b3d54214f0d18555f8b2f77fffc2a3d030f65bf7d4fee53570bd902292f7"
+    },
+    {
+      "Name": "SoopaDriveTool-0.3.0-x64-Setup.exe",
+      "Bytes": 61996177,
+      "Sha256": "448b437511448f179a014ced490919c0a77bcbd0a2f19a3916b1a3b4a356d4c4"
+    }
+  ],
+  "Checks": {
+    "Core": 53,
+    "WindowsFullIntegration": 125,
+    "WindowsAdvanced": 85,
+    "WindowsMigration": 81,
+    "NativeArchiveCompatibility": 77,
+    "Vss": 78,
+    "SystemStoragePermissions": 78,
+    "DynamicPreparation": 80,
+    "DynamicAfterRestart": 74,
+    "CountsIncludeSharedBaselines": true
+  },
+  "WindowsBoots": {
+    "LiveVssClone": {
+      "SourceGiB": 256,
+      "DestinationGiB": 192,
+      "IndependentColdBoots": 2,
+      "SecureBoot": true,
+      "SourceDisconnected": true,
+      "PasswordProfileDataStreamsAclsRegistryRuntimeAndApp": true
+    },
+    "ProtectedWindowsImageRestore": {
+      "CapturedResourceGiB": 109.74,
+      "DestinationGiB": 192,
+      "IndependentColdBootsBeforeBootRepair": 2,
+      "SecureBoot": true,
+      "SourceAndRepositoryDisconnected": true,
+      "AutomaticWinreActivation": true,
+      "OneTimeServiceRemoved": true,
+      "HelperRemovedOnSecondBoot": true
+    },
+    "UefiRepair": {
+      "EfiLaunchersDeliberatelyRemovedOnOwnedSpare": true,
+      "IndependentColdBoots": 2,
+      "SecureBoot": true,
+      "EfiBackupStoreReadable": true,
+      "NativeEfiCopyHashChecksPassed": true,
+      "RebuiltSignedLoadersMatchOriginal": true,
+      "WinreEnabled": true,
+      "RepeatedHelperStaging": true,
+      "UnrelatedPendingOperationPreserved": true,
+      "OneTimeServiceRemoved": true,
+      "HelperRemovedOnSecondBoot": true
+    }
+  },
+  "RecoveryMedia": {
+    "NativeNoticesByteIdentical": true,
+    "Architecture": "ARM64",
+    "SourceCommit": "f641913",
+    "VerifiedUtc": "2026-10-29T11:32:34.5464103Z",
+    "NativeRecoveryMatchesRelease": true,
+    "NativeHelperMatchesRelease": true,
+    "MicrosoftAdkWinPeMedia": true
+  },
+  "Scheduling": {
+    "InstalledSystemEncryptedVssSmbBackupAndRestore": true,
+    "DpapiSecret": true,
+    "FileStreamOwnerAndDaclPreserved": true,
+    "PrecreatedUserOwnedParentRejected": true,
+    "OrdinaryUserCannotEditSystemJob": true,
+    "SecureSystemTaskVssBackupCompleted": true,
+    "TaskRemovedOnUninstall": true
+  },
+  "Upgrade": {
+    "From": "0.2.1",
+    "BehavioralCandidateCommit": "35c4f40",
+    "PreferencesPreserved": true,
+    "HistoryFilesPreserved": 35,
+    "LegacyBackupVerifiedAndRestored": true,
+    "RetainedSystemJobRan": true,
+    "TaskRemovedOnUninstall": true
+  },
+  "UI": {
+    "PrimaryWorkspacesRendered": 10,
+    "LightAndDarkOverviewAndBenchmarkVisuallyChecked": true,
+    "ScreenshotsLabeledIllustrative": true
+  },
+  "Unsigned": true,
+  "UnqualifiedHardware": [
+    "Physical firmware erase coverage",
+    "x64 recovery boots",
+    "USB/4Kn/controller behavior",
+    "Disconnect and power loss",
+    "Dissimilar hardware migration",
+    "Complete assistive technology and high DPI coverage"
+  ]
+}

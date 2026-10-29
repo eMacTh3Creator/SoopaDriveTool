@@ -1,0 +1,20 @@
+{
+  "WimEngineMachine": "0x8664",
+  "Uninstall": "Passed",
+  "EngineMachine": "0x8664",
+  "SmartSourceIncluded": true,
+  "Runtime": "win-x64",
+  "WimLibraryMachine": "0x8664",
+  "InstalledRender": "Passed",
+  "Installer": "Passed",
+  "SnapshotHostMachine": "0x8664",
+  "WimSourceAndLicensesIncluded": true,
+  "SmartCollectorMachine": "0x8664",
+  "Utc": "2026-10-29T11:36:33.9844315Z",
+  "VersionedReleaseGuideIncluded": true,
+  "NativeLicensesIncluded": true,
+  "AppMachine": "0x8664",
+  "RecoveryHostMachine": "0x8664",
+  "PortableCriticalResourcesMatchInstalled": true,
+  "InstallerSha256": "448b437511448f179a014ced490919c0a77bcbd0a2f19a3916b1a3b4a356d4c4"
+}

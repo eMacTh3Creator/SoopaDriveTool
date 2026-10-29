@@ -1,0 +1,20 @@
+{
+  "WimEngineMachine": "0xaa64",
+  "Uninstall": "Passed",
+  "EngineMachine": "0xaa64",
+  "SmartSourceIncluded": true,
+  "Runtime": "win-arm64",
+  "WimLibraryMachine": "0xaa64",
+  "InstalledRender": "Passed",
+  "Installer": "Passed",
+  "SnapshotHostMachine": "0xaa64",
+  "WimSourceAndLicensesIncluded": true,
+  "SmartCollectorMachine": "0x8664",
+  "Utc": "2026-10-29T11:36:24.0036270Z",
+  "VersionedReleaseGuideIncluded": true,
+  "NativeLicensesIncluded": true,
+  "AppMachine": "0xaa64",
+  "RecoveryHostMachine": "0xaa64",
+  "PortableCriticalResourcesMatchInstalled": true,
+  "InstallerSha256": "7dfbd3c9f8136311db3d4f0211ecff70d4375693d4855457afe00fcc2546d6f5"
+}

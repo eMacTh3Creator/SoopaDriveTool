@@ -1,0 +1,838 @@
+Windows full integration, native archive and VSS
+================================================
+PASS: Vault encryption is configured without persisting a password
+PASS: Repository locking rejects a concurrent operation
+PASS: Empty directories are retained and excluded trees are skipped
+PASS: Large files use bounded stable chunks
+PASS: An unchanged incremental writes no new data chunks
+PASS: Differential snapshot is based on the full restore point
+PASS: Separate differential points own changed data independently of prior differentials
+PASS: Encrypted restore preserves binary content and empty folders
+PASS: Selective restore exports only the selected files
+PASS: Restore refuses to overwrite an existing destination
+PASS: Retention removes expired restore points and their unreferenced chunks
+PASS: The retained incremental remains complete after its original base manifest is pruned
+PASS: Authenticated verification rejects corrupted data packets
+PASS: Passphrase rotation rejects the old passphrase without rewriting data
+PASS: A rotated passphrase opens the retained restore point
+PASS: Encrypted manifests conceal file names and source metadata
+PASS: Repository configuration contains no plaintext passphrase
+PASS: Wrong passphrases are rejected before repository access
+PASS: Unencrypted compressed repositories remain an explicit supported choice
+PASS: Backup rejects source/repository tree overlap
+PASS: GPT writer produces checksummed primary/backup tables with stable partition identities
+PASS: A damaged primary GPT is recovered from its independently validated backup
+PASS: Backup GPT reconstruction restores a valid primary header and table
+PASS: Nonempty GPT-to-MBR conversion preserves data sectors
+PASS: Nonempty MBR-to-GPT conversion preserves data sectors
+PASS: Partition move plans retain the unique volume identity
+PASS: Move planning rejects a destination outside the disk
+PASS: Primary-to-logical conversion constructs a real bounded EBR chain
+PASS: Logical-to-primary conversion removes the extended-container dependency
+PASS: Duplicate GPT identifiers are rejected before metadata writes
+PASS: Rejected table edits preserve existing disk metadata
+PASS: Cyclic extended-partition links are rejected without following unbounded offsets
+PASS: Overlap-safe right move resumes after pending without losing data
+PASS: Overlap-safe right move resumes after written without losing data
+PASS: Overlap-safe right move resumes after checkpoint without losing data
+PASS: Overlap-safe right move resumes after prepared without losing data
+PASS: Overlap-safe right move resumes after metadata without losing data
+PASS: Overlap-safe left move resumes after pending without losing data
+PASS: Overlap-safe left move resumes after written without losing data
+PASS: Overlap-safe left move resumes after checkpoint without losing data
+PASS: Overlap-safe left move resumes after prepared without losing data
+PASS: Overlap-safe left move resumes after metadata without losing data
+PASS: Lost NTFS discovery validates matching boot sectors and disk bounds
+PASS: Reviewed partition recovery constructs a bounded replacement entry
+PASS: Partition recovery rejects candidates overlapping an existing partition
+PASS: Sector editing retains original bytes and verifies the replacement
+PASS: Sector editing rejects stale preview hashes before writing
+PASS: Signature carving identifies a bounded contiguous PDF candidate
+PASS: Recovery export reads the selected source extents without changing them
+PASS: Recovery export refuses to overwrite an existing file
+PASS: Read surface scanning reports every region without writing
+PASS: Protected raw image stores compressed chunks and restores every sector exactly
+PASS: Protected image points reuse the prior authenticated chunk generation
+ALL 53 CORE CHECKS PASSED
+PASS: Valid data partition operation
+PASS: Boot disk is protected
+PASS: Disk replacement rejected
+PASS: Layout changes rejected
+PASS: BitLocker changes rejected
+PASS: Unknown encryption rejected
+PASS: Online raw operations rejected
+PASS: System drive letter rejected
+PASS: Unknown operations rejected
+PASS: Missing partition selection rejected
+PASS: Control characters rejected
+PASS: Mismatched clone capacity rejected
+PASS: Snapshot SHA-256 verification
+PASS: File restore content
+PASS: Binary restore content
+PASS: Unchanged content deduplicated
+PASS: New content produces one new object
+PASS: Earlier snapshot remains verifiable
+PASS: Existing restore files protected
+PASS: Nested repository rejected
+PASS: Unsafe path rejected: ../evil
+PASS: Unsafe path rejected: /root
+PASS: Unsafe path rejected: a/../b
+PASS: Unsafe path rejected: a\b
+PASS: Unsafe path rejected: C:/evil
+PASS: Unsafe path rejected: a:stream
+PASS: Unsafe path rejected: CON.txt
+PASS: Unsafe path rejected: file.
+PASS: Unsafe path rejected: a//b
+PASS: Corrupt compressed object rejected
+PASS: Malicious manifest rejected before restore
+PASS: MBR partition decode
+PASS: Invalid MBR signature rejected
+PASS: Out-of-range MBR rejected
+PASS: CRC32 reference vector
+PASS: Valid GPT header/table CRC and partition decode
+PASS: Corrupt GPT header CRC rejected
+PASS: Corrupt GPT table CRC rejected
+PASS: DiskSpd unit conversion and p99 parsing
+PASS: WIM scanning exposes measured file counts without inventing a percentage
+PASS: WIM progress survives split pipe reads and includes the integrity-table phase
+PASS: WIM integrity-table verification does not prematurely finish file-resource verification
+PASS: Malformed and regressing tool progress cannot advance or rewind a phase
+PASS: DISM bracketed progress remains supported across partial reads
+PASS: Recovery registration retains its source partition offset and relative path
+PASS: Recovery registration rejects paths escaping the source volume
+PASS: Recovery XML rejects external entities
+PASS: Large recovery images reserve at least 300 MiB of servicing space
+PASS: Queue creates a virtual partition after two deletions
+PASS: Dependent rename targets the newly created partition
+PASS: Queue projection does not mutate the real baseline
+PASS: Planner rejects an overlapping/out-of-capacity allocation
+PASS: External rename is detected between steps
+PASS: Deletion transition verifies unaffected partitions
+PASS: Unexpected unrelated geometry change stops a chain
+PASS: Elevation can add native hardware binding to a standard-user plan without discarding it
+PASS: A changed native device descriptor stops an already bound plan
+PASS: Filesystem-aware clone permits a smaller destination with sufficient used capacity
+PASS: Byte-exact mode does not silently become a smaller-target clone
+PASS: Filesystem-aware cloning blocks the running system source
+PASS: Quick metadata reset can be queued for an online data disk
+PASS: Quick reset projection removes layout without claiming secure erasure
+PASS: ATA raw attributes and nonzero health bitfields are retained
+PASS: Detailed ATA error-log fields are preserved
+PASS: SMART export retains original text and complete JSON
+PASS: Failing NVMe media/wear counters are exported without suppressing health failures
+PASS: Printable SMART HTML escapes device-supplied content
+PASS: An explicit SMART failure stays visible even if detailed attributes are unavailable
+PASS: Unsupported VM/USB SMART is never reported as healthy
+PASS: Unsupported commands produce an explicitly partial report
+PASS: SCSI/SAS defect and error counters remain in the full report
+PASS: SMART CSV neutralizes device-supplied spreadsheet formulas
+PASS: Chain progress combines completed steps and measured active-step progress
+PASS: Live storage inventory
+PASS: Backend blocks system disk mutations
+PASS: Disposable VHD identity
+PASS: Disposable VHD identity
+PASS: Initialize GPT through backend
+PASS: Create + format NTFS partition
+PASS: 1 MiB partition alignment
+PASS: Resize partition to 128 MiB
+PASS: Resize preserves file content
+PASS: Volume rename
+PASS: Filesystem scan
+PASS: Live native DiskSpd real-world workloads
+PASS: Benchmark temporary data removed
+PASS: Running benchmark can be cancelled
+PASS: Cancelled benchmark releases file handles and removes temporary data
+PASS: Verified full raw disk image
+PASS: Raw clone and full target read-back verification
+PASS: Zero-overwrite and full read-back verification
+PASS: Raw image restore and full read-back verification
+PASS: Image restore recovers original file bytes
+PASS: Delete data partition
+PASS: Create exFAT partition
+PASS: Extended destructive tests are restricted to owned VHDs
+PASS: Apply executes delete + delete + create + dependent rename on a real VHD
+PASS: Activity records current phases, completed steps and verified outcomes
+PASS: Real external layout/label change stops a reviewed queue before writing
+PASS: Preflight failure is recorded in the activity run
+PASS: Verified WIM capture and DISM apply preserve source file content
+PASS: Filesystem clone restores the source read-only state
+PASS: WIM capture and DISM apply phases are visible to activity
+PASS: Activity receives actual DISM bracketed progress, not just a stage-start marker
+PASS: WIM capture and DISM apply preserve NTFS alternate data streams
+PASS: WIM capture and DISM apply preserve the file owner and DACL
+PASS: WIM capture and DISM apply preserve NTFS hardlinks
+PASS: Captured WIM resources are verified before destination preparation
+PASS: Windows-aware mode rejects an ordinary data volume before clearing the destination
+PASS: Rejected OS clone preserves destination layout
+PASS: Quick wipe removes partition metadata and reports RAW state
+PASS: Thorough Random overwrite reports progress and verifies every pass
+PASS: Thorough ThreePass overwrite reports progress and verifies every pass
+PASS: UEFI layout check uses its own disposable VHD
+PASS: Windows-aware destination builds actual GPT / EFI / MSR / NTFS layout
+PASS: Recovery destination honors image-dependent capacity
+PASS: Recovery discovery reads the selected disk's hidden partition without assigning a drive letter
+PASS: Offline Windows drive letter and volume aliases are remapped to the destination identifier
+PASS: Offline remap preserves unrelated drive mappings
+PASS: Offline remap leaves the host mapping registry and source hive unchanged
+PASS: Destination registry hive is unloaded after remapping
+PASS: BCDBoot writes a real BCD store only to the explicit disposable EFI target
+PASS: Explicit-target BCDBoot preserves the host firmware boot entries
+PASS: Bundled smartctl runs on Windows ARM/x64 and returns a device/unsupported report
+PASS: Disposable VHDs detached; original disk count restored
+ALL 125 CHECKS PASSED
+PASS: Valid data partition operation
+PASS: Boot disk is protected
+PASS: Disk replacement rejected
+PASS: Layout changes rejected
+PASS: BitLocker changes rejected
+PASS: Unknown encryption rejected
+PASS: Online raw operations rejected
+PASS: System drive letter rejected
+PASS: Unknown operations rejected
+PASS: Missing partition selection rejected
+PASS: Control characters rejected
+PASS: Mismatched clone capacity rejected
+PASS: Snapshot SHA-256 verification
+PASS: File restore content
+PASS: Binary restore content
+PASS: Unchanged content deduplicated
+PASS: New content produces one new object
+PASS: Earlier snapshot remains verifiable
+PASS: Existing restore files protected
+PASS: Nested repository rejected
+PASS: Unsafe path rejected: ../evil
+PASS: Unsafe path rejected: /root
+PASS: Unsafe path rejected: a/../b
+PASS: Unsafe path rejected: a\b
+PASS: Unsafe path rejected: C:/evil
+PASS: Unsafe path rejected: a:stream
+PASS: Unsafe path rejected: CON.txt
+PASS: Unsafe path rejected: file.
+PASS: Unsafe path rejected: a//b
+PASS: Corrupt compressed object rejected
+PASS: Malicious manifest rejected before restore
+PASS: MBR partition decode
+PASS: Invalid MBR signature rejected
+PASS: Out-of-range MBR rejected
+PASS: CRC32 reference vector
+PASS: Valid GPT header/table CRC and partition decode
+PASS: Corrupt GPT header CRC rejected
+PASS: Corrupt GPT table CRC rejected
+PASS: DiskSpd unit conversion and p99 parsing
+PASS: WIM scanning exposes measured file counts without inventing a percentage
+PASS: WIM progress survives split pipe reads and includes the integrity-table phase
+PASS: WIM integrity-table verification does not prematurely finish file-resource verification
+PASS: Malformed and regressing tool progress cannot advance or rewind a phase
+PASS: DISM bracketed progress remains supported across partial reads
+PASS: Recovery registration retains its source partition offset and relative path
+PASS: Recovery registration rejects paths escaping the source volume
+PASS: Recovery XML rejects external entities
+PASS: Large recovery images reserve at least 300 MiB of servicing space
+PASS: Queue creates a virtual partition after two deletions
+PASS: Dependent rename targets the newly created partition
+PASS: Queue projection does not mutate the real baseline
+PASS: Planner rejects an overlapping/out-of-capacity allocation
+PASS: External rename is detected between steps
+PASS: Deletion transition verifies unaffected partitions
+PASS: Unexpected unrelated geometry change stops a chain
+PASS: Elevation can add native hardware binding to a standard-user plan without discarding it
+PASS: A changed native device descriptor stops an already bound plan
+PASS: Filesystem-aware clone permits a smaller destination with sufficient used capacity
+PASS: Byte-exact mode does not silently become a smaller-target clone
+PASS: Filesystem-aware cloning blocks the running system source
+PASS: Quick metadata reset can be queued for an online data disk
+PASS: Quick reset projection removes layout without claiming secure erasure
+PASS: ATA raw attributes and nonzero health bitfields are retained
+PASS: Detailed ATA error-log fields are preserved
+PASS: SMART export retains original text and complete JSON
+PASS: Failing NVMe media/wear counters are exported without suppressing health failures
+PASS: Printable SMART HTML escapes device-supplied content
+PASS: An explicit SMART failure stays visible even if detailed attributes are unavailable
+PASS: Unsupported VM/USB SMART is never reported as healthy
+PASS: Unsupported commands produce an explicitly partial report
+PASS: SCSI/SAS defect and error counters remain in the full report
+PASS: SMART CSV neutralizes device-supplied spreadsheet formulas
+PASS: Chain progress combines completed steps and measured active-step progress
+PASS: Native recovery independently verifies tiny, empty, compressed multi-chunk files, streams and hardlinks
+PASS: Native recovery rejects incorrect passphrases before exporting data
+PASS: Native recovery rejects a tampered AES-GCM object
+PASS: Native recovery also verifies explicitly unencrypted compressed repositories
+ALL 77 CHECKS PASSED
+PASS: Valid data partition operation
+PASS: Boot disk is protected
+PASS: Disk replacement rejected
+PASS: Layout changes rejected
+PASS: BitLocker changes rejected
+PASS: Unknown encryption rejected
+PASS: Online raw operations rejected
+PASS: System drive letter rejected
+PASS: Unknown operations rejected
+PASS: Missing partition selection rejected
+PASS: Control characters rejected
+PASS: Mismatched clone capacity rejected
+PASS: Snapshot SHA-256 verification
+PASS: File restore content
+PASS: Binary restore content
+PASS: Unchanged content deduplicated
+PASS: New content produces one new object
+PASS: Earlier snapshot remains verifiable
+PASS: Existing restore files protected
+PASS: Nested repository rejected
+PASS: Unsafe path rejected: ../evil
+PASS: Unsafe path rejected: /root
+PASS: Unsafe path rejected: a/../b
+PASS: Unsafe path rejected: a\b
+PASS: Unsafe path rejected: C:/evil
+PASS: Unsafe path rejected: a:stream
+PASS: Unsafe path rejected: CON.txt
+PASS: Unsafe path rejected: file.
+PASS: Unsafe path rejected: a//b
+PASS: Corrupt compressed object rejected
+PASS: Malicious manifest rejected before restore
+PASS: MBR partition decode
+PASS: Invalid MBR signature rejected
+PASS: Out-of-range MBR rejected
+PASS: CRC32 reference vector
+PASS: Valid GPT header/table CRC and partition decode
+PASS: Corrupt GPT header CRC rejected
+PASS: Corrupt GPT table CRC rejected
+PASS: DiskSpd unit conversion and p99 parsing
+PASS: WIM scanning exposes measured file counts without inventing a percentage
+PASS: WIM progress survives split pipe reads and includes the integrity-table phase
+PASS: WIM integrity-table verification does not prematurely finish file-resource verification
+PASS: Malformed and regressing tool progress cannot advance or rewind a phase
+PASS: DISM bracketed progress remains supported across partial reads
+PASS: Recovery registration retains its source partition offset and relative path
+PASS: Recovery registration rejects paths escaping the source volume
+PASS: Recovery XML rejects external entities
+PASS: Large recovery images reserve at least 300 MiB of servicing space
+PASS: Queue creates a virtual partition after two deletions
+PASS: Dependent rename targets the newly created partition
+PASS: Queue projection does not mutate the real baseline
+PASS: Planner rejects an overlapping/out-of-capacity allocation
+PASS: External rename is detected between steps
+PASS: Deletion transition verifies unaffected partitions
+PASS: Unexpected unrelated geometry change stops a chain
+PASS: Elevation can add native hardware binding to a standard-user plan without discarding it
+PASS: A changed native device descriptor stops an already bound plan
+PASS: Filesystem-aware clone permits a smaller destination with sufficient used capacity
+PASS: Byte-exact mode does not silently become a smaller-target clone
+PASS: Filesystem-aware cloning blocks the running system source
+PASS: Quick metadata reset can be queued for an online data disk
+PASS: Quick reset projection removes layout without claiming secure erasure
+PASS: ATA raw attributes and nonzero health bitfields are retained
+PASS: Detailed ATA error-log fields are preserved
+PASS: SMART export retains original text and complete JSON
+PASS: Failing NVMe media/wear counters are exported without suppressing health failures
+PASS: Printable SMART HTML escapes device-supplied content
+PASS: An explicit SMART failure stays visible even if detailed attributes are unavailable
+PASS: Unsupported VM/USB SMART is never reported as healthy
+PASS: Unsupported commands produce an explicitly partial report
+PASS: SCSI/SAS defect and error counters remain in the full report
+PASS: SMART CSV neutralizes device-supplied spreadsheet formulas
+PASS: Chain progress combines completed steps and measured active-step progress
+PASS: VSS prepares application writers and verifies their status
+PASS: VSS snapshot reads remain stable while live source content changes
+PASS: Encrypted file backup reads the consistent VSS view and restores its original bytes
+PASS: VSS completes the copy backup and verifies final writer states
+PASS: The requester deletes only its own snapshot after completion
+ALL 78 CHECKS PASSED
+
+Advanced partition and metadata
+===============================
+PASS: Valid data partition operation
+PASS: Boot disk is protected
+PASS: Disk replacement rejected
+PASS: Layout changes rejected
+PASS: BitLocker changes rejected
+PASS: Unknown encryption rejected
+PASS: Online raw operations rejected
+PASS: System drive letter rejected
+PASS: Unknown operations rejected
+PASS: Missing partition selection rejected
+PASS: Control characters rejected
+PASS: Mismatched clone capacity rejected
+PASS: Snapshot SHA-256 verification
+PASS: File restore content
+PASS: Binary restore content
+PASS: Unchanged content deduplicated
+PASS: New content produces one new object
+PASS: Earlier snapshot remains verifiable
+PASS: Existing restore files protected
+PASS: Nested repository rejected
+PASS: Unsafe path rejected: ../evil
+PASS: Unsafe path rejected: /root
+PASS: Unsafe path rejected: a/../b
+PASS: Unsafe path rejected: a\b
+PASS: Unsafe path rejected: C:/evil
+PASS: Unsafe path rejected: a:stream
+PASS: Unsafe path rejected: CON.txt
+PASS: Unsafe path rejected: file.
+PASS: Unsafe path rejected: a//b
+PASS: Corrupt compressed object rejected
+PASS: Malicious manifest rejected before restore
+PASS: MBR partition decode
+PASS: Invalid MBR signature rejected
+PASS: Out-of-range MBR rejected
+PASS: CRC32 reference vector
+PASS: Valid GPT header/table CRC and partition decode
+PASS: Corrupt GPT header CRC rejected
+PASS: Corrupt GPT table CRC rejected
+PASS: DiskSpd unit conversion and p99 parsing
+PASS: WIM scanning exposes measured file counts without inventing a percentage
+PASS: WIM progress survives split pipe reads and includes the integrity-table phase
+PASS: WIM integrity-table verification does not prematurely finish file-resource verification
+PASS: Malformed and regressing tool progress cannot advance or rewind a phase
+PASS: DISM bracketed progress remains supported across partial reads
+PASS: Recovery registration retains its source partition offset and relative path
+PASS: Recovery registration rejects paths escaping the source volume
+PASS: Recovery XML rejects external entities
+PASS: Large recovery images reserve at least 300 MiB of servicing space
+PASS: Queue creates a virtual partition after two deletions
+PASS: Dependent rename targets the newly created partition
+PASS: Queue projection does not mutate the real baseline
+PASS: Planner rejects an overlapping/out-of-capacity allocation
+PASS: External rename is detected between steps
+PASS: Deletion transition verifies unaffected partitions
+PASS: Unexpected unrelated geometry change stops a chain
+PASS: Elevation can add native hardware binding to a standard-user plan without discarding it
+PASS: A changed native device descriptor stops an already bound plan
+PASS: Filesystem-aware clone permits a smaller destination with sufficient used capacity
+PASS: Byte-exact mode does not silently become a smaller-target clone
+PASS: Filesystem-aware cloning blocks the running system source
+PASS: Quick metadata reset can be queued for an online data disk
+PASS: Quick reset projection removes layout without claiming secure erasure
+PASS: ATA raw attributes and nonzero health bitfields are retained
+PASS: Detailed ATA error-log fields are preserved
+PASS: SMART export retains original text and complete JSON
+PASS: Failing NVMe media/wear counters are exported without suppressing health failures
+PASS: Printable SMART HTML escapes device-supplied content
+PASS: An explicit SMART failure stays visible even if detailed attributes are unavailable
+PASS: Unsupported VM/USB SMART is never reported as healthy
+PASS: Unsupported commands produce an explicitly partial report
+PASS: SCSI/SAS defect and error counters remain in the full report
+PASS: SMART CSV neutralizes device-supplied spreadsheet formulas
+PASS: Chain progress combines completed steps and measured active-step progress
+PASS: Advanced tests bind a retained handle to an owned virtual device descriptor
+PASS: Real overlapping NTFS partition move retains files and mounts at its new offset
+PASS: Nonempty GPT-to-MBR conversion preserves a real NTFS volume
+PASS: Primary-to-logical conversion mounts the original NTFS data through a real EBR
+PASS: Logical-to-primary and MBR-to-GPT preserve the original file payload
+PASS: Protected vault restores real NTFS alternate streams
+PASS: Protected vault restores hardlink relationships
+PASS: Protected vault preserves the original file owner and DACL
+PASS: Native recovery host independently decrypts and verifies managed AES-GCM/Brotli backup objects
+PASS: NTFS recovery finds a real deleted MFT record on an owned disk
+PASS: Encrypted compressed raw image restores a wiped disk with full sector read-back
+PASS: Allocation unit migration restores the original files from a verified recovery archive
+ALL 85 CHECKS PASSED
+
+Migration, read-only browse and custom benchmark
+================================================
+PASS: Valid data partition operation
+PASS: Boot disk is protected
+PASS: Disk replacement rejected
+PASS: Layout changes rejected
+PASS: BitLocker changes rejected
+PASS: Unknown encryption rejected
+PASS: Online raw operations rejected
+PASS: System drive letter rejected
+PASS: Unknown operations rejected
+PASS: Missing partition selection rejected
+PASS: Control characters rejected
+PASS: Mismatched clone capacity rejected
+PASS: Snapshot SHA-256 verification
+PASS: File restore content
+PASS: Binary restore content
+PASS: Unchanged content deduplicated
+PASS: New content produces one new object
+PASS: Earlier snapshot remains verifiable
+PASS: Existing restore files protected
+PASS: Nested repository rejected
+PASS: Unsafe path rejected: ../evil
+PASS: Unsafe path rejected: /root
+PASS: Unsafe path rejected: a/../b
+PASS: Unsafe path rejected: a\b
+PASS: Unsafe path rejected: C:/evil
+PASS: Unsafe path rejected: a:stream
+PASS: Unsafe path rejected: CON.txt
+PASS: Unsafe path rejected: file.
+PASS: Unsafe path rejected: a//b
+PASS: Corrupt compressed object rejected
+PASS: Malicious manifest rejected before restore
+PASS: MBR partition decode
+PASS: Invalid MBR signature rejected
+PASS: Out-of-range MBR rejected
+PASS: CRC32 reference vector
+PASS: Valid GPT header/table CRC and partition decode
+PASS: Corrupt GPT header CRC rejected
+PASS: Corrupt GPT table CRC rejected
+PASS: DiskSpd unit conversion and p99 parsing
+PASS: WIM scanning exposes measured file counts without inventing a percentage
+PASS: WIM progress survives split pipe reads and includes the integrity-table phase
+PASS: WIM integrity-table verification does not prematurely finish file-resource verification
+PASS: Malformed and regressing tool progress cannot advance or rewind a phase
+PASS: DISM bracketed progress remains supported across partial reads
+PASS: Recovery registration retains its source partition offset and relative path
+PASS: Recovery registration rejects paths escaping the source volume
+PASS: Recovery XML rejects external entities
+PASS: Large recovery images reserve at least 300 MiB of servicing space
+PASS: Queue creates a virtual partition after two deletions
+PASS: Dependent rename targets the newly created partition
+PASS: Queue projection does not mutate the real baseline
+PASS: Planner rejects an overlapping/out-of-capacity allocation
+PASS: External rename is detected between steps
+PASS: Deletion transition verifies unaffected partitions
+PASS: Unexpected unrelated geometry change stops a chain
+PASS: Elevation can add native hardware binding to a standard-user plan without discarding it
+PASS: A changed native device descriptor stops an already bound plan
+PASS: Filesystem-aware clone permits a smaller destination with sufficient used capacity
+PASS: Byte-exact mode does not silently become a smaller-target clone
+PASS: Filesystem-aware cloning blocks the running system source
+PASS: Quick metadata reset can be queued for an online data disk
+PASS: Quick reset projection removes layout without claiming secure erasure
+PASS: ATA raw attributes and nonzero health bitfields are retained
+PASS: Detailed ATA error-log fields are preserved
+PASS: SMART export retains original text and complete JSON
+PASS: Failing NVMe media/wear counters are exported without suppressing health failures
+PASS: Printable SMART HTML escapes device-supplied content
+PASS: An explicit SMART failure stays visible even if detailed attributes are unavailable
+PASS: Unsupported VM/USB SMART is never reported as healthy
+PASS: Unsupported commands produce an explicitly partial report
+PASS: SCSI/SAS defect and error counters remain in the full report
+PASS: SMART CSV neutralizes device-supplied spreadsheet formulas
+PASS: Chain progress combines completed steps and measured active-step progress
+PASS: Migration tests use a separate owned VHD
+PASS: NTFS split creates the reviewed adjacent partition while retaining original files
+PASS: Adjacent merge restores source contents into a unique destination subfolder
+PASS: Redistribution shrinks, moves and grows real NTFS volumes without losing donor data or streams
+PASS: Filesystem conversion rejects alternate streams before formatting
+PASS: NTFS-to-exFAT migration preserves representable file contents through a verified checkpoint
+PASS: Protected raw image attaches as a genuinely read-only browsing VHD
+PASS: A real custom DiskSpd workload uses the requested block size, queue and read mix
+ALL 81 CHECKS PASSED
+
+Dynamic preparation
+===================
+PASS: Valid data partition operation
+PASS: Boot disk is protected
+PASS: Disk replacement rejected
+PASS: Layout changes rejected
+PASS: BitLocker changes rejected
+PASS: Unknown encryption rejected
+PASS: Online raw operations rejected
+PASS: System drive letter rejected
+PASS: Unknown operations rejected
+PASS: Missing partition selection rejected
+PASS: Control characters rejected
+PASS: Mismatched clone capacity rejected
+PASS: Snapshot SHA-256 verification
+PASS: File restore content
+PASS: Binary restore content
+PASS: Unchanged content deduplicated
+PASS: New content produces one new object
+PASS: Earlier snapshot remains verifiable
+PASS: Existing restore files protected
+PASS: Nested repository rejected
+PASS: Unsafe path rejected: ../evil
+PASS: Unsafe path rejected: /root
+PASS: Unsafe path rejected: a/../b
+PASS: Unsafe path rejected: a\b
+PASS: Unsafe path rejected: C:/evil
+PASS: Unsafe path rejected: a:stream
+PASS: Unsafe path rejected: CON.txt
+PASS: Unsafe path rejected: file.
+PASS: Unsafe path rejected: a//b
+PASS: Corrupt compressed object rejected
+PASS: Malicious manifest rejected before restore
+PASS: MBR partition decode
+PASS: Invalid MBR signature rejected
+PASS: Out-of-range MBR rejected
+PASS: CRC32 reference vector
+PASS: Valid GPT header/table CRC and partition decode
+PASS: Corrupt GPT header CRC rejected
+PASS: Corrupt GPT table CRC rejected
+PASS: DiskSpd unit conversion and p99 parsing
+PASS: WIM scanning exposes measured file counts without inventing a percentage
+PASS: WIM progress survives split pipe reads and includes the integrity-table phase
+PASS: WIM integrity-table verification does not prematurely finish file-resource verification
+PASS: Malformed and regressing tool progress cannot advance or rewind a phase
+PASS: DISM bracketed progress remains supported across partial reads
+PASS: Recovery registration retains its source partition offset and relative path
+PASS: Recovery registration rejects paths escaping the source volume
+PASS: Recovery XML rejects external entities
+PASS: Large recovery images reserve at least 300 MiB of servicing space
+PASS: Queue creates a virtual partition after two deletions
+PASS: Dependent rename targets the newly created partition
+PASS: Queue projection does not mutate the real baseline
+PASS: Planner rejects an overlapping/out-of-capacity allocation
+PASS: External rename is detected between steps
+PASS: Deletion transition verifies unaffected partitions
+PASS: Unexpected unrelated geometry change stops a chain
+PASS: Elevation can add native hardware binding to a standard-user plan without discarding it
+PASS: A changed native device descriptor stops an already bound plan
+PASS: Filesystem-aware clone permits a smaller destination with sufficient used capacity
+PASS: Byte-exact mode does not silently become a smaller-target clone
+PASS: Filesystem-aware cloning blocks the running system source
+PASS: Quick metadata reset can be queued for an online data disk
+PASS: Quick reset projection removes layout without claiming secure erasure
+PASS: ATA raw attributes and nonzero health bitfields are retained
+PASS: Detailed ATA error-log fields are preserved
+PASS: SMART export retains original text and complete JSON
+PASS: Failing NVMe media/wear counters are exported without suppressing health failures
+PASS: Printable SMART HTML escapes device-supplied content
+PASS: An explicit SMART failure stays visible even if detailed attributes are unavailable
+PASS: Unsupported VM/USB SMART is never reported as healthy
+PASS: Unsupported commands produce an explicitly partial report
+PASS: SCSI/SAS defect and error counters remain in the full report
+PASS: SMART CSV neutralizes device-supplied spreadsheet formulas
+PASS: Chain progress combines completed steps and measured active-step progress
+PASS: Real free-space overwrite preserves allocated data and removes its temporary files
+PASS: Surface scan reads real owned disk regions and reports individual timing
+PASS: Firmware erase rejects the VM SATA device before sending NVMe commands
+PASS: Live topology reports physical disks, volumes, pools and virtual disks
+PASS: Windows dynamic conversion and native extent inventory identify the owned simple volume
+PASS: Basic-to-dynamic retains the named NTFS stream
+PASS: Dynamic-to-basic verifies its GPT and keeps the disk offline for restart
+ALL 80 CHECKS PASSED
+
+Dynamic post-restart
+====================
+PASS: Valid data partition operation
+PASS: Boot disk is protected
+PASS: Disk replacement rejected
+PASS: Layout changes rejected
+PASS: BitLocker changes rejected
+PASS: Unknown encryption rejected
+PASS: Online raw operations rejected
+PASS: System drive letter rejected
+PASS: Unknown operations rejected
+PASS: Missing partition selection rejected
+PASS: Control characters rejected
+PASS: Mismatched clone capacity rejected
+PASS: Snapshot SHA-256 verification
+PASS: File restore content
+PASS: Binary restore content
+PASS: Unchanged content deduplicated
+PASS: New content produces one new object
+PASS: Earlier snapshot remains verifiable
+PASS: Existing restore files protected
+PASS: Nested repository rejected
+PASS: Unsafe path rejected: ../evil
+PASS: Unsafe path rejected: /root
+PASS: Unsafe path rejected: a/../b
+PASS: Unsafe path rejected: a\b
+PASS: Unsafe path rejected: C:/evil
+PASS: Unsafe path rejected: a:stream
+PASS: Unsafe path rejected: CON.txt
+PASS: Unsafe path rejected: file.
+PASS: Unsafe path rejected: a//b
+PASS: Corrupt compressed object rejected
+PASS: Malicious manifest rejected before restore
+PASS: MBR partition decode
+PASS: Invalid MBR signature rejected
+PASS: Out-of-range MBR rejected
+PASS: CRC32 reference vector
+PASS: Valid GPT header/table CRC and partition decode
+PASS: Corrupt GPT header CRC rejected
+PASS: Corrupt GPT table CRC rejected
+PASS: DiskSpd unit conversion and p99 parsing
+PASS: WIM scanning exposes measured file counts without inventing a percentage
+PASS: WIM progress survives split pipe reads and includes the integrity-table phase
+PASS: WIM integrity-table verification does not prematurely finish file-resource verification
+PASS: Malformed and regressing tool progress cannot advance or rewind a phase
+PASS: DISM bracketed progress remains supported across partial reads
+PASS: Recovery registration retains its source partition offset and relative path
+PASS: Recovery registration rejects paths escaping the source volume
+PASS: Recovery XML rejects external entities
+PASS: Large recovery images reserve at least 300 MiB of servicing space
+PASS: Queue creates a virtual partition after two deletions
+PASS: Dependent rename targets the newly created partition
+PASS: Queue projection does not mutate the real baseline
+PASS: Planner rejects an overlapping/out-of-capacity allocation
+PASS: External rename is detected between steps
+PASS: Deletion transition verifies unaffected partitions
+PASS: Unexpected unrelated geometry change stops a chain
+PASS: Elevation can add native hardware binding to a standard-user plan without discarding it
+PASS: A changed native device descriptor stops an already bound plan
+PASS: Filesystem-aware clone permits a smaller destination with sufficient used capacity
+PASS: Byte-exact mode does not silently become a smaller-target clone
+PASS: Filesystem-aware cloning blocks the running system source
+PASS: Quick metadata reset can be queued for an online data disk
+PASS: Quick reset projection removes layout without claiming secure erasure
+PASS: ATA raw attributes and nonzero health bitfields are retained
+PASS: Detailed ATA error-log fields are preserved
+PASS: SMART export retains original text and complete JSON
+PASS: Failing NVMe media/wear counters are exported without suppressing health failures
+PASS: Printable SMART HTML escapes device-supplied content
+PASS: An explicit SMART failure stays visible even if detailed attributes are unavailable
+PASS: Unsupported VM/USB SMART is never reported as healthy
+PASS: Unsupported commands produce an explicitly partial report
+PASS: SCSI/SAS defect and error counters remain in the full report
+PASS: SMART CSV neutralizes device-supplied spreadsheet formulas
+PASS: Chain progress combines completed steps and measured active-step progress
+PASS: After Windows restart, basic GPT mounts and preserves original NTFS data and streams
+ALL 74 CHECKS PASSED
+
+Installed SMB restore and SMART
+===============================
+PASS: Valid data partition operation
+PASS: Boot disk is protected
+PASS: Disk replacement rejected
+PASS: Layout changes rejected
+PASS: BitLocker changes rejected
+PASS: Unknown encryption rejected
+PASS: Online raw operations rejected
+PASS: System drive letter rejected
+PASS: Unknown operations rejected
+PASS: Missing partition selection rejected
+PASS: Control characters rejected
+PASS: Mismatched clone capacity rejected
+PASS: Snapshot SHA-256 verification
+PASS: File restore content
+PASS: Binary restore content
+PASS: Unchanged content deduplicated
+PASS: New content produces one new object
+PASS: Earlier snapshot remains verifiable
+PASS: Existing restore files protected
+PASS: Nested repository rejected
+PASS: Unsafe path rejected: ../evil
+PASS: Unsafe path rejected: /root
+PASS: Unsafe path rejected: a/../b
+PASS: Unsafe path rejected: a\b
+PASS: Unsafe path rejected: C:/evil
+PASS: Unsafe path rejected: a:stream
+PASS: Unsafe path rejected: CON.txt
+PASS: Unsafe path rejected: file.
+PASS: Unsafe path rejected: a//b
+PASS: Corrupt compressed object rejected
+PASS: Malicious manifest rejected before restore
+PASS: MBR partition decode
+PASS: Invalid MBR signature rejected
+PASS: Out-of-range MBR rejected
+PASS: CRC32 reference vector
+PASS: Valid GPT header/table CRC and partition decode
+PASS: Corrupt GPT header CRC rejected
+PASS: Corrupt GPT table CRC rejected
+PASS: DiskSpd unit conversion and p99 parsing
+PASS: WIM scanning exposes measured file counts without inventing a percentage
+PASS: WIM progress survives split pipe reads and includes the integrity-table phase
+PASS: WIM integrity-table verification does not prematurely finish file-resource verification
+PASS: Malformed and regressing tool progress cannot advance or rewind a phase
+PASS: DISM bracketed progress remains supported across partial reads
+PASS: Recovery registration retains its source partition offset and relative path
+PASS: Recovery registration rejects paths escaping the source volume
+PASS: Recovery XML rejects external entities
+PASS: Large recovery images reserve at least 300 MiB of servicing space
+PASS: Queue creates a virtual partition after two deletions
+PASS: Dependent rename targets the newly created partition
+PASS: Queue projection does not mutate the real baseline
+PASS: Planner rejects an overlapping/out-of-capacity allocation
+PASS: External rename is detected between steps
+PASS: Deletion transition verifies unaffected partitions
+PASS: Unexpected unrelated geometry change stops a chain
+PASS: Elevation can add native hardware binding to a standard-user plan without discarding it
+PASS: A changed native device descriptor stops an already bound plan
+PASS: Filesystem-aware clone permits a smaller destination with sufficient used capacity
+PASS: Byte-exact mode does not silently become a smaller-target clone
+PASS: Filesystem-aware cloning blocks the running system source
+PASS: Quick metadata reset can be queued for an online data disk
+PASS: Quick reset projection removes layout without claiming secure erasure
+PASS: ATA raw attributes and nonzero health bitfields are retained
+PASS: Detailed ATA error-log fields are preserved
+PASS: SMART export retains original text and complete JSON
+PASS: Failing NVMe media/wear counters are exported without suppressing health failures
+PASS: Printable SMART HTML escapes device-supplied content
+PASS: An explicit SMART failure stays visible even if detailed attributes are unavailable
+PASS: Unsupported VM/USB SMART is never reported as healthy
+PASS: Unsupported commands produce an explicitly partial report
+PASS: SCSI/SAS defect and error counters remain in the full report
+PASS: SMART CSV neutralizes device-supplied spreadsheet formulas
+PASS: Chain progress combines completed steps and measured active-step progress
+PASS: Installed SYSTEM VSS backup restores authenticated file content and its NTFS named stream from SMB
+PASS: Scheduled network backup preserves original owner and DACL on restore
+PASS: Actual VM SMART collection retains complete original device output
+PASS: Actual unsupported VM self-test is rejected with the controller output
+ALL 77 CHECKS PASSED
+
+SYSTEM schedule storage ownership
+=================================
+PASS: Valid data partition operation
+PASS: Boot disk is protected
+PASS: Disk replacement rejected
+PASS: Layout changes rejected
+PASS: BitLocker changes rejected
+PASS: Unknown encryption rejected
+PASS: Online raw operations rejected
+PASS: System drive letter rejected
+PASS: Unknown operations rejected
+PASS: Missing partition selection rejected
+PASS: Control characters rejected
+PASS: Mismatched clone capacity rejected
+PASS: Snapshot SHA-256 verification
+PASS: File restore content
+PASS: Binary restore content
+PASS: Unchanged content deduplicated
+PASS: New content produces one new object
+PASS: Earlier snapshot remains verifiable
+PASS: Existing restore files protected
+PASS: Nested repository rejected
+PASS: Unsafe path rejected: ../evil
+PASS: Unsafe path rejected: /root
+PASS: Unsafe path rejected: a/../b
+PASS: Unsafe path rejected: a\b
+PASS: Unsafe path rejected: C:/evil
+PASS: Unsafe path rejected: a:stream
+PASS: Unsafe path rejected: CON.txt
+PASS: Unsafe path rejected: file.
+PASS: Unsafe path rejected: a//b
+PASS: Corrupt compressed object rejected
+PASS: Malicious manifest rejected before restore
+PASS: MBR partition decode
+PASS: Invalid MBR signature rejected
+PASS: Out-of-range MBR rejected
+PASS: CRC32 reference vector
+PASS: Valid GPT header/table CRC and partition decode
+PASS: Corrupt GPT header CRC rejected
+PASS: Corrupt GPT table CRC rejected
+PASS: DiskSpd unit conversion and p99 parsing
+PASS: WIM scanning exposes measured file counts without inventing a percentage
+PASS: WIM progress survives split pipe reads and includes the integrity-table phase
+PASS: WIM integrity-table verification does not prematurely finish file-resource verification
+PASS: Malformed and regressing tool progress cannot advance or rewind a phase
+PASS: DISM bracketed progress remains supported across partial reads
+PASS: Recovery registration retains its source partition offset and relative path
+PASS: Recovery registration rejects paths escaping the source volume
+PASS: Recovery XML rejects external entities
+PASS: Large recovery images reserve at least 300 MiB of servicing space
+PASS: Queue creates a virtual partition after two deletions
+PASS: Dependent rename targets the newly created partition
+PASS: Queue projection does not mutate the real baseline
+PASS: Planner rejects an overlapping/out-of-capacity allocation
+PASS: External rename is detected between steps
+PASS: Deletion transition verifies unaffected partitions
+PASS: Unexpected unrelated geometry change stops a chain
+PASS: Elevation can add native hardware binding to a standard-user plan without discarding it
+PASS: A changed native device descriptor stops an already bound plan
+PASS: Filesystem-aware clone permits a smaller destination with sufficient used capacity
+PASS: Byte-exact mode does not silently become a smaller-target clone
+PASS: Filesystem-aware cloning blocks the running system source
+PASS: Quick metadata reset can be queued for an online data disk
+PASS: Quick reset projection removes layout without claiming secure erasure
+PASS: ATA raw attributes and nonzero health bitfields are retained
+PASS: Detailed ATA error-log fields are preserved
+PASS: SMART export retains original text and complete JSON
+PASS: Failing NVMe media/wear counters are exported without suppressing health failures
+PASS: Printable SMART HTML escapes device-supplied content
+PASS: An explicit SMART failure stays visible even if detailed attributes are unavailable
+PASS: Unsupported VM/USB SMART is never reported as healthy
+PASS: Unsupported commands produce an explicitly partial report
+PASS: SCSI/SAS defect and error counters remain in the full report
+PASS: SMART CSV neutralizes device-supplied spreadsheet formulas
+PASS: Chain progress combines completed steps and measured active-step progress
+PASS: SYSTEM schedule directory and parent are created atomically with protected administrator ownership
+PASS: SYSTEM schedule directory and parent are created atomically with protected administrator ownership
+PASS: A precreated non-administrator-owned parent cannot become SYSTEM schedule storage
+PASS: Rejecting untrusted schedule storage preserves its contents and ownership
+PASS: An administrator-owned parent with user write access is rejected before creating a SYSTEM job
+ALL 78 CHECKS PASSED
