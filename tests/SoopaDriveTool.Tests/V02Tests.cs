@@ -64,7 +64,7 @@ partial class Program
         await UefiLayoutChecks(root,source);
         var smart=await SmartService.ReadAsync((await StorageService.InventoryAsync()).First(d=>d.Protected));Check(smart.Raw.ValueKind==JsonValueKind.Object&&smart.Overall!="", "Bundled smartctl runs on Windows ARM/x64 and returns a device/unsupported report");
     }
-    static async Task UefiLayoutChecks(string root,DiskInfo source)
+    static async Task UefiLayoutChecks(string root,DiskInfo source,bool mappings=true)
     {
         var file=Path.Combine(root,"uefi-owned.vhd");var script=Path.Combine(root,"uefi-owned.txt");
         try
@@ -84,7 +84,7 @@ partial class Program
             after=(await StorageService.InventoryAsync()).Single(d=>d.Number==number);
             var found=await WindowsRecovery.FindAsync(after,after.Partitions.Single(p=>p.Letter==letters.Windows));
             Check(found!=null&&await File.ReadAllTextAsync(found)=="Owned recovery discovery fixture","Recovery discovery reads the selected disk's hidden partition without assigning a drive letter");
-            await OfflineMappingCheck(source,after,letters.Windows[0]);
+            if(mappings)await OfflineMappingCheck(source,after,letters.Windows[0]);
             var firmwareBefore=await StorageService.PowerShellAsync("bcdedit.exe /enum firmware");var system=Environment.GetFolderPath(Environment.SpecialFolder.Windows);var boot=await ProcessTool.RunAsync(Path.Combine(system,"System32","bcdboot.exe"),[system,"/s",letters.Efi+":","/f","UEFI","/c","/v"]);
             Check(boot.ExitCode==0&&File.Exists(Path.Combine(letters.Efi+@":\",@"EFI\Microsoft\Boot\BCD")),"BCDBoot writes a real BCD store only to the explicit disposable EFI target");
             var firmwareAfter=await StorageService.PowerShellAsync("bcdedit.exe /enum firmware");Check(firmwareBefore==firmwareAfter,"Explicit-target BCDBoot preserves the host firmware boot entries");

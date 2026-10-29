@@ -76,7 +76,7 @@ public static class FileSystemCloneEngine
             if(Directory.Exists(staging))Directory.Delete(staging,true);
         }
         async Task Revalidate(){var now=await StorageService.InventoryAsync();OperationPolicy.Validate(op,now.Single(d=>d.Number==source.Number),now.Single(d=>d.Number==target.Number));}
-        async Task Tool(string exe,string[] args,string phase,double start,double span){progress?.Report(new(phase,start,phase+"…"));var result=await ProcessTool.RunAsync(exe,args,phase,progress,start,span);if(result.ExitCode!=0)throw new IOException($"{Path.GetFileName(exe)} failed ({result.ExitCode}). {result.Error} {result.Output}");}
+        async Task Tool(string exe,string[] args,string phase,double start,double span){progress?.Report(new(phase,phase=="Capturing used files"?null:start,phase=="Capturing used files"?"Scanning source files before capture. DISM reports measured percentages after enumeration.":phase+"…"));var result=await ProcessTool.RunAsync(exe,args,phase,progress,start,span);if(result.ExitCode!=0)throw new IOException($"{Path.GetFileName(exe)} failed ({result.ExitCode}). {result.Error} {result.Output}");}
     }
     // Change only the destination's offline hive. Preserve its original Windows
     // letter rather than guessing C: or clearing every other drive mapping.
@@ -136,9 +136,10 @@ public static class FileSystemCloneEngine
     if($r.Recovery){$p=New-Partition -DiskNumber $d.Number -UseMaximumSize -GptType '{DE94BBA4-06D1-4D40-A16A-BFD50179D6AC}' -AssignDriveLetter;$p|Format-Volume -FileSystem NTFS -NewFileSystemLabel 'Recovery' -Confirm:$false|Out-Null;$recovery=[string]$p.DriveLetter;
       $script=[IO.Path]::GetTempFileName()
       try {
-        @("select disk $($d.Number)","select partition $($p.PartitionNumber)",'gpt attributes=0x8000000000000001','exit')|Set-Content -LiteralPath $script -Encoding ASCII
+        @("select disk $($d.Number)","select partition $($p.PartitionNumber)",'gpt attributes=0x8000000000000001','detail partition','exit')|Set-Content -LiteralPath $script -Encoding ASCII
         $log=& "$env:windir\System32\diskpart.exe" /s $script
-        if($LASTEXITCODE -ne 0 -or !(Get-Partition -DiskNumber $d.Number -PartitionNumber $p.PartitionNumber).NoDefaultDriveLetter){throw 'Recovery partition attributes could not be set'}
+        $code=$LASTEXITCODE
+        if($code -ne 0 -or (($log -join ' ') -notmatch '(?i)\b0x8000000000000001\b')){throw ('Recovery partition attributes could not be set: '+($log -join ' '))}
       } finally {Remove-Item -LiteralPath $script -Force}
     }
     @{Windows=$windows;Efi=$efi;Recovery=$recovery}|ConvertTo-Json -Compress
