@@ -1,4 +1,5 @@
 using System.IO;
+using System.Security.AccessControl;
 using Microsoft.Win32;
 using System.Text.Json;
 using SoopaDriveTool.Core;
@@ -64,7 +65,7 @@ partial class Program
         var planned=new[]{DiskOperation.For(source,OperationKind.SetLabel,created) with{Value="Later"}};await Apply(source,OperationKind.SetLabel,created,o=>o with{Value="External"});var stale=new RunActivity{Steps=[new(){Description=planned[0].Description}]};await RejectAsync(()=>QueueRunner.RunAsync(planned,new Dictionary<int,DiskInfo>{{source.Number,source}},stale),"Real external layout/label change stops a reviewed queue before writing");Check(stale.State=="Failed","Preflight failure is recorded in the activity run");source=await Current(source.Number);created=source.Partitions.Single(p=>!p.Protected);
         var content=Path.Combine(created.Letter+@":\","clone-payload.txt");await File.WriteAllTextAsync(content,"Filesystem-aware clone byte verification");
         await File.WriteAllTextAsync(content+":QualificationTag","Alternate stream survives capture/apply");
-        var acl=await StorageService.PowerShellAsync($"(Get-Acl -LiteralPath '{content}').Sddl");
+        var acl=new FileInfo(content).GetAccessControl().GetSecurityDescriptorSddlForm(AccessControlSections.Access|AccessControlSections.Owner|AccessControlSections.Group);
         var link=Path.Combine(created.Letter+@":\","clone-hardlink.txt");
         await StorageService.PowerShellAsync($"fsutil.exe hardlink create '{link}' '{content}';if($LASTEXITCODE -ne 0){{throw 'Hardlink fixture failed'}}");
         target=await Current(target.Number);await Apply(target,OperationKind.Online);target=await Current(target.Number);
@@ -72,7 +73,7 @@ partial class Program
         var cloned=(await Current(target.Number)).Partitions.Single(p=>p.FileSystem=="NTFS");Check(await File.ReadAllTextAsync(Path.Combine(cloned.Letter+@":\","clone-payload.txt"))=="Filesystem-aware clone byte verification","Verified WIM capture and DISM apply preserve source file content");Check(!(await Current(source.Number)).ReadOnly,"Filesystem clone restores the source read-only state");Check(events.Any(e=>e.Phase.Contains("Capturing"))&&events.Any(e=>e.Phase.Contains("Applying")),"WIM capture and DISM apply phases are visible to activity");Check(events.Any(e=>e.Phase=="Applying used files"&&e.Percent>40),"Activity receives actual DISM bracketed progress, not just a stage-start marker");
         var copy=Path.Combine(cloned.Letter+@":\","clone-payload.txt");
         Check(await File.ReadAllTextAsync(copy+":QualificationTag")=="Alternate stream survives capture/apply","WIM capture and DISM apply preserve NTFS alternate data streams");
-        Check(await StorageService.PowerShellAsync($"(Get-Acl -LiteralPath '{copy}').Sddl")==acl,"WIM capture and DISM apply preserve the file owner and DACL");
+        Check(new FileInfo(copy).GetAccessControl().GetSecurityDescriptorSddlForm(AccessControlSections.Access|AccessControlSections.Owner|AccessControlSections.Group)==acl,"WIM capture and DISM apply preserve the file owner and DACL");
         var links=await StorageService.PowerShellAsync($"fsutil.exe hardlink list '{copy}';if($LASTEXITCODE -ne 0){{throw 'Hardlink inspection failed'}}");Check(links.Contains("clone-hardlink.txt")&&links.Contains("clone-payload.txt"),"WIM capture and DISM apply preserve NTFS hardlinks");
         Check(events.Any(e=>e.Phase=="Verifying captured image"),"Captured WIM resources are verified before destination preparation");
         source=await Current(source.Number);target=await Current(target.Number);var os=clone with{CloneMode=CloneMode.WindowsUefi,Identity=source.Identity,Layout=source.Layout,TargetIdentity=target.Identity,TargetLayout=target.Layout};await RejectAsync(()=>StorageService.ExecuteDetailedAsync(os),"Windows-aware mode rejects an ordinary data volume before clearing the destination");Check((await Current(target.Number)).Layout==target.Layout,"Rejected OS clone preserves destination layout");
