@@ -43,6 +43,14 @@ partial class Program
         Item(menu,"Delete partition").RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent));
         var pending=GetField<List<DiskOperation>>(manager,"queue");
         Check(pending.Count==1&&pending[0].Kind==OperationKind.DeletePartition&&pending[0].PartitionNumber==first.Number,"The context-menu delete action queues the clicked partition without applying it");
+        var diskList=Descendants(body).OfType<ComboBox>().Single(c=>c.Items.OfType<DiskInfo>().Any());
+        Check((diskList.SelectedItem as DiskInfo)?.Number==disk.Number,"Queuing a layout change retains the selected physical disk");
+        Check(Descendants(body).OfType<Button>().Any(b=>b.Tag is PartitionMapTarget t&&t.Partition?.Number==second.Number)&&!Descendants(body).OfType<Button>().Any(b=>b.Tag is PartitionMapTarget t&&t.Partition?.Number==first.Number),"The partition map remains visible with the queued deletion projected");
+        var clearQueue=Descendants(body).OfType<Button>().Single(b=>Equals(b.Content,"Clear queue"));clearQueue.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Check(Descendants(body).OfType<Button>().Any(b=>b.Tag is PartitionMapTarget t&&t.Partition?.Number==first.Number),"Clearing the queue restores the original map without dropping disk selection");
+        Check(GetField<List<DiskOperation>>(manager,"queue").Count==0,"Clearing graphical changes never applies them");
+        // Requeue for the baseline assertion after checking the cleared preview.
+        Call(manager,"Queue",DiskOperation.For(disk,OperationKind.DeletePartition,first),disk,null);
         Check(GetField<Dictionary<int,DiskInfo>>(manager,"queueBaselines")[disk.Number].Partitions.Count==2,"A queued context-menu action leaves the actual disk baseline unchanged");
 
         foreach(var (name,restricted) in new[]{

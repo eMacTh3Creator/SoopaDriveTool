@@ -86,9 +86,14 @@ public partial class MainWindow:Window
     ComboBox DiskPicker(bool dataOnly=false,string key="")
     {
         var items=new System.Collections.ObjectModel.ObservableCollection<DiskInfo>(ProjectedDisks().Where(d=>!dataOnly||!d.Protected));var combo=new ComboBox{ItemsSource=items,DisplayMemberPath="Display"};key=page+":"+key;
-        combo.SelectedItem=diskSelections.TryGetValue(key,out var previous)?DiskRefreshPolicy.RetainSelection(items,previous):items.FirstOrDefault(d=>!d.Protected)??items.FirstOrDefault();
-        if(combo.SelectedItem is DiskInfo initial)diskSelections[key]=initial;
-        combo.SelectionChanged+=(_,_)=>{if(combo.SelectedItem is DiskInfo d)diskSelections[key]=d;};
+        // Remember the physical inventory, while displaying the queued projection.
+        // A reviewed layout edit must not look like an external disk replacement.
+        combo.SelectedItem=diskSelections.TryGetValue(key,out var previous)?
+            DiskRefreshPolicy.RetainSelection(disks,previous)!=null?items.FirstOrDefault(d=>d.Number==previous.Number&&d.Identity==previous.Identity):null:
+            items.FirstOrDefault(d=>!d.Protected)??items.FirstOrDefault();
+        void Remember(DiskInfo selected){diskSelections[key]=disks.FirstOrDefault(d=>d.Number==selected.Number&&d.Identity==selected.Identity)??selected;}
+        if(combo.SelectedItem is DiskInfo initial)Remember(initial);
+        combo.SelectionChanged+=(_,_)=>{if(combo.SelectedItem is DiskInfo d)Remember(d);};
         inventoryObservers.Add(()=>
         {
             var latest=ProjectedDisks().Where(d=>!dataOnly||!d.Protected).ToList();var selected=combo.SelectedItem as DiskInfo;
