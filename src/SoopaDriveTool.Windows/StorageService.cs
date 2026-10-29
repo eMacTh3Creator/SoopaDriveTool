@@ -71,6 +71,10 @@ public static class StorageService
     }
     public static void Elevate(string? plan=null)
     {
-        var info=new ProcessStartInfo(Environment.ProcessPath!){UseShellExecute=true,Verb="runas"};if(plan!=null){info.ArgumentList.Add("--resume-plan");info.ArgumentList.Add(plan);}Process.Start(info);
+        string executable=Environment.ProcessPath??throw new IOException("Cannot identify the application executable.");
+        var info=new ProcessStartInfo(executable){UseShellExecute=true,Verb="runas"};
+        if(string.Equals(Path.GetFileNameWithoutExtension(executable),"dotnet",StringComparison.OrdinalIgnoreCase))info.ArgumentList.Add(typeof(App).Assembly.Location);
+        if(plan!=null){info.ArgumentList.Add("--resume-plan");info.ArgumentList.Add(Path.GetFullPath(plan));}
+        using var child=Process.Start(info)??throw new IOException("Windows did not start the administrator process.");
     }
 }

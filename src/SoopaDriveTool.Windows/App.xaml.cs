@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using System.Text.Json;
 using System.Windows;
 using System.Windows.Media;
@@ -36,6 +37,12 @@ public partial class App:Application
                 using var hiddenSource=new System.Windows.Interop.HwndSource(new System.Windows.Interop.HwndSourceParameters("SoopaDriveTool offscreen render"){Width=1440,Height=940,PositionX=-32000,PositionY=-32000,WindowStyle=unchecked((int)0x80000000)});
                 hiddenSource.RootVisual=visual;await Dispatcher.InvokeAsync(()=>{},System.Windows.Threading.DispatcherPriority.ApplicationIdle);visual.Measure(new System.Windows.Size(1440,940));visual.Arrange(new Rect(0,0,1440,940));visual.UpdateLayout();
                 var bitmap=new RenderTargetBitmap(1440,940,96,96,PixelFormats.Pbgra32);bitmap.Render(visual);var encoder=new PngBitmapEncoder();encoder.Frames.Add(BitmapFrame.Create(bitmap));using var stream=File.Create(e.Args[1]);encoder.Save(stream);w.Close();Shutdown(0);return;
+            }
+            if(!StorageService.IsAdmin)
+            {
+                try{StorageService.Elevate(e.Args.Length==2&&e.Args[0]=="--resume-plan"?e.Args[1]:null);}
+                catch(Win32Exception ex)when(ex.NativeErrorCode==1223){}
+                Shutdown(0);return;
             }
             PendingPlan? pending=null;
             if(e.Args.Length==2&&e.Args[0]=="--resume-plan")

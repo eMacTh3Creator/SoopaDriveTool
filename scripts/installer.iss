@@ -1,5 +1,5 @@
 #ifndef AppVersion
-  #define AppVersion "0.3.1"
+  #define AppVersion "0.3.2"
 #endif
 #ifndef Runtime
   #define Runtime "win-x64"

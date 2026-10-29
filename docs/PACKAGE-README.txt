@@ -2,8 +2,9 @@ SoopaDriveTool
 Version @APP_VERSION@ - unsigned preview
 Windows 11 ARM64 and x64
 
-Start SoopaDriveTool.exe. The .NET runtime is included. Restart as administrator
-inside the app for disk changes. Prepare a chain, review its targets, then Apply.
+Start SoopaDriveTool.exe. Windows requests administrator approval (UAC) before
+the window opens, unless the process is already elevated. Declining closes the
+app. The .NET runtime is included. Review queued operations, then Apply.
 If a step fails, later steps stop; completed disk changes are not rolled back.
 
 Partition management
@@ -34,6 +35,9 @@ VSS backs up open local files and the running Windows volume consistently.
 Network repositories use the Windows account's existing share permissions.
 Daily, weekly, hourly and logon schedules support logged-on-user or installed
 SYSTEM execution; schedule secrets use Windows DPAPI and restricted job folders.
+Background jobs keep the account and run level configured in Task Scheduler.
+They do not show the app's startup UAC prompt. VSS tasks require elevation;
+SYSTEM jobs require an installed application in Program Files.
 Keep passphrases separately: the application cannot recover a lost passphrase.
 
 Protected raw images support verified desktop restore and read-only VHD browsing
