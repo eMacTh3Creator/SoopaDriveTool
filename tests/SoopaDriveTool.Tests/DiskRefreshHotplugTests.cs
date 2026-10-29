@@ -24,11 +24,19 @@ partial class Program
             try
             {
                 application=new App{ShutdownMode=ShutdownMode.OnExplicitShutdown};application.InitializeComponent();
-                Dispatcher.CurrentDispatcher.BeginInvoke(new Action(async()=>
+                var dispatcher=Dispatcher.CurrentDispatcher;
+                dispatcher.BeginInvoke(new Action(async()=>
                 {
                     try{await DiskRefreshHotplugScenarioAsync(timeout.Token);}
                     catch(Exception ex){failure=ex is TargetInvocationException {InnerException:not null} reflection?reflection.InnerException:ex;}
-                    finally{application.Shutdown();}
+                    finally
+                    {
+                        // The fixture starts Dispatcher.Run directly, without
+                        // Application.Run. Shut down that loop explicitly.
+                        try{application.Shutdown();}
+                        catch(Exception ex){failure=failure==null?ex:new AggregateException(failure,ex);}
+                        finally{dispatcher.BeginInvokeShutdown(DispatcherPriority.Send);}
+                    }
                 }));
                 Dispatcher.Run();
             }
