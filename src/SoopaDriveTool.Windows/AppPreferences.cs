@@ -4,15 +4,16 @@ using System.Windows;
 using System.Windows.Media;
 using SoopaDriveTool.Core;
 namespace SoopaDriveTool.Windows;
-public record AppPreferences(string Theme="System",bool WaitingFacts=true,bool Compact=false);
+public record AppPreferences(string Theme="System",bool WaitingFacts=true,bool Compact=false,bool AutoRefreshDisks=false,int DiskRefreshSeconds=10);
 public static class Preferences
 {
     static string PathName=>Path.Combine(Data.Home,"settings.json");
     public static AppPreferences Current{get;private set;}=new();
     public static bool Dark{get;private set;}
     public static Brush Surface=>new SolidColorBrush((Color)ColorConverter.ConvertFromString(Dark?"#1D293D":"#FFFFFF"));
-    public static void Load(){try{if(File.Exists(PathName))Current=JsonSerializer.Deserialize<AppPreferences>(File.ReadAllText(PathName),Data.Json)??new();}catch(IOException){}catch(JsonException){}Apply();}
-    public static async Task SaveAsync(AppPreferences p){if(p.Theme is not ("System" or "Light" or "Dark"))throw new IOException("Unknown theme.");await Data.SaveAsync(PathName,p);Current=p;Apply();}
+    public static void Load(){try{if(File.Exists(PathName))Current=JsonSerializer.Deserialize<AppPreferences>(File.ReadAllText(PathName),Data.Json)??new();}catch(IOException){}catch(JsonException){}Current=Current with{DiskRefreshSeconds=NormalizeRefreshSeconds(Current.DiskRefreshSeconds)};Apply();}
+    public static int NormalizeRefreshSeconds(int seconds)=>seconds is 5 or 10 or 30 or 60?seconds:10;
+    public static async Task SaveAsync(AppPreferences p){if(NormalizeRefreshSeconds(p.DiskRefreshSeconds)!=p.DiskRefreshSeconds)throw new IOException("Choose a disk refresh interval of 5, 10, 30, or 60 seconds.");if(p.Theme is not ("System" or "Light" or "Dark"))throw new IOException("Unknown theme.");await Data.SaveAsync(PathName,p);Current=p;Apply();}
     static void Apply()
     {
         bool systemDark=false;using(var key=Microsoft.Win32.Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize"))systemDark=key?.GetValue("AppsUseLightTheme") is int value&&value==0;Dark=Current.Theme=="Dark"||Current.Theme=="System"&&systemDark;

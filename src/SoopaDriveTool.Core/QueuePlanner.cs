@@ -59,7 +59,7 @@ public static class QueuePlanner
         void Replace(PartitionInfo replacement){parts.Remove(p!);parts.Add(replacement);}
     }
     public static void AssertUnchanged(DiskInfo expected,DiskInfo actual)
-    {if(expected.StableIdentity!=actual.StableIdentity||expected.NativeIdentity.Length>0&&expected.NativeIdentity!=actual.NativeIdentity||expected.Layout!=actual.Layout||expected.Protected!=actual.Protected)throw new InvalidOperationException("Disk identity/layout changed outside the verified chain. The remaining steps were stopped.");}
+    {if(actual.InventoryWarning.Length>0||expected.InventoryWarning.Length>0||expected.StableIdentity!=actual.StableIdentity||expected.NativeIdentity.Length>0&&expected.NativeIdentity!=actual.NativeIdentity||expected.Layout!=actual.Layout||expected.Protected!=actual.Protected)throw new InvalidOperationException("Disk identity/layout changed outside the verified chain. The remaining steps were stopped.");}
     public static PartitionInfo? VerifyTransition(DiskInfo before,DiskInfo after,DiskOperation op)
     {
         if(op.Kind==OperationKind.ConvertDynamic)

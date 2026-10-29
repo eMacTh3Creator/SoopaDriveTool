@@ -20,16 +20,16 @@ public partial class MainWindow:Window
     readonly StackPanel body=new(){Margin=new Thickness(32,24,32,32)};
     readonly StackPanel rail=new();readonly TextBlock title=new(),subtitle=new(),status=new();
     readonly Button cancel=new(){Content="Stop benchmark",Visibility=Visibility.Collapsed};
-    readonly Dictionary<int,DiskInfo> queueBaselines=[];readonly Dictionary<string,int> diskSelections=[];
+    readonly Dictionary<int,DiskInfo> queueBaselines=[];readonly Dictionary<string,DiskInfo> diskSelections=[];
     RunActivity? activeRun;SmartReport? smartReport;
     readonly List<DiskOperation> queue=[];List<DiskInfo> disks=[];readonly bool demo;bool busy;string page="Overview";CancellationTokenSource? cts;BenchmarkRun? lastRun;
     public MainWindow(bool demo=false,string initialPage="Overview",PendingPlan? restoredPlan=null)
     {
         FontSize=13;FontFamily=new FontFamily("Segoe UI Variable Text");Foreground=Ink;Background=B("#F4F6FA");this.demo=demo;Title="SoopaDriveTool";Width=1280;Height=880;MinWidth=1060;MinHeight=700;WindowStartupLocation=WindowStartupLocation.CenterScreen;
-        Icon=BitmapFrame.Create(new Uri("pack://application:,,,/Assets/logo.png"));
+        Icon=BitmapFrame.Create(new Uri("pack://application:,,,/SoopaDriveTool;component/Assets/logo.png"));
         var root=new Grid{Background=B("#F4F6FA")};root.ColumnDefinitions.Add(new(){Width=new GridLength(210)});root.ColumnDefinitions.Add(new());Content=root;
         var sidebar=new Grid{Background=B("#14233E")};sidebar.RowDefinitions.Add(new(){Height=new GridLength(112)});sidebar.RowDefinitions.Add(new());sidebar.RowDefinitions.Add(new(){Height=GridLength.Auto});root.Children.Add(sidebar);
-        var brand=new StackPanel{Orientation=Orientation.Horizontal,Margin=new Thickness(20,30,0,0),VerticalAlignment=VerticalAlignment.Top};brand.Children.Add(new Image{Source=new BitmapImage(new Uri("pack://application:,,,/Assets/logo.png")),Width=38,Height=38});var brandText=new StackPanel{Margin=new Thickness(10,1,0,0)};brandText.Children.Add(T("SoopaDrive",17,Brushes.White,true));brandText.Children.Add(T("TOOL",10,B("#93A5C5"),true));brand.Children.Add(brandText);sidebar.Children.Add(brand);
+        var brand=new StackPanel{Orientation=Orientation.Horizontal,Margin=new Thickness(20,30,0,0),VerticalAlignment=VerticalAlignment.Top};brand.Children.Add(new Image{Source=new BitmapImage(new Uri("pack://application:,,,/SoopaDriveTool;component/Assets/logo.png")),Width=38,Height=38});var brandText=new StackPanel{Margin=new Thickness(10,1,0,0)};brandText.Children.Add(T("SoopaDrive",17,Brushes.White,true));brandText.Children.Add(T("TOOL",10,B("#93A5C5"),true));brand.Children.Add(brandText);sidebar.Children.Add(brand);
         rail.Margin=new Thickness(12,0,12,0);var navScroll=new ScrollViewer{Content=rail,VerticalScrollBarVisibility=ScrollBarVisibility.Auto};Grid.SetRow(navScroll,1);sidebar.Children.Add(navScroll);
         rail.Children.Add(T("TOOLS",10,B("#8295B8"),true,new Thickness(14,0,0,18)));
         string[] names=["Overview","Disk manager","Benchmark","Backup & restore","Clone & image","Recovery inspector","Health","Recovery media","Activity","Settings","About"];
@@ -40,7 +40,7 @@ public partial class MainWindow:Window
         var header=new Grid{Margin=new Thickness(32,24,24,12)};header.ColumnDefinitions.Add(new());header.ColumnDefinitions.Add(new(){Width=GridLength.Auto});var headings=new StackPanel();title.FontSize=26;title.FontWeight=FontWeights.SemiBold;subtitle.Foreground=Muted;subtitle.Margin=new Thickness(0,6,0,0);headings.Children.Add(title);headings.Children.Add(subtitle);header.Children.Add(headings);
         var actions=new StackPanel{Orientation=Orientation.Horizontal,VerticalAlignment=VerticalAlignment.Center};cancel.Click+=(_,_)=>cts?.Cancel();actions.Children.Add(cancel);
         if(!StorageService.IsAdmin&&!demo)actions.Children.Add(Btn("↗  Administrator",ElevateWithPlan));
-        actions.Children.Add(Btn("↻  Refresh",async()=>await RefreshAsync()));Grid.SetColumn(actions,1);header.Children.Add(actions);main.Children.Add(header);
+        InitializeDiskRefresh(actions);actions.Children.Add(Btn("↻  Refresh",async()=>await RefreshAsync()));Grid.SetColumn(actions,1);header.Children.Add(actions);main.Children.Add(header);
         var scroll=new ScrollViewer{Content=body,VerticalScrollBarVisibility=ScrollBarVisibility.Auto,HorizontalScrollBarVisibility=ScrollBarVisibility.Disabled};Grid.SetRow(scroll,1);main.Children.Add(scroll);
         var bar=new Border{Background=Preferences.Surface,BorderBrush=B("#E5E9F1"),BorderThickness=new Thickness(0,1,0,0),Padding=new Thickness(32,10,20,8)};status.Foreground=Muted;status.Text="Ready";bar.Child=status;Grid.SetRow(bar,2);main.Children.Add(bar);
         if(demo){disks=DemoDisks();
@@ -60,16 +60,15 @@ public partial class MainWindow:Window
     void Note(string text)=>body.Children.Add(new Border{Background=B("#EDEFFD"),CornerRadius=new CornerRadius(8),Padding=new Thickness(16,12,16,12),Margin=new Thickness(0,0,0,18),Child=T(text,12,B("#51558D"))});
     async Task Work(string label,Func<Task> action,bool canCancel=false)
     {
-        if(busy)return;busy=true;body.IsEnabled=false;rail.IsEnabled=false;status.Text=label;cancel.Content=page=="Benchmark"?"Stop benchmark":"Cancel after current safe unit";cancel.Visibility=canCancel?Visibility.Visible:Visibility.Collapsed;
+        if(busy)return;inventoryRevision++;busy=true;body.IsEnabled=false;rail.IsEnabled=false;status.Text=label;cancel.Content=page=="Benchmark"?"Stop benchmark":"Cancel after current safe unit";cancel.Visibility=canCancel?Visibility.Visible:Visibility.Collapsed;
         try{await action();status.Text="Completed · "+label;}
         catch(OperationCanceledException){status.Text="Operation cancelled. Temporary resources were cleaned up.";}
         catch(Exception ex){Error(ex);}
         finally{busy=false;body.IsEnabled=true;rail.IsEnabled=true;cancel.Visibility=Visibility.Collapsed;}
     }
-    async Task RefreshAsync()=>await Work("Refreshing storage inventory",async()=>{disks=await StorageService.InventoryAsync();Navigate(page);});
     void Navigate(string name)
     {
-        page=name;body.Children.Clear();title.Text=name;subtitle.Text=name switch{"Overview"=>"View detected disks, capacity, and partition layouts.","Disk manager"=>"Manage partitions and review queued changes before applying them.","Benchmark"=>"Measure read/write speed, IOPS, and latency.","Backup & restore"=>"Create backups, restore files, and manage schedules.","Clone & image"=>"Clone drives, create disk images, or wipe data disks.","Recovery inspector"=>"Inspect partition tables and recover supported files or partitions.","Health"=>"Read SMART data, run device tests, and export health reports.","Recovery media"=>"Create Windows PE recovery media using the Microsoft ADK.","Activity"=>"View operation progress, remaining steps, and logs.","Settings"=>"Change appearance, activity options, and move-recovery settings.",_=>"Version, developer, documentation, and support."};
+        page=name;inventoryObservers.Clear();queueWarning=null;queueApply=null;body.Children.Clear();title.Text=name;subtitle.Text=name switch{"Overview"=>"View detected disks, capacity, and partition layouts.","Disk manager"=>"Manage partitions and review queued changes before applying them.","Benchmark"=>"Measure read/write speed, IOPS, and latency.","Backup & restore"=>"Create backups, restore files, and manage schedules.","Clone & image"=>"Clone drives, create disk images, or wipe data disks.","Recovery inspector"=>"Inspect partition tables and recover supported files or partitions.","Health"=>"Read SMART data, run device tests, and export health reports.","Recovery media"=>"Create Windows PE recovery media using the Microsoft ADK.","Activity"=>"View operation progress, remaining steps, and logs.","Settings"=>"Change appearance, disk refresh, activity, and move-recovery settings.",_=>"Version, developer, documentation, and support."};
         foreach(var b in rail.Children.OfType<Button>()){bool selected=(string)b.Tag==name;b.Background=selected?B("#31436A"):Brushes.Transparent;b.Foreground=selected?Brushes.White:B("#BECBE0");}
         if(demo)Note("ILLUSTRATIVE DEMO DATA · This screenshot shows the interface, not measured hardware performance.");
         switch(name){case "Overview":Overview();break;case "Disk manager":DiskManager();break;case "Benchmark":Benchmark();break;case "Backup & restore":Backup();break;case "Clone & image":Clone();break;case "Recovery inspector":Recovery();break;case "Health":Health();break;case "Recovery media":RecoveryMedia();break;case "Activity":Activity();break;case "Settings":Settings();break;default:About();break;}
@@ -96,13 +95,25 @@ public partial class MainWindow:Window
         }
         if(cursor<d.Size)Segment(d.Size-cursor,"Unallocated\n"+Data.Size(d.Size-cursor),B("#E6EAF2"),Muted);
         void Segment(long length,string label,Brush background,Brush color){map.ColumnDefinitions.Add(new(){Width=new GridLength(Math.Max(.018,(double)length/d.Size),GridUnitType.Star)});var b=new Border{Background=background,CornerRadius=new CornerRadius(5),Margin=new Thickness(0,0,4,0),Padding=new Thickness(9,8,4,5),ClipToBounds=true,ToolTip=label,Child=T((double)length/d.Size<.04?"":label,11,color,true)};Grid.SetColumn(b,column++);map.Children.Add(b);}
+        if(d.InventoryWarning.Length>0)panel.Children.Add(T(d.InventoryWarning,12,B("#9C6C20"),false,new Thickness(0,12,0,0)));
         panel.Children.Add(map);panel.Children.Add(T("Layout shown proportionally with a minimum visible width for small partitions.",10,Muted,false,new Thickness(0,9,0,0)));return Card(panel);
     }
     ComboBox DiskPicker(bool dataOnly=false,string key="")
     {
-        var items=QueuePlanner.Project(disks,queue).Where(d=>!dataOnly||!d.Protected).ToList();var combo=new ComboBox{ItemsSource=items,DisplayMemberPath="Display"};key=page+":"+key;
-        combo.SelectedItem=items.FirstOrDefault(d=>diskSelections.TryGetValue(key,out var n)&&d.Number==n)??items.FirstOrDefault(d=>!d.Protected)??items.FirstOrDefault();
-        combo.SelectionChanged+=(_,_)=>{if(combo.SelectedItem is DiskInfo d)diskSelections[key]=d.Number;};return combo;
+        var items=new System.Collections.ObjectModel.ObservableCollection<DiskInfo>(ProjectedDisks().Where(d=>!dataOnly||!d.Protected));var combo=new ComboBox{ItemsSource=items,DisplayMemberPath="Display"};key=page+":"+key;
+        combo.SelectedItem=diskSelections.TryGetValue(key,out var previous)?DiskRefreshPolicy.RetainSelection(items,previous):items.FirstOrDefault(d=>!d.Protected)??items.FirstOrDefault();
+        if(combo.SelectedItem is DiskInfo initial)diskSelections[key]=initial;
+        combo.SelectionChanged+=(_,_)=>{if(combo.SelectedItem is DiskInfo d)diskSelections[key]=d;};
+        inventoryObservers.Add(()=>
+        {
+            var latest=ProjectedDisks().Where(d=>!dataOnly||!d.Protected).ToList();var selected=combo.SelectedItem as DiskInfo;
+            // Keep the selected object when the disk and layout still match. This avoids
+            // firing SelectionChanged and resetting dependent partition selectors.
+            for(int i=items.Count-1;i>=0;i--)if(DiskRefreshPolicy.RetainSelection(latest,items[i])==null)items.RemoveAt(i);
+            foreach(var d in latest)if(!items.Any(old=>DiskRefreshPolicy.RetainSelection([d],old)!=null))items.Add(d);
+            if(selected!=null&&DiskRefreshPolicy.RetainSelection(latest,selected)==null)combo.SelectedItem=null;
+        });
+        return combo;
     }
     ComboBox Choices(params string[] values){var c=new ComboBox{ItemsSource=values};c.SelectedIndex=0;return c;}
     void DiskManager()
@@ -126,20 +137,22 @@ public partial class MainWindow:Window
     }
     void Queue(DiskOperation op,DiskInfo d,DiskInfo? target=null)
     {
-        var proposed=queue.Append(op).ToList();QueuePlanner.Project(disks,proposed);
+        RequireCurrentQueue();var current=ProjectedDisks();
+        if(DiskRefreshPolicy.RetainSelection(current,d)==null||op.Identity!=d.Identity||op.Layout!=d.Layout||target!=null&&(DiskRefreshPolicy.RetainSelection(current,target)==null||op.TargetIdentity!=target.Identity||op.TargetLayout!=target.Layout))throw new IOException("The selected disk changed or disconnected. Select it again and review the operation.");
+        inventoryRevision++;var proposed=queue.Append(op).ToList();QueuePlanner.Project(disks,proposed);
         if(!queueBaselines.ContainsKey(d.Number))queueBaselines[d.Number]=disks.Single(x=>x.Number==d.Number);
         if(target!=null&&!queueBaselines.ContainsKey(target.Number))queueBaselines[target.Number]=disks.Single(x=>x.Number==target.Number);
         queue.Add(op);Navigate(page);status.Text="Step added to the chain. Nothing changes until Apply.";
     }
     void QueuePanel()
     {
-        var p=Stack(T($"Pending operations ({queue.Count})",16,Ink,true));if(queue.Count==0)p.Children.Add(T("Your queue is empty. Disk changes appear here before they run.",12,Muted,false,new Thickness(0,12,0,16)));
-        foreach(var item in queue.Select((o,i)=>(o,i))){var rowItem=new DockPanel();var remove=Btn("Remove from here",()=>{queue.RemoveRange(item.i,queue.Count-item.i);if(queue.Count==0)queueBaselines.Clear();Navigate(page);});DockPanel.SetDock(remove,Dock.Right);rowItem.Children.Add(remove);rowItem.Children.Add(T($"{item.i+1}. {item.o.Description}",13,Ink,false,new Thickness(0,12,0,12)));p.Children.Add(rowItem);}
-        var row=new WrapPanel();var apply=Btn(StorageService.IsAdmin?"Review & apply":"Restart as administrator to apply",async()=>{if(!StorageService.IsAdmin){await ElevateWithPlan();return;}await Apply();},true);apply.IsEnabled=queue.Count>0;row.Children.Add(apply);row.Children.Add(Btn("Clear queue",()=>{queue.Clear();queueBaselines.Clear();Navigate(page);}));p.Children.Add(row);p.Children.Add(T("Queued operations can be cleared. Applied operations are not transactional and cannot be undone automatically.",11,Muted));body.Children.Add(Card(p));
+        var p=Stack(T($"Pending operations ({queue.Count})",16,Ink,true));queueWarning=T("",12,B("#B34545"),false,new Thickness(0,12,0,12));p.Children.Add(queueWarning);if(queue.Count==0)p.Children.Add(T("Your queue is empty. Disk changes appear here before they run.",12,Muted,false,new Thickness(0,12,0,16)));
+        foreach(var item in queue.Select((o,i)=>(o,i))){var rowItem=new DockPanel();var remove=Btn("Remove from here",()=>{queue.RemoveRange(item.i,queue.Count-item.i);if(queue.Count==0){queueBaselines.Clear();queueIssue=null;}Navigate(page);});DockPanel.SetDock(remove,Dock.Right);rowItem.Children.Add(remove);rowItem.Children.Add(T($"{item.i+1}. {item.o.Description}",13,Ink,false,new Thickness(0,12,0,12)));p.Children.Add(rowItem);}
+        var row=new WrapPanel();var apply=Btn(StorageService.IsAdmin?"Review & apply":"Restart as administrator to apply",async()=>{if(!StorageService.IsAdmin){await ElevateWithPlan();return;}await Apply();},true);queueApply=apply;UpdateQueueWarning();row.Children.Add(apply);row.Children.Add(Btn("Clear queue",()=>{queue.Clear();queueBaselines.Clear();queueIssue=null;Navigate(page);status.Text="Queue cleared.";}));p.Children.Add(row);p.Children.Add(T("Queued operations can be cleared. Applied operations are not transactional and cannot be undone automatically.",11,Muted));body.Children.Add(Card(p));
     }
     async Task Apply()
     {
-        if(queue.Count==0)return;var review=new Window{Title="Review disk operations",Owner=this,Width=650,Height=530,WindowStartupLocation=WindowStartupLocation.CenterOwner,ResizeMode=ResizeMode.NoResize};
+        if(queue.Count==0)return;RequireCurrentQueue();var review=new Window{Title="Review disk operations",Owner=this,Width=650,Height=530,WindowStartupLocation=WindowStartupLocation.CenterOwner,ResizeMode=ResizeMode.NoResize};
         var p=Stack(T("Review before applying",23,Ink,true),T(string.Join("\n",queue.Select(o=>o.Description)),13,Ink,false,new Thickness(0,20,0,20)),T("These operations change disk data. Keep a separate verified backup. If an operation fails, later operations stop; earlier changes remain applied.",13,Muted));
         string phrase=string.Join(", ",queue.Where(o=>o.Destructive).Select(o=>"DISK "+(o.Kind==OperationKind.CloneDisk?o.TargetDiskNumber:o.DiskNumber)).Distinct());TextBox? confirm=null;
         if(phrase.Length>0){p.Children.Add(T("Destructive operation. Type exactly: "+phrase,13,B("#B34545"),true,new Thickness(0,20,0,0)));confirm=new TextBox();p.Children.Add(confirm);}var ack=new CheckBox{Content="I reviewed the target disks and have a separate backup.",Margin=new Thickness(0,16,0,20)};p.Children.Add(ack);
@@ -153,7 +166,7 @@ public partial class MainWindow:Window
             }
             finally
             {
-                queue.Clear();queueBaselines.Clear();disks=await StorageService.InventoryAsync();StopActivityTimer();RefreshRunDisplay();
+                queue.Clear();queueBaselines.Clear();queueIssue=null;disks=await StorageService.InventoryAsync();StopActivityTimer();RefreshRunDisplay();
             }
         });
     }
@@ -164,7 +177,7 @@ public partial class MainWindow:Window
     void Benchmark()
     {
         Note("Uses an isolated temporary file, never a raw disk. Writing test data consumes drive endurance. Results depend on file size, cache, workload and virtualization; they are not numerically interchangeable with CrystalDiskMark.");
-        var volume=new ComboBox{ItemsSource=DriveInfo.GetDrives().Where(d=>d.IsReady&&d.DriveType is DriveType.Fixed or DriveType.Removable).Select(d=>d.RootDirectory.FullName).ToList()};if(volume.Items.Count>0)volume.SelectedIndex=0;
+        var volume=VolumePicker();
         ComboBox size=Choices("256","1024","4096","16384"),duration=Choices("3","5","10","30"),passes=Choices("1","3","5"),profile=Choices("Standard","Real world"),pattern=Choices("Random data","Zero fill");var mixed=new CheckBox{Content="Include mixed 70% read / 30% write",Margin=new Thickness(0,6,0,18)};
         var fields=new Grid();for(int i=0;i<3;i++)fields.ColumnDefinitions.Add(new());fields.RowDefinitions.Add(new());fields.RowDefinitions.Add(new());var controls=new (string,UIElement)[]{("Target volume",volume),("Test file (MiB)",size),("Seconds / workload",duration),("Passes (mean)",passes),("Profile",profile),("Data pattern",pattern)};
         for(int i=0;i<controls.Length;i++){var p=Stack(T(controls[i].Item1,12,Muted),controls[i].Item2);p.Margin=new Thickness(0,0,i%3<2?18:0,0);Grid.SetColumn(p,i%3);Grid.SetRow(p,i/3);fields.Children.Add(p);}

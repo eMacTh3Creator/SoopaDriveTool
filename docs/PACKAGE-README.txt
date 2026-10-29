@@ -7,6 +7,14 @@ the window opens, unless the process is already elevated. Declining closes the
 app. The .NET runtime is included. Review queued operations, then Apply.
 If a step fails, later steps stop; completed disk changes are not rolled back.
 
+Connected disks
+Internal disks, USB flash drives and external hard drives appear in the disk list.
+Enable Auto refresh in the header; Settings offers 5, 10, 30 and 60 second checks.
+The choice is saved. Refresh pauses during operations and dialogs. A disconnected
+or changed queued disk disables Apply until the queue is cleared and reviewed.
+Incomplete Windows device information is shown with a warning; disk changes are
+blocked until full information is available. USB SMART depends on the adapter.
+
 Partition management
 Create, delete, rename, format, resize, move, split, merge and redistribute data
 partitions. Convert nonempty GPT/MBR, primary/logical and eligible simple dynamic

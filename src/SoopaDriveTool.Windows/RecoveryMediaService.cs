@@ -47,6 +47,7 @@ public static class RecoveryMediaService
     }
     public static async Task WriteUsbAsync(string iso,DiskInfo target,IProgress<DriveProgress>? progress=null)
     {
+        if(target.InventoryWarning.Length>0)throw new IOException("Windows could not read complete USB disk information. Refresh before creating recovery media.");
         if(!StorageService.IsAdmin||target.Protected||target.ReadOnly||target.Size>256L*1024*1024*1024||target.Bus!="USB")throw new IOException("Choose a writable USB data disk of at most 256 GiB.");BackupEngine.RejectExistingAncestorLinks(iso);if(!File.Exists(iso))throw new IOException("Choose a built recovery ISO.");await DiskAccess.RequireSeparatePathAsync(iso,target.Number);var current=(await StorageService.InventoryAsync()).Single(d=>d.Number==target.Number);QueuePlanner.AssertUnchanged(target,current);
         string path=Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(Path.GetFullPath(iso)));var expected=Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(System.Text.Json.JsonSerializer.Serialize(target,Data.Json)));
         await StorageService.PowerShellAsync("$iso=[Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('"+path+"'));$expected=[Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('"+expected+"'))|ConvertFrom-Json;"+UsbScript,progress:progress);

@@ -25,6 +25,7 @@ public static class DiskAccess
     }
     public static BoundDiskStream Open(DiskInfo expected,bool write,bool requireOffline=true)
     {
+        if(write&&expected.InventoryWarning.Length>0)throw new IOException("Windows could not read complete disk information. Disk writes are disabled; refresh first.");
         if(!StorageService.IsAdmin)throw new UnauthorizedAccessException("Administrator access is required for direct disk I/O.");if(write&&(expected.Protected||expected.ReadOnly))throw new IOException("This disk is protected or read-only.");if(requireOffline&&!expected.Offline)throw new IOException("Take this data disk offline before direct disk access.");
         var h=OpenHandle(@"\\.\PhysicalDrive"+expected.Number,write);
         try

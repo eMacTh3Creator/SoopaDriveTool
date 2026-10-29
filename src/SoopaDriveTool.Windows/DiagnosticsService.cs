@@ -32,6 +32,7 @@ public static class DiagnosticsService
     }
     public static async Task FreeSpaceWipeAsync(DiskInfo disk,PartitionInfo partition,bool thorough,IProgress<DriveProgress>? p,CancellationToken ct)
     {
+        if(disk.InventoryWarning.Length>0)throw new IOException("Windows could not read complete disk information. Refresh before overwriting free space.");
         if(disk.Protected||partition.Protected||partition.Encryption!="None"||partition.Letter.Length!=1||disk.Offline)throw new IOException("Choose a mounted unencrypted data volume.");var now=(await StorageService.InventoryAsync(ct)).Single(d=>d.Number==disk.Number);QueuePlanner.AssertUnchanged(disk,now);string root=partition.Letter+@":\",folder=Path.Combine(root,".soopa-free-space-"+Guid.NewGuid().ToString("N"));Directory.CreateDirectory(folder);var files=new List<string>();long reserve=256L*1024*1024,total=Math.Max(0,new DriveInfo(root).AvailableFreeSpace-reserve),done=0;byte[] buffer=new byte[1024*1024];int passes=thorough?3:1;
         try
         {

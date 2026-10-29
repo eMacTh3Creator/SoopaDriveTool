@@ -59,13 +59,15 @@ public partial class MainWindow
     }
     void AddWithoutNavigate(DiskOperation op)
     {
-        if(!queueBaselines.ContainsKey(op.DiskNumber))queueBaselines[op.DiskNumber]=disks.Single(d=>d.Number==op.DiskNumber);
-        QueuePlanner.Project(disks,queue.Append(op).ToList());queue.Add(op);
+        RequireCurrentQueue();var selected=ProjectedDisks().SingleOrDefault(d=>d.Number==op.DiskNumber);
+        if(selected==null||selected.Identity!=op.Identity||selected.Layout!=op.Layout)throw new IOException("The selected disk changed or disconnected. Select it again before adding operations.");
+        inventoryRevision++;QueuePlanner.Project(disks,queue.Append(op).ToList());
+        if(!queueBaselines.ContainsKey(op.DiskNumber))queueBaselines[op.DiskNumber]=disks.Single(d=>d.Number==op.DiskNumber);queue.Add(op);
     }
     void Health()
     {
         Note("Full SMART means all attributes, counters and logs the drive and its connection expose. USB bridges, RAID controllers and VMs can hide data; unavailable information is never treated as a health pass. Collection does not start self-tests or change firmware settings.");
-        var disk=DiskPicker();var transport=Choices("auto","sat","sat,12","sat,16","scsi","nvme","sntasmedia","sntjmicron","sntrealtek");var output=new StackPanel();var controls=Stack(T("SMART & drive condition report",21,Ink,true),T("Select drive",12,Muted,false,new Thickness(0,18,0,0)),disk,T("Transport override (normally auto)",12,Muted),transport,Btn("Read full SMART and logs",async()=>{if(disk.SelectedItem is not DiskInfo d)throw new IOException("Select a drive.");await Work("Reading device SMART attributes and logs",async()=>{smartReport=await SmartService.ReadAsync(d,(string)transport.SelectedItem);Draw();});},true));body.Children.Add(Card(controls));body.Children.Add(output);Draw();int diagnosticStart=body.Children.Count;DiagnosticActions(disk,transport);TabWorkspace(diagnosticStart,("Tests & temperature",1),("Surface scan",1),("Device erase",1),("Free-space wipe",1),("Topology",1));
+        var disk=DiskPicker();var transport=Choices("auto","sat","sat,12","sat,16","scsi","nvme","sntasmedia","sntjmicron","sntrealtek");var output=new StackPanel();var controls=Stack(T("SMART & drive condition report",21,Ink,true),T("Select drive",12,Muted,false,new Thickness(0,18,0,0)),disk,T("Transport override (normally auto)",12,Muted),transport,Btn("Read full SMART and logs",async()=>{if(disk.SelectedItem is not DiskInfo d)throw new IOException("Select a drive.");await Work("Reading device SMART attributes and logs",async()=>{smartReport=await SmartService.ReadAsync(d,(string)transport.SelectedItem);smartReportIdentity=d.Identity;Draw();});},true));body.Children.Add(Card(controls));body.Children.Add(output);disk.SelectionChanged+=(_,_)=>{if((disk.SelectedItem as DiskInfo)?.Identity!=smartReportIdentity){smartReport=null;Draw();}};if(!demo&&(disk.SelectedItem as DiskInfo)?.Identity!=smartReportIdentity)smartReport=null;Draw();int diagnosticStart=body.Children.Count;DiagnosticActions(disk,transport);TabWorkspace(diagnosticStart,("Tests & temperature",1),("Surface scan",1),("Device erase",1),("Free-space wipe",1),("Topology",1));
         void Draw()
         {
             output.Children.Clear();if(smartReport==null)return;var r=smartReport;var p=Stack(T($"{r.Model} · {r.Overall}",21,r.Overall=="FAILING"?B("#B34545"):Ink,true),T($"Serial: {r.Serial} · Firmware: {r.Firmware} · {r.Protocol} · Collected {r.CollectedUtc:u}",12,Muted,false,new Thickness(0,12,0,14)),T(r.Coverage,13,Muted));

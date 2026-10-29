@@ -45,6 +45,7 @@ public record DiskInfo
     public string Style { get; init; } = "";
     public string Bus { get; init; } = "";
     public string Health { get; init; } = "Unknown";
+    public string InventoryWarning { get; init; } = "";
     public bool IsBoot { get; init; }
     public bool IsSystem { get; init; }
     public bool Offline { get; init; }
@@ -89,6 +90,7 @@ public static class OperationPolicy
     public static void Validate(DiskOperation op,DiskInfo disk,DiskInfo? target=null)
     {
         if(!Enum.IsDefined(op.Kind)) throw new InvalidOperationException("Unknown operation.");
+        if(disk.InventoryWarning.Length>0||target?.InventoryWarning.Length>0)throw new InvalidOperationException("Windows could not read complete disk information. Refresh the disk before preparing changes.");
         if(disk.Number!=op.DiskNumber || disk.Identity!=op.Identity || disk.Layout!=op.Layout) throw new InvalidOperationException("The disk identity or layout changed. Refresh and prepare the operation again.");
         bool liveRead=op.Kind==OperationKind.CloneDisk&&op.CloneMode==CloneMode.WindowsLiveUefi;
         if(disk.Protected&&!liveRead) throw new InvalidOperationException("Changes to the running system/boot disk are blocked in this release.");

@@ -1,11 +1,12 @@
 # Supported operations and test coverage
 
-This page summarizes version 0.3.2. The [user guide](USER-GUIDE.md) describes how to use each tool. The [latest validation report](VALIDATION-0.3.2.md) and [test record](QUALIFICATION-0.3.0.json) document the checks completed for this release.
+This page summarizes version 0.3.3. The [user guide](USER-GUIDE.md) describes how to use each tool. The [latest validation report](VALIDATION-0.3.3.md) and [test record](QUALIFICATION-0.3.0.json) document the checks completed for this release.
 
 ## Available operations
 
 | Area | Operations | Requirements and limits |
 |---|---|---|
+| Disk detection | Internal, USB, and external drives; optional automatic refresh with saved intervals; selection and queued-disk identity checks | Available details depend on the Windows provider and controller. Incomplete inventory is displayed with disk changes disabled. Physical USB bridges still need hardware testing. |
 | File backup | Encrypted full, incremental, and differential backups; exclusions, retention, selective restore, passphrase changes, NTFS metadata, VSS, and user/SYSTEM schedules | AES-256-GCM encryption with Brotli compression. Scheduled credentials use Windows DPAPI. Target filesystems must support the metadata being restored. |
 | Disk and Windows images | Compressed encrypted raw images, versioned restore points, verification, Windows WIM capture through VSS, read-only VHD browsing, and selective WIM extraction | Raw restore includes full read-back verification. VHD browsing supports 512-byte raw images up to 2040 GiB. Full Windows restoration runs from WinPE. |
 | Cloning | Inactive or live Windows UEFI cloning, used-file NTFS cloning, exact-sector cloning, and copying to a larger disk with GPT relocation | Windows modes create new identifiers, preserve drive mappings, and configure available WinRE images. Source, destination, sector size, and scratch-space requirements depend on the mode. |

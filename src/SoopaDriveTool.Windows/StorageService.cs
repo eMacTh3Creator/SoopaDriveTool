@@ -37,7 +37,16 @@ public static class StorageService
     public static async Task<List<DiskInfo>> InventoryAsync(CancellationToken ct=default)
     {
         var disks=JsonSerializer.Deserialize<List<DiskInfo>>(await PowerShellAsync(Script("Inventory"),ct),Data.Json)??[];
-        if(IsAdmin)for(int i=0;i<disks.Count;i++){try{if(disks[i].Style=="Dynamic")disks[i]=DynamicDiskService.Inspect(disks[i]);disks[i]=disks[i] with{NativeIdentity=DiskAccess.Fingerprint(disks[i].Number)};}catch(System.ComponentModel.Win32Exception){/* controller did not expose direct descriptors */}}
+        if(IsAdmin)await Task.Run(()=>{for(int i=0;i<disks.Count;i++)
+        {
+            ct.ThrowIfCancellationRequested();
+            try
+            {
+                if(disks[i].Style is "Dynamic" or "Unavailable")disks[i]=DynamicDiskService.Inspect(disks[i]);
+                disks[i]=disks[i] with{NativeIdentity=DiskAccess.Fingerprint(disks[i].Number)};
+            }
+            catch(Exception ex)when(ex is System.ComponentModel.Win32Exception or IOException){/* Keep other devices visible if a drive disconnects or its controller omits native descriptors. */}
+        }},ct);
         return disks;
     }
     public static async Task<string> HealthAsync(CancellationToken ct=default)=>await PowerShellAsync("$r=@(Get-PhysicalDisk | ForEach-Object { $p=$_; try { $c=$p | Get-StorageReliabilityCounter -ErrorAction Stop; [pscustomobject]@{Name=$p.FriendlyName;Health=[string]$p.HealthStatus;Temperature=$c.Temperature;Wear=$c.Wear;PowerOnHours=$c.PowerOnHours;ReadErrors=$c.ReadErrorsTotal;WriteErrors=$c.WriteErrorsTotal} } catch { [pscustomobject]@{Name=$p.FriendlyName;Health=[string]$p.HealthStatus;Note='Controller did not expose reliability counters'} } }); ConvertTo-Json -InputObject $r -Depth 5",ct);

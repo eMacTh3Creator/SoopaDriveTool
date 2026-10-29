@@ -1,8 +1,16 @@
 # SoopaDriveTool user guide
 
-This guide covers version 0.3.2 on Windows 11. Install ARM64 on Windows on ARM, or x64 on Intel/AMD PCs. The .NET runtime and required engines are included.
+This guide covers version 0.3.3 on Windows 11. Install ARM64 on Windows on ARM, or x64 on Intel/AMD PCs. The .NET runtime and required engines are included.
 
 When you launch SoopaDriveTool, Windows requests administrator approval (UAC) before the window opens, unless the process is already elevated. If you decline, the app closes. Review queued disk changes before applying them.
+
+## Connected disks and automatic refresh
+
+Use **Refresh** to update the connected disk list. Enable **Auto refresh** in the header to check automatically, or open **Settings** to choose a 5-, 10-, 30-, or 60-second interval. Automatic refresh is off by default. Your choice is saved between launches.
+
+Refresh pauses during operations and dialogs. It updates disk lists without clearing form entries or changing an unchanged disk or partition selection. If the selected disk disconnects or its layout changes, select it again. If an affected disk has queued operations, those steps remain visible, but Apply is disabled. Clear the queue and prepare the changes again.
+
+USB flash drives and external hard drives appear alongside internal disks. Available partition, filesystem, capacity, and health information depends on the drive and its USB controller. If Windows provides incomplete disk information, the available details remain visible with a warning and disk changes are disabled. SMART attributes and logs also depend on the USB bridge; the Health page includes transport overrides for supported adapters.
 
 ## Manage partitions
 
