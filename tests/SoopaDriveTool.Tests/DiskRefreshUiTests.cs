@@ -21,6 +21,7 @@ partial class Program
             {
                 application=new App{ShutdownMode=ShutdownMode.OnExplicitShutdown};application.InitializeComponent();
                 SetPreferences(new AppPreferences(Theme:"Light"));
+                ConfirmationUiChecks(windows);PartitionMapUiChecks(windows);
                 var old=JsonSerializer.Deserialize<AppPreferences>("{\"Theme\":\"Dark\",\"WaitingFacts\":false,\"Compact\":true}",Data.Json)!;
                 Check(!old.AutoRefreshDisks&&old.DiskRefreshSeconds==10&&old.Theme=="Dark"&&!old.WaitingFacts&&old.Compact,"Existing preferences get disabled auto refresh and a ten-second interval");
                 var saved=old with{AutoRefreshDisks=true,DiskRefreshSeconds=30};

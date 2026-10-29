@@ -61,7 +61,7 @@ public partial class MainWindow
     {
         RequireCurrentQueue();var selected=ProjectedDisks().SingleOrDefault(d=>d.Number==op.DiskNumber);
         if(selected==null||selected.Identity!=op.Identity||selected.Layout!=op.Layout)throw new IOException("The selected disk changed or disconnected. Select it again before adding operations.");
-        inventoryRevision++;QueuePlanner.Project(disks,queue.Append(op).ToList());
+        ResetApplyConfirmation();inventoryRevision++;QueuePlanner.Project(disks,queue.Append(op).ToList());
         if(!queueBaselines.ContainsKey(op.DiskNumber))queueBaselines[op.DiskNumber]=disks.Single(d=>d.Number==op.DiskNumber);queue.Add(op);
     }
     void Health()

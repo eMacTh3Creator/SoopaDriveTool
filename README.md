@@ -4,28 +4,29 @@
 
 SoopaDriveTool is an open-source disk utility for Windows 11. It manages partitions, clones drives, creates backups, runs storage benchmarks, and exports SMART reports. Builds are available for ARM64 and x64. Developed by Ev-Tech Solutions, LLC.
 
-[Website](https://emacth3creator.github.io/SoopaDriveTool/) · [User guide](docs/USER-GUIDE.md) · [Release notes](docs/RELEASE-NOTES-0.3.3.md) · [Test results](docs/VALIDATION-0.3.3.md)
+[Website](https://emacth3creator.github.io/SoopaDriveTool/) · [User guide](docs/USER-GUIDE.md) · [Release notes](docs/RELEASE-NOTES-0.3.4.md) · [Test results](docs/VALIDATION-0.3.4.md)
 
 ## Download
 
-Version **0.3.3** is an unsigned preview. Windows may show a publisher or SmartScreen warning.
+Version **0.3.4** is an unsigned preview. Windows may show a publisher or SmartScreen warning.
 
 | Windows PC | Installer | Portable |
 |---|---|---|
-| ARM64, including Snapdragon PCs and Windows VMs on Apple Silicon | [ARM64 installer](https://github.com/eMacTh3Creator/SoopaDriveTool/releases/download/v0.3.3/SoopaDriveTool-0.3.3-arm64-Setup.exe) | [ARM64 ZIP](https://github.com/eMacTh3Creator/SoopaDriveTool/releases/download/v0.3.3/SoopaDriveTool-0.3.3-arm64-Portable.zip) |
-| 64-bit Intel or AMD | [x64 installer](https://github.com/eMacTh3Creator/SoopaDriveTool/releases/download/v0.3.3/SoopaDriveTool-0.3.3-x64-Setup.exe) | [x64 ZIP](https://github.com/eMacTh3Creator/SoopaDriveTool/releases/download/v0.3.3/SoopaDriveTool-0.3.3-x64-Portable.zip) |
+| ARM64, including Snapdragon PCs and Windows VMs on Apple Silicon | [ARM64 installer](https://github.com/eMacTh3Creator/SoopaDriveTool/releases/download/v0.3.4/SoopaDriveTool-0.3.4-arm64-Setup.exe) | [ARM64 ZIP](https://github.com/eMacTh3Creator/SoopaDriveTool/releases/download/v0.3.4/SoopaDriveTool-0.3.4-arm64-Portable.zip) |
+| 64-bit Intel or AMD | [x64 installer](https://github.com/eMacTh3Creator/SoopaDriveTool/releases/download/v0.3.4/SoopaDriveTool-0.3.4-x64-Setup.exe) | [x64 ZIP](https://github.com/eMacTh3Creator/SoopaDriveTool/releases/download/v0.3.4/SoopaDriveTool-0.3.4-x64-Portable.zip) |
 
-The .NET runtime is included. Extract the portable ZIP before running it. [Release checksums](https://github.com/eMacTh3Creator/SoopaDriveTool/releases/download/v0.3.3/SHA256SUMS.txt) are available for each download.
+The .NET runtime is included. Extract the portable ZIP before running it. [Release checksums](https://github.com/eMacTh3Creator/SoopaDriveTool/releases/download/v0.3.4/SHA256SUMS.txt) are available for each download.
 
 ## Features
 
 - **Disk detection:** view internal disks, USB drives, and external hard drives. Enable automatic refresh and choose an interval in Settings.
+- **Partition map:** click a partition to select it, then right-click for its actions. The purple Apply button opens a Yes/No review with No selected by default.
 - **Partitions:** create, delete, format, rename, resize, move, split, and merge partitions. Redistribute free space and convert supported partition tables, volume types, filesystems, and allocation sizes.
 - **Queued changes:** prepare several operations against a preview of the disk layout, then review and apply them together. Later steps can refer to a partition created earlier in the queue.
 - **Cloning:** copy every sector, copy used NTFS files, or migrate a Windows UEFI installation. Windows cloning supports inactive installations and the running system through Volume Shadow Copy Service (VSS).
 - **Backups and images:** create encrypted full, incremental, or differential backups. Set exclusions, retention rules, and schedules; restore selected files or complete disk and Windows images.
 - **Recovery:** build WinPE recovery media, restore images, repair UEFI boot files, find lost partitions, and recover supported deleted-file candidates. Recovery tools include file previews and a sector editor.
-- **Wiping:** reset partition metadata, overwrite a disk with zeroes or random data, run a three-pass overwrite, or overwrite free space. Full-disk overwrites include read-back verification. Firmware erase is available on eligible devices.
+- **Wiping:** erase one partition with read-back verification, reset partition metadata, overwrite a disk with zeroes or random data, run a three-pass overwrite, or overwrite free space. Full-disk overwrites include read-back verification. Firmware erase is available on eligible devices.
 - **Drive health:** view the SMART attributes, error logs, wear counters, and self-test history exposed by the drive. Export JSON, CSV, text, or printable HTML reports for maintenance and resale records.
 - **Benchmarks:** run Microsoft DiskSpd workloads, configure access patterns and queue depth, compare saved runs, and export throughput, IOPS, and latency results.
 
@@ -45,7 +46,7 @@ The running Windows disk is protected from partition changes and raw writes. Liv
 
 Recovery-media creation requires Microsoft's Windows ADK Deployment Tools and the matching WinPE add-on. Microsoft boot files are supplied by your ADK installation.
 
-ARM64 Windows clones, image restores, and boot repair have passed independent Secure Boot tests in spare VMs. Physical firmware erasure, x64 recovery boots, USB/4Kn hardware, power interruption, and migration between different hardware still need testing. VM benchmark results do not measure physical-drive performance. See the [validation report](docs/VALIDATION-0.3.3.md) for the full scope and remaining limits.
+ARM64 Windows clones, image restores, and boot repair have passed independent Secure Boot tests in spare VMs. Physical firmware erasure, x64 recovery boots, USB/4Kn hardware, power interruption, and migration between different hardware still need testing. VM benchmark results do not measure physical-drive performance. See the [validation report](docs/VALIDATION-0.3.4.md) for the full scope and remaining limits.
 
 ## Build from source
 

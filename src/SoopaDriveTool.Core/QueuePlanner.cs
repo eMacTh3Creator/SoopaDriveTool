@@ -2,14 +2,14 @@ namespace SoopaDriveTool.Core;
 public static class QueuePlanner
 {
     public const long MiB=1024*1024;
-    public static bool Opaque(DiskOperation o)=>o.Kind is OperationKind.RestoreImage or OperationKind.CloneDisk or OperationKind.MovePartition or OperationKind.ConvertTable or OperationKind.SetPartitionKind or OperationKind.SplitPartition or OperationKind.MergePartition or OperationKind.ChangeFileSystem or OperationKind.ChangeClusterSize or OperationKind.RedistributeSpace or OperationKind.ConvertDynamic;
+    public static bool Opaque(DiskOperation o)=>o.Kind is OperationKind.RestoreImage or OperationKind.CloneDisk or OperationKind.MovePartition or OperationKind.ConvertTable or OperationKind.SetPartitionKind or OperationKind.SplitPartition or OperationKind.MergePartition or OperationKind.ChangeFileSystem or OperationKind.ChangeClusterSize or OperationKind.RedistributeSpace or OperationKind.ConvertDynamic or OperationKind.WipePartition;
     public static List<DiskInfo> Project(IEnumerable<DiskInfo> initial,IReadOnlyList<DiskOperation> operations)
     {
         var result=initial.ToDictionary(d=>d.Number);var closed=new HashSet<int>();
         for(int index=0;index<operations.Count;index++)
         {
             var op=operations[index];
-            if(closed.Contains(op.DiskNumber)||op.TargetDiskNumber>=0&&closed.Contains(op.TargetDiskNumber))throw new InvalidOperationException("Cloning/restoring must be the final operation using its disks. Apply before planning further changes.");
+            if(closed.Contains(op.DiskNumber)||op.TargetDiskNumber>=0&&closed.Contains(op.TargetDiskNumber))throw new InvalidOperationException("This operation must be the final step using its disk. Apply before planning further changes.");
             if(!result.TryGetValue(op.DiskNumber,out var d))throw new InvalidOperationException("A queued disk is missing.");
             var target=result.GetValueOrDefault(op.TargetDiskNumber);
             var bound=op with{Identity=d.Identity,Layout=d.Layout,TargetIdentity=target?.Identity??"",TargetLayout=target?.Layout??""};
@@ -44,6 +44,7 @@ public static class QueuePlanner
             case OperationKind.CreatePartition:
                 var offset=Allocate(d,o.Bytes);if(d.Style=="GPT"&&parts.Count==0)parts.Add(Reserved(d));if(o.Offset!=0&&o.Offset!=offset)throw new InvalidOperationException("Planned allocation changed.");
                 parts.Add(new(){Number=VirtualNumber(index),Offset=offset,Size=o.Bytes,Label=o.Value,FileSystem=o.FileSystem,Free=o.Bytes,Type="Basic",Encryption="None"});break;
+            case OperationKind.WipePartition:Replace(p! with{FileSystem="",Label="",Letter="",Free=0,Encryption="Unknown"});break;
             case OperationKind.DeletePartition:parts.Remove(p!);break;
             case OperationKind.SetLabel:Replace(p! with{Label=o.Value});break;
             case OperationKind.SetLetter:
@@ -74,6 +75,7 @@ public static class QueuePlanner
         foreach(var p in unaffected)if(!after.Partitions.Any(a=>Same(a,p)))throw new InvalidOperationException("An unrelated partition changed; the remaining queue was stopped.");
         switch(op.Kind)
         {
+            case OperationKind.WipePartition:if(after.Style!=before.Style||after.Partitions.Count!=before.Partitions.Count||!after.Partitions.Any(p=>Same(p,partition!)))throw new InvalidOperationException("The retained partition table did not match after erasure.");break;
             case OperationKind.MovePartition:if(!after.Partitions.Any(p=>p.Offset==op.Offset&&p.Size==partition!.Size))throw new InvalidOperationException("Moved partition location was not verified.");break;
             case OperationKind.ConvertTable:if(after.Style!=op.Value)throw new InvalidOperationException("Converted partition table was not verified.");break;
             case OperationKind.SplitPartition:if(!after.Partitions.Any(p=>p.Offset==partition!.Offset&&p.Size==op.Bytes)||after.Partitions.Count!=before.Partitions.Count+1)throw new InvalidOperationException("Partition split was not verified.");break;

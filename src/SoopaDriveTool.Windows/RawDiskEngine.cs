@@ -49,6 +49,19 @@ public static class RawDiskEngine
             if(op.CloneMode==CloneMode.ByteExactGrow&&target!.Size>disk.Size){var table=DiskTables.Read(output,disk.SectorSize);if(table.Style=="GPT"){DiskTables.Write(output,table);output.Flush();if(DiskTables.Read(output,disk.SectorSize).RecoveredFromBackup)throw new IOException("Relocated GPT verification failed.");}return "All source sectors copied and hash-verified; redundant GPT metadata relocated to the larger disk boundary. Extra capacity is unallocated. Disconnect the source before using its identical clone.";}
             return "Byte-exact clone complete and full read-back verified. Both disks remain offline. Disconnect the source before bringing its identical clone online.";
         }
+        if(op.Kind==OperationKind.WipePartition)
+        {
+            await ValidateAgain(op);OperationPolicy.Validate(op,disk);
+            var selected=disk.Partitions.Single(p=>p.Number==op.PartitionNumber);
+            await using var output=Open(disk,true);var table=DiskTables.Read(output,disk.SectorSize);
+            var entry=table.Partitions.SingleOrDefault(p=>p.Offset==selected.Offset&&p.Length==selected.Size);
+            if(table.Style!=disk.Style||entry==null||entry.Type!=DiskTables.Basic||entry.Active)throw new IOException("The selected data partition does not match the on-disk partition table, or is protected.");
+            var before=JsonSerializer.Serialize(table,Data.Json);
+            var result=await PartitionErase.EraseAsync(output,selected.Offset,selected.Size,disk.SectorSize,op.WipeMode,new PartitionEraseProgress(progress));
+            if(JsonSerializer.Serialize(DiskTables.Read(output,disk.SectorSize),Data.Json)!=before)throw new IOException("Partition-table verification failed after erasure. Keep this disk offline and inspect its layout.");
+            progress?.Report(new("Partition erase verified",100,"Selected contents and retained partition table verified."));
+            return $"Partition {selected.Number} contents erased with {result.Passes} pass(es) and full read-back verification. Its partition entry and other partitions were retained. Disk remains offline. Bring it online and format the partition before use. This is not firmware sanitize or guaranteed SSD remapped-cell erasure.";
+        }
         if(op.Kind==OperationKind.WipeDisk)
         {
             await ValidateAgain(op);int passes=op.WipeMode==WipeMode.ThreePass?3:1;var b=new byte[1024*1024];
@@ -73,6 +86,7 @@ public static class RawDiskEngine
         }
         throw new InvalidOperationException("Unsupported raw operation.");
     }
+    sealed class PartitionEraseProgress(IProgress<DriveProgress>? target):IProgress<DriveProgress>{public void Report(DriveProgress p)=>target?.Report(p with{Percent=p.Percent.HasValue?Math.Min(99.9,p.Percent.Value):null});}
     sealed class Meter(IProgress<DriveProgress>? progress,string phase,double start,double span,long total)
     {
         readonly Stopwatch clock=Stopwatch.StartNew();long last;

@@ -1,10 +1,24 @@
 $ErrorActionPreference='Stop'
 $ProgressPreference='SilentlyContinue'
-function Encryption($letter) {
-  if (!$letter) { return 'Unknown' }
+function Encryption($partition,$volume,$offline) {
   try {
-    $b=Get-CimInstance -Namespace 'root/CIMV2/Security/MicrosoftVolumeEncryption' -ClassName Win32_EncryptableVolume -Filter "DriveLetter='$($letter):'" -ErrorAction Stop
-    if (!$b -or $b.EncryptionMethod -eq 0) { return 'None' }
+    $instances=@();$queried=$false
+    if ($partition.DriveLetter) {
+      $queried=$true
+      $instances=@(Get-CimInstance -Namespace 'root/CIMV2/Security/MicrosoftVolumeEncryption' -ClassName Win32_EncryptableVolume -Filter "DriveLetter='$($partition.DriveLetter):'" -ErrorAction Stop)
+    } else {
+      $ids=@($partition.AccessPaths)+@($volume.Path,$volume.UniqueId)
+      foreach ($id in @($ids | Where-Object { $_ -match '^\\\\\?\\Volume\{' } | Select-Object -Unique)) {
+        $queried=$true
+        $escaped=([string]$id).Replace('\','\\').Replace("'","\'")
+        $instances+=@(Get-CimInstance -Namespace 'root/CIMV2/Security/MicrosoftVolumeEncryption' -ClassName Win32_EncryptableVolume -Filter ("DeviceID='"+$escaped+"'") -ErrorAction Stop)
+      }
+    }
+    if ($instances.Count -eq 0 -and $queried -and !$offline) { return 'None' }
+    if ($instances.Count -ne 1) { return 'Unknown' }
+    $state=Invoke-CimMethod -InputObject $instances[0] -MethodName GetEncryptionMethod -ErrorAction Stop
+    if ($null -eq $state.ReturnValue -or [uint32]$state.ReturnValue -ne 0 -or $null -eq $state.EncryptionMethod) { return 'Unknown' }
+    if ([uint32]$state.EncryptionMethod -eq 0) { return 'None' }
     return 'BitLocker'
   } catch { return 'Unknown' }
 }
@@ -43,7 +57,7 @@ foreach ($d in $storage) {
   } catch { $warning='Windows could not read the partition list. Disk changes are disabled until a refresh succeeds.' }
   foreach ($p in $providerParts) {
     $v=Volume-Details $p
-    $parts+=[ordered]@{Number=[int]$p.PartitionNumber;Offset=[long]$p.Offset;Size=[long]$p.Size;Letter=[string]$p.DriveLetter;Label=[string]$v.FileSystemLabel;FileSystem=[string]$v.FileSystem;Free=[long]$v.SizeRemaining;Type=[string]$p.Type;IsBoot=[bool]$p.IsBoot;IsSystem=[bool]$p.IsSystem;Encryption=(Encryption $p.DriveLetter)}
+    $parts+=[ordered]@{Number=[int]$p.PartitionNumber;Offset=[long]$p.Offset;Size=[long]$p.Size;Letter=[string]$p.DriveLetter;Label=[string]$v.FileSystemLabel;FileSystem=[string]$v.FileSystem;Free=[long]$v.SizeRemaining;Type=[string]$p.Type;IsBoot=[bool]$p.IsBoot;IsSystem=[bool]$p.IsSystem;Encryption=(Encryption $p $v $d.IsOffline)}
   }
   $name=[string]$d.FriendlyName;if (!$name) { $name=[string]$physical.Model };if (!$name) { $name='Disk '+$d.Number }
   $disks.Add([ordered]@{Number=[int]$d.Number;Name=$name;UniqueId=[string]$d.UniqueId;Serial=[string]$d.SerialNumber;Size=[long]$d.Size;SectorSize=[int]$d.LogicalSectorSize;Style=[string]$d.PartitionStyle;Bus=(Usb-Bus $d.BusType $physical);Health=[string]$d.HealthStatus;IsBoot=[bool]$d.IsBoot;IsSystem=[bool]$d.IsSystem;Offline=[bool]$d.IsOffline;ReadOnly=[bool]$d.IsReadOnly;InventoryWarning=$warning;Partitions=$parts})

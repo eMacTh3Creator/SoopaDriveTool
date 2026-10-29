@@ -58,7 +58,7 @@ public record DiskInfo
     public override string ToString()=>Display;
     public string Display => $"Disk {Number} · {Name} · {Data.Size(Size)}";
 }
-public enum OperationKind { InitializeGpt, InitializeMbr, CreatePartition, ResizePartition, FormatPartition, DeletePartition, SetLabel, SetLetter, RemoveLetter, Offline, Online, ReadOnly, ReadWrite, ReTrim, CheckFileSystem, BackupImage, RestoreImage, CloneDisk, WipeDisk, QuickWipeDisk, MovePartition, ConvertTable, SetPartitionKind, SplitPartition, MergePartition, ChangeFileSystem, ChangeClusterSize, RedistributeSpace, ConvertDynamic }
+public enum OperationKind { InitializeGpt, InitializeMbr, CreatePartition, ResizePartition, FormatPartition, DeletePartition, SetLabel, SetLetter, RemoveLetter, Offline, Online, ReadOnly, ReadWrite, ReTrim, CheckFileSystem, BackupImage, RestoreImage, CloneDisk, WipeDisk, QuickWipeDisk, MovePartition, ConvertTable, SetPartitionKind, SplitPartition, MergePartition, ChangeFileSystem, ChangeClusterSize, RedistributeSpace, ConvertDynamic, WipePartition }
 public enum CloneMode { ByteExact, FileSystem, WindowsUefi, WindowsLiveUefi, ByteExactGrow }
 public enum WipeMode { Zero, Random, ThreePass }
 public record DiskOperation
@@ -81,8 +81,13 @@ public record DiskOperation
     public int TargetDiskNumber { get; init; } = -1;
     public string TargetIdentity { get; init; } = "";
     public string TargetLayout { get; init; } = "";
-    public bool Destructive => Kind is OperationKind.FormatPartition or OperationKind.DeletePartition or OperationKind.RestoreImage or OperationKind.CloneDisk or OperationKind.WipeDisk or OperationKind.QuickWipeDisk or OperationKind.MovePartition or OperationKind.ConvertTable or OperationKind.SetPartitionKind or OperationKind.MergePartition or OperationKind.ChangeFileSystem or OperationKind.ChangeClusterSize or OperationKind.RedistributeSpace or OperationKind.ConvertDynamic;
-    public string Description => $"{(Kind==OperationKind.CloneDisk?CloneMode+" clone":Kind==OperationKind.WipeDisk?WipeMode+" overwrite":Kind.ToString())} · Disk {DiskNumber}"+(PartitionNumber!=0?$" / {(PartitionNumber<0?"pending partition "+(-PartitionNumber):"partition "+PartitionNumber)}":"")+(Bytes>0?$" · {Data.Size(Bytes)}":"")+(Value.Length>0?$" · {Value}":"")+(TargetDiskNumber>=0?$" → Disk {TargetDiskNumber}":"");
+    public bool Destructive => Kind is OperationKind.FormatPartition or OperationKind.DeletePartition or OperationKind.RestoreImage or OperationKind.CloneDisk or OperationKind.WipeDisk or OperationKind.QuickWipeDisk or OperationKind.MovePartition or OperationKind.ConvertTable or OperationKind.SetPartitionKind or OperationKind.MergePartition or OperationKind.ChangeFileSystem or OperationKind.ChangeClusterSize or OperationKind.RedistributeSpace or OperationKind.ConvertDynamic or OperationKind.WipePartition;
+    public string ActionName=>Kind switch
+    {
+        OperationKind.InitializeGpt=>"Initialize GPT",OperationKind.InitializeMbr=>"Initialize MBR",OperationKind.CreatePartition=>"Create partition",OperationKind.ResizePartition=>"Resize partition",OperationKind.FormatPartition=>"Format partition",OperationKind.DeletePartition=>"Delete partition",OperationKind.SetLabel=>"Rename partition",OperationKind.SetLetter=>"Assign drive letter",OperationKind.RemoveLetter=>"Remove drive letter",OperationKind.Offline=>"Take disk offline",OperationKind.Online=>"Bring disk online",OperationKind.ReadOnly=>"Set disk read-only",OperationKind.ReadWrite=>"Make disk writable",OperationKind.ReTrim=>"SSD TRIM",OperationKind.CheckFileSystem=>"Check filesystem",OperationKind.BackupImage=>"Create disk image",OperationKind.RestoreImage=>"Restore disk image",OperationKind.CloneDisk=>"Clone disk ("+(CloneMode switch{CloneMode.ByteExact=>"all sectors",CloneMode.ByteExactGrow=>"all sectors to larger disk",CloneMode.FileSystem=>"used files",CloneMode.WindowsUefi=>"Windows UEFI",_=>"live Windows UEFI"})+")",OperationKind.WipeDisk=>"Erase disk contents ("+EraseMethod+")",OperationKind.WipePartition=>"Erase partition contents ("+EraseMethod+")",OperationKind.QuickWipeDisk=>"Quick partition reset",OperationKind.MovePartition=>"Move partition",OperationKind.ConvertTable=>"Convert partition table",OperationKind.SetPartitionKind=>"Change partition type",OperationKind.SplitPartition=>"Split partition",OperationKind.MergePartition=>"Merge partitions",OperationKind.ChangeFileSystem=>"Convert filesystem",OperationKind.ChangeClusterSize=>"Change allocation units",OperationKind.RedistributeSpace=>"Redistribute space",OperationKind.ConvertDynamic=>"Convert basic / dynamic disk",_=>Kind.ToString()
+    };
+    string EraseMethod=>WipeMode switch{WipeMode.Zero=>"zero overwrite",WipeMode.Random=>"random overwrite",_=>"three passes"};
+    public string Description => $"{ActionName} · Disk {DiskNumber}"+(PartitionNumber!=0?$" / {(PartitionNumber<0?"pending partition "+(-PartitionNumber):"partition "+PartitionNumber)}":"")+(Bytes>0?$" · {Data.Size(Bytes)}":"")+(Kind is OperationKind.CreatePartition or OperationKind.FormatPartition or OperationKind.ChangeFileSystem?$" · {FileSystem}":"")+(Value.Length>0?$" · {Value}":"")+(TargetDiskNumber>=0?$" → Disk {TargetDiskNumber}":"");
     public static DiskOperation For(DiskInfo disk,OperationKind kind,PartitionInfo? partition=null) => new(){Kind=kind,DiskNumber=disk.Number,Identity=disk.Identity,Layout=disk.Layout,PartitionNumber=partition?.Number??0};
 }
 public static class OperationPolicy
@@ -96,10 +101,10 @@ public static class OperationPolicy
         if(disk.Protected&&!liveRead) throw new InvalidOperationException("Changes to the running system/boot disk are blocked in this release.");
         if(string.IsNullOrWhiteSpace(disk.UniqueId) || disk.Size<=0) throw new InvalidOperationException("The disk cannot be identified safely.");
         if(disk.ReadOnly && op.Kind is not (OperationKind.ReadWrite or OperationKind.Online or OperationKind.BackupImage or OperationKind.CheckFileSystem or OperationKind.CloneDisk)) throw new InvalidOperationException("Disk is read-only.");
-        var raw=op.Kind is OperationKind.BackupImage or OperationKind.RestoreImage or OperationKind.WipeDisk or OperationKind.MovePartition or OperationKind.ConvertTable or OperationKind.SetPartitionKind || op.Kind==OperationKind.CloneDisk&&op.CloneMode is CloneMode.ByteExact or CloneMode.ByteExactGrow;
+        var raw=op.Kind is OperationKind.BackupImage or OperationKind.RestoreImage or OperationKind.WipeDisk or OperationKind.WipePartition or OperationKind.MovePartition or OperationKind.ConvertTable or OperationKind.SetPartitionKind || op.Kind==OperationKind.CloneDisk&&op.CloneMode is CloneMode.ByteExact or CloneMode.ByteExactGrow;
         if(raw && !disk.Offline) throw new InvalidOperationException("Take the data disk offline before raw imaging, cloning or wiping.");
         if(!raw && disk.Offline && op.Kind is not (OperationKind.Online or OperationKind.ReadOnly or OperationKind.ReadWrite)) throw new InvalidOperationException("Bring this data disk online first.");
-        if(op.Kind is OperationKind.ResizePartition or OperationKind.FormatPartition or OperationKind.DeletePartition or OperationKind.SetLabel or OperationKind.SetLetter or OperationKind.RemoveLetter or OperationKind.ReTrim or OperationKind.CheckFileSystem or OperationKind.MovePartition or OperationKind.SetPartitionKind or OperationKind.SplitPartition or OperationKind.MergePartition or OperationKind.ChangeFileSystem or OperationKind.ChangeClusterSize or OperationKind.RedistributeSpace)
+        if(op.Kind is OperationKind.ResizePartition or OperationKind.FormatPartition or OperationKind.DeletePartition or OperationKind.SetLabel or OperationKind.SetLetter or OperationKind.RemoveLetter or OperationKind.ReTrim or OperationKind.CheckFileSystem or OperationKind.MovePartition or OperationKind.SetPartitionKind or OperationKind.SplitPartition or OperationKind.MergePartition or OperationKind.ChangeFileSystem or OperationKind.ChangeClusterSize or OperationKind.RedistributeSpace or OperationKind.WipePartition)
             if(op.PartitionNumber==0)throw new InvalidOperationException("Select a data partition for this operation.");
         if(op.PartitionNumber!=0)
         {
@@ -126,7 +131,14 @@ public static class OperationPolicy
             if(op.FileSystem is not ("NTFS" or "exFAT" or "FAT32")) throw new InvalidOperationException("Unsupported filesystem.");
         if(op.Kind is OperationKind.SetLabel or OperationKind.CreatePartition or OperationKind.FormatPartition)
             if(op.Value.Length>11 || op.Value.Any(c=>char.IsControl(c)||"\\/:*?\"<>|".Contains(c))) throw new InvalidOperationException("Use a label of up to 11 characters without filesystem punctuation.");
-        if(op.Kind==OperationKind.WipeDisk && !Enum.IsDefined(op.WipeMode))throw new InvalidOperationException("Unknown wipe mode.");
+        if((op.Kind is OperationKind.WipeDisk or OperationKind.WipePartition) && !Enum.IsDefined(op.WipeMode))throw new InvalidOperationException("Unknown wipe mode.");
+        if(op.Kind==OperationKind.WipePartition)
+        {
+            var selected=disk.Partitions.Single(p=>p.Number==op.PartitionNumber);
+            if(disk.Style is not ("GPT" or "MBR"))throw new InvalidOperationException("Partition erasure requires a basic GPT or MBR data disk.");
+            PartitionErase.ValidateRange(disk.Size,selected.Offset,selected.Size,disk.SectorSize);
+            if(disk.Partitions.Any(p=>p.Number!=selected.Number&&p.Offset<selected.Offset+selected.Size&&p.Offset+p.Size>selected.Offset))throw new InvalidOperationException("The partition extent overlaps another partition.");
+        }
         if(op.Kind==OperationKind.CloneDisk)
         {
             if(!Enum.IsDefined(op.CloneMode))throw new InvalidOperationException("Unknown clone mode.");

@@ -11,7 +11,7 @@ partial class Program
     {
         string root=Path.Combine(Path.GetTempPath(),"SoopaCore-"+Guid.NewGuid().ToString("N"));Directory.CreateDirectory(root);
         try{await VaultChecks(root);await TableChecks(root);
-        await MoveChecks(root);await RecoveryChecks(root);DiskRefreshChecks();Console.WriteLine($"ALL {checks} CORE CHECKS PASSED");return 0;}catch(Exception ex){Console.Error.WriteLine(ex);return 1;}finally{Directory.Delete(root,true);}
+        await MoveChecks(root);await RecoveryChecks(root);DiskRefreshChecks();await PartitionEraseChecks();Console.WriteLine($"ALL {checks} CORE CHECKS PASSED");return 0;}catch(Exception ex){Console.Error.WriteLine(ex);return 1;}finally{Directory.Delete(root,true);}
     }
     static async Task VaultChecks(string root)
     {

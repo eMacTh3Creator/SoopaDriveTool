@@ -17,6 +17,8 @@ partial class Program
         var root=Path.Combine(Path.GetTempPath(),"SoopaDriveToolTests-"+Guid.NewGuid().ToString("N"));Directory.CreateDirectory(root);
         try
         {
+            if(args.Length==2&&args[0]=="--partition-interface-render"){PartitionInterfaceRenderChecks(args[1]);return 0;}
+            if(args.Contains("--partition-erase-only")){await PartitionEraseIntegrationChecks();Console.WriteLine($"ALL {passed} PARTITION ERASE CHECKS PASSED");return 0;}
             if(args.Contains("--disk-refresh-hotplug-only")){DiskRefreshHotplugChecks();Console.WriteLine($"ALL {passed} HOTPLUG CHECKS PASSED");return 0;}
             var d=Disk();var op=DiskOperation.For(d,OperationKind.SetLabel,d.Partitions[0]) with{Value="Archive"};OperationPolicy.Validate(op,d);Check(true,"Valid data partition operation");
             Reject(()=>OperationPolicy.Validate(op,d with{IsBoot=true}),"Boot disk is protected");Reject(()=>OperationPolicy.Validate(op,d with{UniqueId="replacement"}),"Disk replacement rejected");Reject(()=>OperationPolicy.Validate(op,d with{Partitions=[]}),"Layout changes rejected");
@@ -45,6 +47,7 @@ partial class Program
 
             var xml="<Results><Profile><TimeSpans><TimeSpan><Duration>2</Duration></TimeSpan></TimeSpans></Profile><TimeSpan><TestTimeSeconds>2</TestTimeSeconds><Thread><Target><BytesCount>2000000</BytesCount><IOCount>500</IOCount></Target></Thread><Latency><AverageTotalMilliseconds>0.5</AverageTotalMilliseconds><Bucket><Percentile>99</Percentile><TotalMilliseconds>1.2</TotalMilliseconds></Bucket></Latency></TimeSpan></Results>";var result=BenchmarkService.Parse(xml,"test","Read");Check(result.MBps==1&&result.Iops==250&&result.P99Ms==1.2,"DiskSpd unit conversion and p99 parsing");
             V02CoreTests();
+            OfflineEncryptionEvidenceChecks();
             await InventoryFixtureChecks();
             DiskRefreshUiChecks();
             if(args.Contains("--native-store-only")){await NativeStoreCheck(root);Console.WriteLine($"ALL {passed} CHECKS PASSED");return 0;}

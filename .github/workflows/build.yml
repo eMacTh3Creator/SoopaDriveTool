@@ -49,6 +49,17 @@ jobs:
           } else {
             ./scripts/test.ps1 -Runtime win-x64 -Integration
           }
+      - name: Check partition erasure and interactive controls
+        shell: pwsh
+        run: |
+          $runtime='${{ matrix.runtime }}'
+          $folder="tests/SoopaDriveTool.Tests/bin/Release/net10.0-windows/$runtime"
+          # Exercise the same managed assemblies included in the installers.
+          Copy-Item "artifacts/$runtime/publish/SoopaDriveTool.dll","artifacts/$runtime/publish/SoopaDriveTool.Core.dll" $folder -Force
+          & dotnet "$folder/SoopaDriveTool.Tests.dll" --partition-erase-only
+          if ($LASTEXITCODE -ne 0) { throw 'Selected-partition erase/format integration failed' }
+          & dotnet "$folder/SoopaDriveTool.Tests.dll" --partition-interface-render "artifacts/$runtime/interface"
+          if ($LASTEXITCODE -ne 0) { throw 'Partition map/menu/confirmation rendering failed' }
       - name: Install, render, and uninstall package
         shell: pwsh
         run: ./scripts/check-installer.ps1 -Runtime ${{ matrix.runtime }}
@@ -62,3 +73,4 @@ jobs:
             artifacts/${{ matrix.runtime }}/SHA256SUMS.txt
             artifacts/${{ matrix.runtime }}/*-check.json
             artifacts/${{ matrix.runtime }}/*-preview.png
+            artifacts/${{ matrix.runtime }}/interface/**

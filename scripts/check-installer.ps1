@@ -1,4 +1,4 @@
-param([ValidateSet('win-arm64','win-x64')][string]$Runtime='win-x64',[string]$Version='0.3.3')
+param([ValidateSet('win-arm64','win-x64')][string]$Runtime='win-x64',[string]$Version='0.3.4')
 $ErrorActionPreference='Stop';$root=Split-Path $PSScriptRoot -Parent;$output=Join-Path $root "artifacts\$Runtime";$arch=$Runtime.Replace('win-','')
 $installer=Join-Path $output "SoopaDriveTool-$Version-$arch-Setup.exe";$testDir=Join-Path $env:TEMP ('SoopaDriveTool-InstallCheck-'+[guid]::NewGuid().ToString('N'))
 $preview=Join-Path $output 'installed-preview.png'

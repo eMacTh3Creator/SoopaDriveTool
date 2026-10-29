@@ -34,7 +34,7 @@ public partial class MainWindow
         diskRefreshTimer.Stop();diskRefreshTimer.Interval=TimeSpan.FromSeconds(Preferences.Current.DiskRefreshSeconds);
         if(!demo&&!windowClosed&&Preferences.Current.AutoRefreshDisks)diskRefreshTimer.Start();
     }
-    bool CanRefreshAutomatically=>!demo&&!windowClosed&&!busy&&!inventoryRefreshing&&IsEnabled&&OwnedWindows.Count==0;
+    bool CanRefreshAutomatically=>!demo&&!windowClosed&&!busy&&!inventoryRefreshing&&!partitionMenuOpen&&IsEnabled&&OwnedWindows.Count==0;
     async Task RefreshAutomaticallyAsync()
     {
         if(!Preferences.Current.AutoRefreshDisks||!CanRefreshAutomatically)return;
@@ -83,6 +83,7 @@ public partial class MainWindow
     void UpdateQueueWarning()
     {
         if(queueWarning!=null){queueWarning.Text=queueIssue??"";queueWarning.Visibility=queueIssue==null?Visibility.Collapsed:Visibility.Visible;}
+        if(queueIssue!=null)ResetApplyConfirmation();
         if(queueApply!=null)queueApply.IsEnabled=queue.Count>0&&queueIssue==null;
     }
     ComboBox VolumePicker()

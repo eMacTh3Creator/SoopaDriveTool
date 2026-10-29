@@ -15,13 +15,13 @@ partial class Program
           if($scenario -in @('StorageFailure','BothFailure')){throw 'Storage unavailable'}
           if($scenario -eq 'Empty'){return}
           foreach($number in @(4,8,9)) {
-            [pscustomobject]@{Number=$number;FriendlyName=('Disk '+$number);UniqueId=('ID'+$number);SerialNumber=('SERIAL'+$number);Size=4GB;LogicalSectorSize=512;PartitionStyle=$(if($number -eq 8){'RAW'}else{'GPT'});BusType='USB';HealthStatus='Healthy';IsBoot=$false;IsSystem=$false;IsOffline=$false;IsReadOnly=$false;NumberOfPartitions=$(if($number -eq 8){0}else{1})}
+            [pscustomobject]@{Number=$number;FriendlyName=('Disk '+$number);UniqueId=('ID'+$number);SerialNumber=('SERIAL'+$number);Size=4GB;LogicalSectorSize=512;PartitionStyle=$(if($number -eq 8){'RAW'}else{'GPT'});BusType='USB';HealthStatus='Healthy';IsBoot=$false;IsSystem=$false;IsOffline=($scenario -eq 'OfflineNoCrypto');IsReadOnly=$false;NumberOfPartitions=$(if($number -eq 8){0}else{1})}
           }
         }
         function Get-Partition {
           [CmdletBinding()]param([int]$DiskNumber)
           if($DiskNumber -eq 9){throw 'Device disconnected during partition enumeration'}
-          [pscustomobject]@{PartitionNumber=1;DiskNumber=$DiskNumber;Offset=1MB;Size=3GB;DriveLetter='E';Type='Basic';IsBoot=$false;IsSystem=$false}
+          [pscustomobject]@{PartitionNumber=1;DiskNumber=$DiskNumber;Offset=1MB;Size=3GB;DriveLetter=$(if($scenario -in @('GuidOnly','GuidMissing','NoVolumePath','OfflineNoCrypto')){$null}else{'E'});AccessPaths=$(if($scenario -in @('NoVolumePath','OfflineNoCrypto')){$null}else{@('\\?\Volume{11111111-1111-1111-1111-111111111111}\')});Type='Basic';IsBoot=$false;IsSystem=$false}
         }
         function Get-Volume {
           [CmdletBinding()]param([Parameter(ValueFromPipeline)]$InputObject)
@@ -36,8 +36,15 @@ partial class Program
           } elseif($ClassName -eq 'Win32_LogicalDisk') {
             [pscustomobject]@{DeviceID='E:';VolumeName='External';FileSystem='NTFS';FreeSpace=2GB}
           } elseif($ClassName -eq 'Win32_EncryptableVolume') {
-            [pscustomobject]@{EncryptionMethod=0}
+            if($scenario -in @('CryptoMissing','GuidMissing','OfflineNoCrypto')){return};if($scenario -eq 'CryptoProviderFailure'){throw 'Encryption provider unavailable'};[pscustomobject]@{DeviceID='\\?\Volume{11111111-1111-1111-1111-111111111111}\';DriveLetter='E:'}
           } else {throw ('Unexpected CIM query: '+$ClassName)}
+        }
+        function Invoke-CimMethod {
+          [CmdletBinding()]param($InputObject,[string]$MethodName)
+          if($MethodName -ne 'GetEncryptionMethod'){throw 'Unexpected encryption method'}
+          if($scenario -eq 'CryptoMethodFailure'){return [pscustomobject]@{ReturnValue=5;EncryptionMethod=0}}
+          if($scenario -eq 'CryptoMalformed'){return [pscustomobject]@{ReturnValue=0}}
+          [pscustomobject]@{ReturnValue=0;EncryptionMethod=$(if($scenario -eq 'BitLocker'){7}else{0})}
         }
         function Get-CimAssociatedInstance {
           [CmdletBinding()]param($InputObject,[string]$Association)
@@ -61,6 +68,15 @@ partial class Program
         var storageOnly=await Read("CimFailure");Check(storageOnly.Count==3&&storageOnly.Single(d=>d.Number==4).InventoryWarning=="","Storage inventory remains available when the legacy provider fails");
         Check((await Read("Empty")).Count==0,"Empty inventory remains a JSON array");
         await RejectAsync(()=>Read("BothFailure"),"Failure of both providers is reported instead of showing an empty inventory");
+        Check(external.Partitions.Single().Encryption=="None","Encryption requires a successful GetEncryptionMethod result");
+        Check((await Read("GuidOnly")).Single(d=>d.Number==4).Partitions.Single().Encryption=="None","Letterless online volumes can query encryption through their volume GUID path");
+        Check((await Read("BitLocker")).Single(d=>d.Number==4).Partitions.Single().Encryption=="BitLocker","Nonzero encryption methods stay protected as BitLocker");
+        Check((await Read("CryptoMissing")).Single(d=>d.Number==4).Partitions.Single().Encryption=="None","A successful query with no encryptable-volume record on a mounted drive preserves its eligibility");
+        Check((await Read("GuidMissing")).Single(d=>d.Number==4).Partitions.Single().Encryption=="None","A successful query with no encryptable-volume record also supports a mounted volume GUID");
+        Check((await Read("NoVolumePath")).Single(d=>d.Number==4).Partitions.Single().Encryption=="Unknown","No drive letter or volume GUID remains unknown");
+        Check((await Read("OfflineNoCrypto")).Single(d=>d.Number==4).Partitions.Single().Encryption=="Unknown","An offline disk without a usable volume path requires native cached evidence");
+        foreach(string scenario in new[]{"CryptoProviderFailure","CryptoMethodFailure","CryptoMalformed"})
+            Check((await Read(scenario)).Single(d=>d.Number==4).Partitions.Single().Encryption=="Unknown","Missing or failed encryption evidence remains unknown: "+scenario);
         var d=Disk();var unavailable=d with{InventoryWarning="Incomplete provider result"};
         Reject(()=>OperationPolicy.Validate(DiskOperation.For(unavailable,OperationKind.ReadWrite),unavailable),"Incomplete inventory cannot bypass write protection by clearing read-only");
         Reject(()=>OperationPolicy.Validate(DiskOperation.For(unavailable,OperationKind.QuickWipeDisk),unavailable),"Incomplete inventory blocks quick wiping");

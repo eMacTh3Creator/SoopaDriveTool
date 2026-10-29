@@ -6,6 +6,9 @@ Start SoopaDriveTool.exe. Windows requests administrator approval (UAC) before
 the window opens, unless the process is already elevated. Declining closes the
 app. The .NET runtime is included. Review queued operations, then Apply.
 If a step fails, later steps stop; completed disk changes are not rolled back.
+Click a graphical partition to select it. Right-click for Move, Shrink, Expand,
+Format, Erase contents, Rename, and Delete. Apply opens a Yes/No review; No is the
+default answer. No typed phrase is required.
 
 Connected disks
 Internal disks, USB flash drives and external hard drives appear in the disk list.

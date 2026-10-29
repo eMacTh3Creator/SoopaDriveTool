@@ -7,6 +7,7 @@ using SoopaDriveTool.Core;
 namespace SoopaDriveTool.Windows;
 public static class StorageService
 {
+    static readonly OfflineEncryptionEvidence EncryptionEvidence=new(d=>DiskAccess.Open(d,false,false));
     public static bool IsAdmin => new WindowsPrincipal(WindowsIdentity.GetCurrent()).IsInRole(WindowsBuiltInRole.Administrator);
     public static async Task<string> PowerShellAsync(string script,CancellationToken ct=default,IProgress<DriveProgress>? progress=null)
     {
@@ -36,6 +37,7 @@ public static class StorageService
     }
     public static async Task<List<DiskInfo>> InventoryAsync(CancellationToken ct=default)
     {
+        long generation=EncryptionEvidence.BeginInventory();
         var disks=JsonSerializer.Deserialize<List<DiskInfo>>(await PowerShellAsync(Script("Inventory"),ct),Data.Json)??[];
         if(IsAdmin)await Task.Run(()=>{for(int i=0;i<disks.Count;i++)
         {
@@ -46,6 +48,7 @@ public static class StorageService
                 disks[i]=disks[i] with{NativeIdentity=DiskAccess.Fingerprint(disks[i].Number)};
             }
             catch(Exception ex)when(ex is System.ComponentModel.Win32Exception or IOException){/* Keep other devices visible if a drive disconnects or its controller omits native descriptors. */}
+            disks[i]=EncryptionEvidence.Apply(disks[i],generation);
         }},ct);
         return disks;
     }
@@ -64,10 +67,10 @@ public static class StorageService
         if(op.Kind==OperationKind.ConvertDynamic)return await DynamicDiskService.ConvertAsync(op,d,progress);
         if(AdvancedPartitionService.Handles(op.Kind))return await AdvancedPartitionService.ExecuteAsync(op,d,progress);
         if(op.Kind==OperationKind.CloneDisk&&op.CloneMode is not (CloneMode.ByteExact or CloneMode.ByteExactGrow))return await FileSystemCloneEngine.ExecuteAsync(op,d,target!,progress);
-        if(op.Kind is OperationKind.BackupImage or OperationKind.RestoreImage or OperationKind.CloneDisk or OperationKind.WipeDisk)
+        if(op.Kind is OperationKind.BackupImage or OperationKind.RestoreImage or OperationKind.CloneDisk or OperationKind.WipeDisk or OperationKind.WipePartition)
         {
             var result=await RawDiskEngine.ExecuteAsync(op,d,target,progress);
-            if(op.Kind==OperationKind.WipeDisk||op.Kind==OperationKind.RestoreImage)await PowerShellAsync("Update-HostStorageCache");
+            if(op.Kind is OperationKind.WipeDisk or OperationKind.WipePartition or OperationKind.RestoreImage)await PowerShellAsync("Update-HostStorageCache");
             return result;
         }
         var payload=Convert.ToBase64String(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(new{Operation=new{op.DiskNumber,op.PartitionNumber,op.Bytes,op.Offset,op.Value,op.FileSystem,KindName=op.Kind.ToString()},Disk=d},Data.Json)));

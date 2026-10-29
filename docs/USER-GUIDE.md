@@ -1,8 +1,16 @@
 # SoopaDriveTool user guide
 
-This guide covers version 0.3.3 on Windows 11. Install ARM64 on Windows on ARM, or x64 on Intel/AMD PCs. The .NET runtime and required engines are included.
+This guide covers version 0.3.4 on Windows 11. Install ARM64 on Windows on ARM, or x64 on Intel/AMD PCs. The .NET runtime and required engines are included.
 
 When you launch SoopaDriveTool, Windows requests administrator approval (UAC) before the window opens, unless the process is already elevated. If you decline, the app closes. Review queued disk changes before applying them.
+
+## Select a partition and prepare changes
+
+Open **Disk manager** and click a partition in the map to select it. The partition list follows your selection. Right-click the partition for Move, Shrink, Expand, Format, Erase contents, Rename, or Delete. The **Partition actions** button opens the same menu. Additional partition tools are under **More tools**; initialization, online/offline, and disk conversions are under **Disk actions**.
+
+Shrink and Expand ask for the new total size and check Windows' supported limits. Format provides filesystem and label choices. Erase contents overwrites only the selected partition, verifies the result, and keeps its partition-table entry. It is separate from deleting the partition. Protected or unavailable actions are disabled, with the reason in the tooltip.
+
+Each action is added to the queue. Press the purple **Apply** button to review the steps, then answer **Are you sure?**. **No** is selected by default; No or Escape leaves the queue unchanged. **Yes** starts the reviewed chain. No typed confirmation is required.
 
 ## Connected disks and automatic refresh
 
@@ -99,7 +107,7 @@ Install Microsoft's Windows ADK Deployment Tools and the matching WinPE add-on. 
 
 Microsoft boot files come from your ADK installation. Use media that matches the Windows architecture and test that it boots and can access the required disks. Keep images and passphrases on separate storage.
 
-The recovery app supports encrypted raw restore, Windows image restore, exact disk clone, verified overwrite, eligible ATA erase, and UEFI boot repair. Review the destination and type its exact **DISK N** phrase. Shutdown is blocked while a disk operation is running.
+The recovery app supports encrypted raw restore, Windows image restore, exact disk clone, verified overwrite, eligible ATA erase, and UEFI boot repair. Review the destination, press Apply, and choose Yes to continue. No is the default answer. Shutdown is blocked while a disk operation is running.
 
 ### Restore Windows
 

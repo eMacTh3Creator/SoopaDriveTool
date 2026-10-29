@@ -1,4 +1,4 @@
-param([ValidateSet('win-arm64','win-x64')][string]$Runtime='win-x64',[string]$Version='0.3.3',[string]$Compiler)
+param([ValidateSet('win-arm64','win-x64')][string]$Runtime='win-x64',[string]$Version='0.3.4',[string]$Compiler)
 $ErrorActionPreference='Stop';$ProgressPreference='SilentlyContinue';$env:DOTNET_CLI_TELEMETRY_OPTOUT='1'
 $root=Split-Path $PSScriptRoot -Parent
 $tools=Join-Path $root '.tools';New-Item -ItemType Directory -Force $tools | Out-Null
