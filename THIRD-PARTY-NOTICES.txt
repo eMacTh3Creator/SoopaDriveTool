@@ -28,3 +28,6 @@ Self-contained packages also redistribute Microsoft .NET and WPF runtime compone
 
 
 SMART collection runs smartctl 7.5 (smartmontools) as a separate executable, under the GNU GPL version 2 or later. It is not linked into the MIT-licensed application. Its GPL license is included as Smartmontools-COPYING.txt. Complete corresponding upstream source and build instructions are included in Licenses/smartmontools-7.5.tar.gz and distributed as a release asset. Upstream: https://github.com/smartmontools/smartmontools. The x64 collector runs under Windows x64 emulation on ARM64. No smartd service is installed.
+
+
+WIM capture and verification invoke unmodified wimlib-imagex 1.14.5 as a separate executable (GNU GPL version 3 or later), with its libwim-15.dll and upstream license notices. They are not linked into the MIT-licensed application. Full corresponding upstream source and build instructions are included in Licenses/wimlib-1.14.5.tar.gz; license texts and Windows build documentation are in Licenses/wimlib. Upstream: https://wimlib.net/. The bundled executable and library match the selected ARM64/x64 application architecture. Upstream labels its ARM64 builds experimental; this release's executed tests and remaining qualification limits are recorded in the validation report.

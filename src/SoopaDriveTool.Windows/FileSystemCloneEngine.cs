@@ -38,7 +38,10 @@ public static class FileSystemCloneEngine
                 if(recovery!=null)recoveryBytes=WindowsRecovery.ReserveBytes(new FileInfo(recovery).Length);
                 if(target.Size<used+recoveryBytes+300L*1024*1024)throw new IOException("The destination cannot hold the Windows files, EFI layout and recovery image with servicing space.");
             }
-            await Tool(SystemTool("dism.exe"),["/English","/Capture-Image","/ImageFile:"+image,"/CaptureDir:"+root,"/Name:SoopaDriveTool clone","/Compress:fast","/CheckIntegrity","/Verify","/EA"],"Capturing used files",0,35);
+            var wim=Path.Combine(AppContext.BaseDirectory,"Tools","wimlib","wimlib-imagex.exe");
+            if(!File.Exists(wim)||!File.Exists(Path.Combine(Path.GetDirectoryName(wim)!,"libwim-15.dll")))throw new IOException("The bundled WIM capture engine is missing. Reinstall the complete application package.");
+            await Tool(wim,["capture",root,image,"SoopaDriveTool clone","--compress=XPRESS","--check","--strict-acls","--rpfix","--threads="+Math.Clamp(Environment.ProcessorCount,1,4)],"Capturing used files",0,30);
+            await Tool(wim,["verify",image],"Verifying captured image",30,5);
             var protect=source with{ReadOnly=true};var current=await StorageService.InventoryAsync();QueuePlanner.AssertUnchanged(protect,current.Single(d=>d.Number==source.Number));QueuePlanner.AssertUnchanged(target,current.Single(d=>d.Number==target.Number));
             progress?.Report(new("Preparing destination",35,"Creating fresh partition identifiers and the destination filesystem layout."));
             var letters=await CreateDestinationLayoutAsync(op,target,recovery!=null,recoveryBytes);
@@ -60,12 +63,12 @@ public static class FileSystemCloneEngine
                     await Tool(SystemTool("reagentc.exe"),["/Setreimage","/Path",dir,"/Target",volume+@":\Windows"],"Registering Windows recovery",90,3);
                 }
             }
-            progress?.Report(new("Verifying filesystem",94,"Checking the applied filesystem. DISM verified file resources during capture and apply."));
+            progress?.Report(new("Verifying filesystem",94,"Checking the applied filesystem. The captured archive and applied file resources were verified."));
             await StorageService.PowerShellAsync($"$scan=Repair-Volume -DriveLetter '{volume}' -Scan -ErrorAction Stop; if($scan -and [string]$scan -ne 'NoErrorsFound'){{throw ('NTFS scan result: '+[string]$scan)}}");
             var after=(await StorageService.InventoryAsync()).Single(d=>d.Number==target.Number);
             if(after.Identity!=target.Identity||after.Protected||after.Style!="GPT"||!after.Partitions.Any(p=>p.Letter==volume.ToString()&&p.FileSystem=="NTFS"))throw new IOException("Destination layout verification failed.");
             progress?.Report(new("Verified",100,windows?"Windows image, NTFS layout, EFI loader and BCD store verified. Independent boot testing is still required.":"Used-file data clone applied and verified."));
-            return windows?"Offline Windows-aware clone complete: fresh GPT/EFI/MSR/Windows layout, verified WIM resources, EFI loader and BCD store. Disconnect the source and independently boot-test the destination. Hardware binding, BitLocker, activation and all firmware configurations are not guaranteed.":"Filesystem-aware NTFS clone complete. Used files were captured/applied with DISM integrity verification; unused sectors were not copied.";
+            return windows?"Offline Windows-aware clone complete: fresh GPT/EFI/MSR/Windows layout, verified WIM resources, EFI loader and BCD store. Disconnect the source and independently boot-test the destination. Hardware binding, BitLocker, activation and all firmware configurations are not guaranteed.":"Filesystem-aware NTFS clone complete. Used files were captured into a verified WIM archive and applied with DISM integrity verification; unused sectors were not copied.";
         }
         finally
         {
@@ -76,7 +79,7 @@ public static class FileSystemCloneEngine
             if(Directory.Exists(staging))Directory.Delete(staging,true);
         }
         async Task Revalidate(){var now=await StorageService.InventoryAsync();OperationPolicy.Validate(op,now.Single(d=>d.Number==source.Number),now.Single(d=>d.Number==target.Number));}
-        async Task Tool(string exe,string[] args,string phase,double start,double span){progress?.Report(new(phase,phase=="Capturing used files"?null:start,phase=="Capturing used files"?"Scanning source files before capture. DISM reports measured percentages after enumeration.":phase+"…"));var result=await ProcessTool.RunAsync(exe,args,phase,progress,start,span);if(result.ExitCode!=0)throw new IOException($"{Path.GetFileName(exe)} failed ({result.ExitCode}). {result.Error} {result.Output}");}
+        async Task Tool(string exe,string[] args,string phase,double start,double span){progress?.Report(new(phase,phase=="Capturing used files"?null:start,phase=="Capturing used files"?"Scanning source files before capture. File counts are reported during scanning; percentages begin during capture.":phase+"…"));var result=await ProcessTool.RunAsync(exe,args,phase,progress,start,span);if(result.ExitCode!=0)throw new IOException($"{Path.GetFileName(exe)} failed ({result.ExitCode}). {result.Error} {result.Output}");}
     }
     // Change only the destination's offline hive. Preserve its original Windows
     // letter rather than guessing C: or clearing every other drive mapping.

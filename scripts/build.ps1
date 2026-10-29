@@ -26,6 +26,15 @@ if((Get-FileHash "$smartDir\smartctl.exe").Hash.ToLowerInvariant() -ne $smart.sm
 $smartSource=Join-Path $tools 'smartmontools-7.5.tar.gz'
 if(!(Test-Path $smartSource)){Invoke-WebRequest $smart.source_url -OutFile $smartSource -UseBasicParsing}
 if((Get-FileHash $smartSource).Hash.ToLowerInvariant() -ne $smart.source_sha256){throw 'SMART corresponding-source checksum mismatch'}
+$wim=(Get-Content "$PSScriptRoot\dependencies.json" -Raw|ConvertFrom-Json).wimlib;$wimArch=$wim.architectures.$Runtime
+$wimZip=Join-Path $tools "wimlib-$Runtime.zip"
+if(!(Test-Path $wimZip)){Invoke-WebRequest $wimArch.url -OutFile $wimZip -UseBasicParsing}
+if((Get-FileHash $wimZip).Hash.ToLowerInvariant() -ne $wimArch.sha256){throw 'WIM engine archive checksum mismatch'}
+$wimDir=Join-Path $tools "wimlib\$Runtime";Expand-Archive $wimZip $wimDir -Force
+if((Get-FileHash "$wimDir\wimlib-imagex.exe").Hash.ToLowerInvariant() -ne $wimArch.exe_sha256 -or (Get-FileHash "$wimDir\libwim-15.dll").Hash.ToLowerInvariant() -ne $wimArch.dll_sha256){throw 'WIM executable/library checksum mismatch'}
+$wimSource=Join-Path $tools 'wimlib-1.14.5.tar.gz'
+if(!(Test-Path $wimSource)){Invoke-WebRequest $wim.source_url -OutFile $wimSource -UseBasicParsing}
+if((Get-FileHash $wimSource).Hash.ToLowerInvariant() -ne $wim.source_sha256){throw 'WIM corresponding-source checksum mismatch'}
 $output=Join-Path $root "artifacts\$Runtime";$publish=Join-Path $output 'publish';New-Item -ItemType Directory -Force $output | Out-Null
 if(Test-Path $publish){Remove-Item $publish -Recurse -Force}
 Push-Location $root
@@ -37,6 +46,8 @@ try{
  Copy-Item "$root\docs\Smartmontools-COPYING.txt" $publish
  New-Item -ItemType Directory -Force "$publish\Licenses"|Out-Null
  Copy-Item $smartSource "$publish\Licenses\smartmontools-7.5.tar.gz"
+ Copy-Item $wimSource "$publish\Licenses\wimlib-1.14.5.tar.gz"
+ Copy-Item "$root\docs\wimlib" "$publish\Licenses\wimlib" -Recurse
  Copy-Item "$root\docs\DotNet-LICENSE.txt","$root\docs\DotNet-THIRD-PARTY-NOTICES.txt","$root\docs\WPF-LICENSE.txt","$root\docs\WPF-THIRD-PARTY-NOTICES.txt" $publish
  if(!$Compiler){$candidates=@("$tools\InnoSetup\ISCC.exe",'C:\Program Files (x86)\Inno Setup 6\ISCC.exe','C:\Program Files (x86)\Inno Setup 7\ISCC.exe','C:\Program Files\Inno Setup 7\ISCC.exe');$Compiler=$candidates | Where-Object {Test-Path $_} | Select-Object -First 1}
  if(!$Compiler){throw 'Install Inno Setup 6.7+ or pass -Compiler with the ISCC.exe path.'}
