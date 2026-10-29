@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
+using System.Reflection;
 using System.Text;
 using System.Text.Json;
 using System.Windows;
@@ -13,6 +14,8 @@ using SoopaDriveTool.Core;
 namespace SoopaDriveTool.Windows;
 public partial class MainWindow:Window
 {
+    static string AppVersion=>typeof(MainWindow).Assembly.GetName().Version!.ToString(3);
+    static string Developer=>typeof(MainWindow).Assembly.GetCustomAttribute<AssemblyCompanyAttribute>()!.Company;
     static Brush Ink=>B("#15253F");static Brush Muted=>B("#69778F");static Brush Accent=>B("#5355E8");static Brush Mint=>B("#28B89A");
     readonly StackPanel body=new(){Margin=new Thickness(32,24,32,32)};
     readonly StackPanel rail=new();readonly TextBlock title=new(),subtitle=new(),status=new();
@@ -25,21 +28,21 @@ public partial class MainWindow:Window
         FontSize=13;FontFamily=new FontFamily("Segoe UI Variable Text");Foreground=Ink;Background=B("#F4F6FA");this.demo=demo;Title="SoopaDriveTool";Width=1280;Height=880;MinWidth=1060;MinHeight=700;WindowStartupLocation=WindowStartupLocation.CenterScreen;
         Icon=BitmapFrame.Create(new Uri("pack://application:,,,/Assets/logo.png"));
         var root=new Grid{Background=B("#F4F6FA")};root.ColumnDefinitions.Add(new(){Width=new GridLength(210)});root.ColumnDefinitions.Add(new());Content=root;
-        var sidebar=new Grid{Background=B("#14233E")};sidebar.RowDefinitions.Add(new(){Height=new GridLength(112)});sidebar.RowDefinitions.Add(new());sidebar.RowDefinitions.Add(new(){Height=new GridLength(110)});root.Children.Add(sidebar);
+        var sidebar=new Grid{Background=B("#14233E")};sidebar.RowDefinitions.Add(new(){Height=new GridLength(112)});sidebar.RowDefinitions.Add(new());sidebar.RowDefinitions.Add(new(){Height=GridLength.Auto});root.Children.Add(sidebar);
         var brand=new StackPanel{Orientation=Orientation.Horizontal,Margin=new Thickness(20,30,0,0),VerticalAlignment=VerticalAlignment.Top};brand.Children.Add(new Image{Source=new BitmapImage(new Uri("pack://application:,,,/Assets/logo.png")),Width=38,Height=38});var brandText=new StackPanel{Margin=new Thickness(10,1,0,0)};brandText.Children.Add(T("SoopaDrive",17,Brushes.White,true));brandText.Children.Add(T("TOOL",10,B("#93A5C5"),true));brand.Children.Add(brandText);sidebar.Children.Add(brand);
         rail.Margin=new Thickness(12,0,12,0);var navScroll=new ScrollViewer{Content=rail,VerticalScrollBarVisibility=ScrollBarVisibility.Auto};Grid.SetRow(navScroll,1);sidebar.Children.Add(navScroll);
-        rail.Children.Add(T("WORKSPACE",10,B("#8295B8"),true,new Thickness(14,0,0,18)));
-        string[] names=["Overview","Disk manager","Benchmark","Backup & restore","Clone & image","Recovery inspector","Health","Recovery media","Activity","Settings","About & roadmap"];
+        rail.Children.Add(T("TOOLS",10,B("#8295B8"),true,new Thickness(14,0,0,18)));
+        string[] names=["Overview","Disk manager","Benchmark","Backup & restore","Clone & image","Recovery inspector","Health","Recovery media","Activity","Settings","About"];
         string[] icons=["◫","▤","ϟ","↺","⇄","⌕","♡","◉","≡","⚙","ⓘ"];
         for(int i=0;i<names.Length;i++){var name=names[i];var button=Btn(icons[i]+"    "+name,()=>Navigate(name));button.HorizontalContentAlignment=HorizontalAlignment.Left;button.Background=Brushes.Transparent;button.Foreground=B("#BECBE0");button.BorderThickness=new Thickness(0);button.Padding=new Thickness(14,13,4,13);button.Margin=new Thickness(0,0,0,4);button.Tag=name;rail.Children.Add(button);}
-        var foot=new StackPanel{Margin=new Thickness(24,12,18,18)};foot.Children.Add(T("LOCAL. PRIVATE. IN CONTROL.",9,B("#8295B8"),true));foot.Children.Add(T("v0.3.0  ·  Storage suite preview",11,B("#BECBE0"),false,new Thickness(0,10,0,0)));Grid.SetRow(foot,2);sidebar.Children.Add(foot);
+        var foot=T("v"+AppVersion,11,B("#BECBE0"),false,new Thickness(24,18,18,24));Grid.SetRow(foot,2);sidebar.Children.Add(foot);
         var main=new Grid();main.RowDefinitions.Add(new(){Height=new GridLength(104)});main.RowDefinitions.Add(new());main.RowDefinitions.Add(new(){Height=new GridLength(44)});Grid.SetColumn(main,1);root.Children.Add(main);
         var header=new Grid{Margin=new Thickness(32,24,24,12)};header.ColumnDefinitions.Add(new());header.ColumnDefinitions.Add(new(){Width=GridLength.Auto});var headings=new StackPanel();title.FontSize=26;title.FontWeight=FontWeights.SemiBold;subtitle.Foreground=Muted;subtitle.Margin=new Thickness(0,6,0,0);headings.Children.Add(title);headings.Children.Add(subtitle);header.Children.Add(headings);
         var actions=new StackPanel{Orientation=Orientation.Horizontal,VerticalAlignment=VerticalAlignment.Center};cancel.Click+=(_,_)=>cts?.Cancel();actions.Children.Add(cancel);
         if(!StorageService.IsAdmin&&!demo)actions.Children.Add(Btn("↗  Administrator",ElevateWithPlan));
         actions.Children.Add(Btn("↻  Refresh",async()=>await RefreshAsync()));Grid.SetColumn(actions,1);header.Children.Add(actions);main.Children.Add(header);
         var scroll=new ScrollViewer{Content=body,VerticalScrollBarVisibility=ScrollBarVisibility.Auto,HorizontalScrollBarVisibility=ScrollBarVisibility.Disabled};Grid.SetRow(scroll,1);main.Children.Add(scroll);
-        var bar=new Border{Background=Preferences.Surface,BorderBrush=B("#E5E9F1"),BorderThickness=new Thickness(0,1,0,0),Padding=new Thickness(32,10,20,8)};status.Foreground=Muted;status.Text="Ready · Disk changes require review before applying";bar.Child=status;Grid.SetRow(bar,2);main.Children.Add(bar);
+        var bar=new Border{Background=Preferences.Surface,BorderBrush=B("#E5E9F1"),BorderThickness=new Thickness(0,1,0,0),Padding=new Thickness(32,10,20,8)};status.Foreground=Muted;status.Text="Ready";bar.Child=status;Grid.SetRow(bar,2);main.Children.Add(bar);
         if(demo){disks=DemoDisks();
             if(initialPage=="Health")smartReport=SmartReport.Parse("""{"model_name":"Illustrative NVMe device (sample)","serial_number":"DEMO-NOT-A-REAL-DRIVE","firmware_version":"Sample","device":{"protocol":"NVMe"},"smart_status":{"passed":true},"nvme_smart_health_information_log":{"critical_warning":0,"temperature":39,"available_spare":100,"percentage_used":18,"data_units_read":2212345,"data_units_written":1333444,"power_on_hours":4200,"power_cycles":241,"unsafe_shutdowns":2,"media_errors":0,"num_err_log_entries":0},"smartctl":{"output":["ILLUSTRATIVE SAMPLE — synthetic SMART data for this interface render.","Model: Illustrative NVMe device","Available spare: 100%","Percentage used: 18%","Power on hours: 4200","Media/data integrity errors: 0"]}}""",0,1);
             if(initialPage=="Activity")activeRun=new RunActivity{StartedUtc=DateTime.UtcNow.AddMinutes(-3),CurrentStep=2,Steps=[new(){Description="Delete partition · Disk 1 / partition 1",State="Completed",Phase="Verified",Percent=100},new(){Description="Create NTFS partition · Disk 1",State="Completed",Phase="Verified",Percent=100},new(){Description="Byte-exact clone · Disk 1 → Disk 2",State="Running",Phase="Copying sectors",Percent=42,Message="Illustrative progress · 76 GiB / 180 GiB · Copying sectors, then a full read-back verification."},new(){Description="Read-back verification",State="Pending"}],Events=[new(DateTime.UtcNow.AddMinutes(-3),0,"Verified",100,"Requested data partition was deleted."),new(DateTime.UtcNow.AddMinutes(-2),1,"Verified",100,"New partition geometry and NTFS label verified."),new(DateTime.UtcNow,2,"Copying sectors",42,"Illustrative progress data for this rendered preview.")]};
@@ -66,23 +69,20 @@ public partial class MainWindow:Window
     async Task RefreshAsync()=>await Work("Refreshing storage inventory",async()=>{disks=await StorageService.InventoryAsync();Navigate(page);});
     void Navigate(string name)
     {
-        page=name;body.Children.Clear();title.Text=name;subtitle.Text=name switch{"Overview"=>"A clearer view of every drive.","Disk manager"=>"Plan a change. Review it. Apply with confidence.","Benchmark"=>"Understand your storage, one workload at a time.","Backup & restore"=>"Versioned file backups with verified restores.","Clone & image"=>"Choose how to clone, image, or reset a drive.","Recovery inspector"=>"Inspect partition tables without changing the source.","Health"=>"See what your storage controller can tell you.","Activity"=>"Every step, every phase, and what comes next.",_=>"Built for Windows on ARM and Intel / AMD."};
+        page=name;body.Children.Clear();title.Text=name;subtitle.Text=name switch{"Overview"=>"View detected disks, capacity, and partition layouts.","Disk manager"=>"Manage partitions and review queued changes before applying them.","Benchmark"=>"Measure read/write speed, IOPS, and latency.","Backup & restore"=>"Create backups, restore files, and manage schedules.","Clone & image"=>"Clone drives, create disk images, or wipe data disks.","Recovery inspector"=>"Inspect partition tables and recover supported files or partitions.","Health"=>"Read SMART data, run device tests, and export health reports.","Recovery media"=>"Create Windows PE recovery media using the Microsoft ADK.","Activity"=>"View operation progress, remaining steps, and logs.","Settings"=>"Change appearance, activity options, and move-recovery settings.",_=>"Version, developer, documentation, and support."};
         foreach(var b in rail.Children.OfType<Button>()){bool selected=(string)b.Tag==name;b.Background=selected?B("#31436A"):Brushes.Transparent;b.Foreground=selected?Brushes.White:B("#BECBE0");}
         if(demo)Note("ILLUSTRATIVE DEMO DATA · This screenshot shows the interface, not measured hardware performance.");
         switch(name){case "Overview":Overview();break;case "Disk manager":DiskManager();break;case "Benchmark":Benchmark();break;case "Backup & restore":Backup();break;case "Clone & image":Clone();break;case "Recovery inspector":Recovery();break;case "Health":Health();break;case "Recovery media":RecoveryMedia();break;case "Activity":Activity();break;case "Settings":Settings();break;default:About();break;}
     }
     void Overview()
     {
-        var hero=new Grid();hero.ColumnDefinitions.Add(new());hero.ColumnDefinitions.Add(new(){Width=new GridLength(210)});
-        var copy=Stack(T("YOUR STORAGE, SIMPLIFIED",10,Accent,true),T("Room for what’s next.",30,Ink,true,new Thickness(0,10,0,7)),T("Manage space, measure speed, and keep a verified backup.\nOne workspace for your drives.",14,Muted),new WrapPanel{Children={Btn("Manage disks  →",()=>Navigate("Disk manager"),true),Btn("Run a benchmark",()=>Navigate("Benchmark"))},Margin=new Thickness(0,20,0,0)});hero.Children.Add(copy);
-        var illustration=new Image{Source=new BitmapImage(new Uri("pack://application:,,,/Assets/logo.png")),Width=156,Height=156,Opacity=.95};Grid.SetColumn(illustration,1);hero.Children.Add(illustration);body.Children.Add(Card(hero));
+        body.Children.Add(new WrapPanel{Children={Btn("Manage disks",()=>Navigate("Disk manager"),true),Btn("Run benchmark",()=>Navigate("Benchmark"))},Margin=new Thickness(0,0,0,18)});
         var stats=new Grid();for(int i=0;i<3;i++)stats.ColumnDefinitions.Add(new());
         var values=new[]{(disks.Count.ToString(),"Detected disks"),(Data.Size(disks.Sum(d=>d.Size)),"Total capacity"),(Data.Size(disks.SelectMany(d=>d.Partitions).Sum(p=>p.Free)),"Free on mounted volumes")};
         for(int i=0;i<3;i++){var c=Card(Stack(T(values[i].Item2,12,Muted),T(values[i].Item1,25,Ink,true,new Thickness(0,10,0,0))),new Thickness(0,0,i<2?16:0,18));Grid.SetColumn(c,i);stats.Children.Add(c);}body.Children.Add(stats);
-        body.Children.Add(T("Your drives",17,Ink,true,new Thickness(0,6,0,14)));
+        body.Children.Add(T("Disks",17,Ink,true,new Thickness(0,6,0,14)));
         if(disks.Count==0)Note("No disk inventory is available yet. Refresh or restart as administrator if Windows restricts access.");
         foreach(var disk in disks)body.Children.Add(DiskCard(disk));
-        body.Children.Add(T("Changes stay in the operation queue until you review and apply them. System disks remain protected in this preview.",12,Muted));
     }
     Border DiskCard(DiskInfo d)
     {
@@ -178,7 +178,7 @@ public partial class MainWindow:Window
         body.Children.Add(Card(Stack(fields,mixed,run)));body.Children.Add(results);body.Children.Add(editor);Draw();
         void Draw()
         {
-            results.Children.Clear();if(lastRun==null){results.Children.Add(Card(Stack(T("Ready when you are.",20,Ink,true),T("Sequential and 4K random workloads at low and high queue depths.\nRead / write throughput, IOPS, average and 99th-percentile latency.",13,Muted,false,new Thickness(0,12,0,0)))));return;}
+            results.Children.Clear();if(lastRun==null){results.Children.Add(Card(Stack(T("Benchmark results",20,Ink,true),T("No results yet. Select the test settings and start a benchmark.",13,Muted,false,new Thickness(0,12,0,0)))));return;}
             var grid=Table(lastRun.Results,("Workload","Name"),("Mode","Mode"),("MB/s","MBps"),("IOPS","Iops"),("Avg ms","LatencyMs"),("p99 ms","P99Ms"));var row=new WrapPanel();row.Children.Add(Btn("Export JSON",()=>ExportBenchmark(false)));row.Children.Add(Btn("Export CSV",()=>ExportBenchmark(true)));results.Children.Add(Card(Stack(T("Benchmark results",18,Ink,true),T($"{lastRun.Engine} · {lastRun.FileMiB} MiB · {lastRun.Passes} pass(es) · {lastRun.Architecture}",12,Muted,false,new Thickness(0,8,0,18)),grid,row)));
         }
         BenchmarkComparison();
@@ -213,13 +213,12 @@ public partial class MainWindow:Window
     void LegacyRecovery()
     {
         Note("Read-only partition inspection. Validates MBR bounds or GPT header/table CRCs in raw image files. This tool does not undelete partitions or recover deleted files.");
-        var output=new StackPanel();body.Children.Add(Card(Stack(T("Look inside a disk image",21,Ink,true),T("Open a .sdi, .img, or raw .bin image to examine its partition map. VHD/VHDX containers must be exported to raw format first.",13,Muted,false,new Thickness(0,12,0,20)),Btn("Inspect image…",async()=>{var path=PickFile("Raw disk image|*.sdi;*.img;*.bin|All files|*.*");if(path==null)return;var sector=Prompt("Logical sector size","Enter 512 or 4096. Match the source disk.","512");if(sector==null)return;if(!int.TryParse(sector,out var n)||n is not (512 or 4096))throw new IOException("Choose 512 or 4096.");await Work("Inspecting image",async()=>{var results=await Task.Run(()=>{using var f=File.OpenRead(path);return PartitionInspector.Inspect(f,n);});output.Children.Clear();output.Children.Add(Card(Stack(T(Path.GetFileName(path),17,Ink,true),Table(results,("Scheme","Scheme"),("Index","Index"),("Offset bytes","Offset"),("Length bytes","Length"),("Name","Name"),("Type","Type")))));});},true))));body.Children.Add(output);
+        var output=new StackPanel();body.Children.Add(Card(Stack(T("Inspect a disk image",21,Ink,true),T("Open a .sdi, .img, or raw .bin image to examine its partition map. VHD/VHDX containers must be exported to raw format first.",13,Muted,false,new Thickness(0,12,0,20)),Btn("Inspect image…",async()=>{var path=PickFile("Raw disk image|*.sdi;*.img;*.bin|All files|*.*");if(path==null)return;var sector=Prompt("Logical sector size","Enter 512 or 4096. Match the source disk.","512");if(sector==null)return;if(!int.TryParse(sector,out var n)||n is not (512 or 4096))throw new IOException("Choose 512 or 4096.");await Work("Inspecting image",async()=>{var results=await Task.Run(()=>{using var f=File.OpenRead(path);return PartitionInspector.Inspect(f,n);});output.Children.Clear();output.Children.Add(Card(Stack(T(Path.GetFileName(path),17,Ink,true),Table(results,("Scheme","Scheme"),("Index","Index"),("Offset bytes","Offset"),("Length bytes","Length"),("Name","Name"),("Type","Type")))));});},true))));body.Children.Add(output);
     }
     void About()
     {
-        body.Children.Add(Card(Stack(T("SoopaDriveTool",27,Ink,true),T("0.3.0 · Storage suite preview · Native Windows ARM64 & x64",14,Accent,true,new Thickness(0,12,0,18)),T("Partition management, Windows and sector cloning, encrypted versioned backup, native recovery media, benchmarks and full available SMART exports. No account, advertisements, or telemetry.",14,Muted),T("This release is unsigned. Device and filesystem capabilities determine which operations are available. Keep independent backups before applying disk changes.",13,B("#9C6C20"),false,new Thickness(0,18,0,0)))));
-        body.Children.Add(Card(Stack(T("Storage and recovery capabilities",20,Ink,true),T("Move, split, merge and redistribute partition space\nLive VSS Windows migration and protected Windows images\nEncrypted full, incremental and differential backups\nLost partition and deleted-file recovery with preview/export\nNative WinPE restore, disk cloning, erasure and UEFI boot repair\nARM64 and x64 installers, portable packages and local activity journals",14,Muted,false,new Thickness(0,18,0,0)))));
-        var row=new WrapPanel();row.Children.Add(Btn("Source & issue tracker ↗",()=>Process.Start(new ProcessStartInfo("https://github.com/eMacTh3Creator/SoopaDriveTool"){UseShellExecute=true})));row.Children.Add(Btn("Research & roadmap ↗",()=>Process.Start(new ProcessStartInfo("https://github.com/eMacTh3Creator/SoopaDriveTool/blob/main/docs/RESEARCH-AND-PLAN.md"){UseShellExecute=true})));body.Children.Add(row);
+        body.Children.Add(Card(Stack(T("SoopaDriveTool",27,Ink,true),T("Version "+AppVersion,14,Accent,true,new Thickness(0,12,0,18)),T("Developer: "+Developer,14,Ink),T("Windows 11 · ARM64 and x64",13,Muted,false,new Thickness(0,10,0,0)),T("This build is unsigned.",13,B("#9C6C20"),false,new Thickness(0,18,0,0)))));
+        var row=new WrapPanel();row.Children.Add(Btn("Source code ↗",()=>Process.Start(new ProcessStartInfo("https://github.com/eMacTh3Creator/SoopaDriveTool"){UseShellExecute=true})));row.Children.Add(Btn("User guide ↗",()=>Process.Start(new ProcessStartInfo("https://github.com/eMacTh3Creator/SoopaDriveTool/blob/main/docs/USER-GUIDE.md"){UseShellExecute=true})));row.Children.Add(Btn("Report an issue ↗",()=>Process.Start(new ProcessStartInfo("https://github.com/eMacTh3Creator/SoopaDriveTool/issues"){UseShellExecute=true})));body.Children.Add(row);
     }
     static List<DiskInfo> DemoDisks()=>[new(){Number=0,Name="Windows SSD",UniqueId="DEMO0",Size=1024L*1024*1024*1024,Style="GPT",Bus="NVMe",Health="Healthy",IsSystem=true,IsBoot=true,Partitions=[new(){Number=1,Offset=1048576,Size=260L*1024*1024,Type="System",IsSystem=true},new(){Number=2,Offset=272629760,Size=740L*1024*1024*1024,Letter="C",Label="Windows",FileSystem="NTFS",Free=318L*1024*1024*1024,IsBoot=true,Encryption="None"},new(){Number=3,Offset=800L*1024*1024*1024,Size=220L*1024*1024*1024,Letter="D",Label="Projects",FileSystem="NTFS",Free=150L*1024*1024*1024,Encryption="None"}]},new(){Number=1,Name="Portable SSD",UniqueId="DEMO1",Size=500L*1024*1024*1024,Style="GPT",Bus="USB",Health="Healthy",Partitions=[new(){Number=1,Offset=1048576,Size=450L*1024*1024*1024,Letter="E",Label="Archive",FileSystem="exFAT",Free=281L*1024*1024*1024,Encryption="None"}]}];
 }

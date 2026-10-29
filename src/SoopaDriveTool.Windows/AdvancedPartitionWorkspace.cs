@@ -26,6 +26,6 @@ public partial class MainWindow
             Queue(op,d);
         })));
         Add("Move partition…",OperationKind.MovePartition);Add("Convert GPT / MBR…",OperationKind.ConvertTable);Add("Primary / logical…",OperationKind.SetPartitionKind);Add("Split…",OperationKind.SplitPartition);Add("Merge right partition…",OperationKind.MergePartition);Add("Convert filesystem…",OperationKind.ChangeFileSystem);Add("Change allocation units…",OperationKind.ChangeClusterSize);Add("Redistribute space…",OperationKind.RedistributeSpace);Add("Basic / dynamic…",OperationKind.ConvertDynamic);
-        body.Children.Add(Card(Stack(T("Advanced partition workflows",19,Ink,true),T("Moves save a resumable checkpoint before each overlapping write. Content conversions retain a verified recovery archive on a separate disk. Each workflow is reviewed in the action chain before it starts.",12,Muted),actions)));
+        body.Children.Add(Card(Stack(T("Advanced partition tools",19,Ink,true),T("Moves save a resumable checkpoint before each overlapping write. Content conversions retain a verified recovery archive on a separate disk. Each workflow is reviewed in the action chain before it starts.",12,Muted),actions)));
     }
 }

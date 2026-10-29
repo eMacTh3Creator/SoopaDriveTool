@@ -7,7 +7,7 @@ public record SmartAttribute(string Id,string Name,string Current,string Worst,s
 public class SmartReport
 {
     public DateTime CollectedUtc {get;init;}=DateTime.UtcNow;
-    public string ApplicationVersion {get;init;}="0.3.0";
+    public string ApplicationVersion {get;init;}=typeof(SmartReport).Assembly.GetName().Version!.ToString(3);
     public int WindowsDiskNumber {get;init;}
     public string DevicePath {get;init;}="";
     public string Model {get;init;}="";

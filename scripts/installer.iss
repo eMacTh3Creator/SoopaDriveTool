@@ -1,5 +1,5 @@
 #ifndef AppVersion
-  #define AppVersion "0.3.0"
+  #define AppVersion "0.3.1"
 #endif
 #ifndef Runtime
   #define Runtime "win-x64"
@@ -19,7 +19,7 @@
 AppId={{A34ED4DE-2A9B-43D8-AB4C-4F9C737B3095}
 AppName=SoopaDriveTool
 AppVersion={#AppVersion}
-AppPublisher=Everett Jenkins
+AppPublisher=Ev-Tech Solutions, LLC
 AppPublisherURL=https://github.com/eMacTh3Creator/SoopaDriveTool
 AppSupportURL=https://github.com/eMacTh3Creator/SoopaDriveTool/issues
 AppUpdatesURL=https://github.com/eMacTh3Creator/SoopaDriveTool/releases
