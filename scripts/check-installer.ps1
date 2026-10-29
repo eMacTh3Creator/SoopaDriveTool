@@ -8,7 +8,7 @@ foreach($base in @('HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall','
 try{
   $p=Start-Process $installer -ArgumentList '/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART','/SP-',"/DIR=$testDir",'/GROUP=SoopaDriveTool Install Check' -Wait -PassThru
   if($p.ExitCode -ne 0){throw "Installer failed: $($p.ExitCode)"}
-  $guide=Get-Content (Join-Path $testDir 'README.txt') -Raw;if(!$guide.Contains("Version $Version") -or $guide.Contains('@APP_VERSION@')){throw 'Installed release guide has the wrong version'}
+  $guide=Get-Content (Join-Path $testDir 'README.md') -Raw;if(!$guide.Contains("Version $Version") -or $guide.Contains('@APP_VERSION@')){throw 'Installed release guide has the wrong version'}
   $exe=Join-Path $testDir 'SoopaDriveTool.exe';if(!(Test-Path $exe)){throw 'Installed executable missing'}
   $p=Start-Process $exe -ArgumentList '--render',"`"$preview`"" -PassThru -WindowStyle Hidden
   if(!$p.WaitForExit(30000)){$p.Kill();throw 'Installed render timeout'}
