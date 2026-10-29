@@ -56,7 +56,9 @@ Install Microsoft's Windows ADK Deployment Tools and matching WinPE add-on. In *
 
 Boot architecture-matched media and test that it sees the required disks. Keep images/passphrases on separate storage. The native app supports protected raw restore, Windows image restore to a fresh GPT/EFI/MSR/Windows/recovery layout, exact disk clone, verified overwrite, eligible ATA erase and UEFI boot repair. Review the destination and type its exact **DISK N** phrase. During a disk operation, shutdown is blocked.
 
-Windows restoration verifies/decrypts its resources before preparing the destination. Recovery resources are retained if apply fails. UEFI repair first copies and hashes the original EFI files to an owned backup folder on the chosen Windows volume. Shut down and independently boot the restored destination with the source disconnected.
+Windows restoration verifies/decrypts its resources before preparing the destination. Its `restore-<snapshot ID>` staging folder contains plaintext Windows/recovery archives, even when the repository is encrypted. A failed restore retains this folder for retry; the next attempt checks every retained archive against the authenticated manifest before touching the destination. Incomplete or damaged archives require removing that staging folder and retrying. Successful restoration removes the staging folder. Treat retained archives as sensitive data and use suitably protected storage.
+
+UEFI repair first copies and hashes the original EFI files to an owned backup folder on the chosen Windows volume. Shut down and independently boot the restored destination with the source disconnected.
 
 ## Recover partitions and files
 
