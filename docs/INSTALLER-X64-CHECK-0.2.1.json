@@ -1,0 +1,15 @@
+{
+  "Uninstall": "Passed",
+  "Installer": "Passed",
+  "SmartCollectorMachine": "0x8664",
+  "AppMachine": "0x8664",
+  "Runtime": "win-x64",
+  "VersionedReleaseGuideIncluded": true,
+  "WimSourceAndLicensesIncluded": true,
+  "SmartSourceIncluded": true,
+  "WimEngineMachine": "0x8664",
+  "Utc": "2026-10-29T03:20:36.0092896Z",
+  "EngineMachine": "0x8664",
+  "WimLibraryMachine": "0x8664",
+  "InstalledRender": "Passed"
+}

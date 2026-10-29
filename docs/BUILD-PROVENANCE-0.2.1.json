@@ -1,0 +1,99 @@
+{
+  "version": "0.2.1",
+  "source_code_commit": "105dc5e6af742803f77ddc774728225b04862a0d",
+  "ci_run": "https://github.com/eMacTh3Creator/SoopaDriveTool/actions/runs/40810726511",
+  "build_environment": "Native Windows x64 and ARM64 GitHub Actions runners; self-contained .NET 10 publish",
+  "installer_compiler": "Inno Setup 6.7.4 with pinned checksum and vendor Authenticode verification",
+  "packaged_frameworks": {
+    "SoopaDriveTool-0.2.1-arm64-Portable.zip": [
+      {
+        "name": "Microsoft.NETCore.App",
+        "version": "10.0.14"
+      },
+      {
+        "name": "Microsoft.WindowsDesktop.App",
+        "version": "10.0.14"
+      }
+    ],
+    "SoopaDriveTool-0.2.1-x64-Portable.zip": [
+      {
+        "name": "Microsoft.NETCore.App",
+        "version": "10.0.14"
+      },
+      {
+        "name": "Microsoft.WindowsDesktop.App",
+        "version": "10.0.14"
+      }
+    ]
+  },
+  "dependencies": {
+    "diskspd": {
+      "version": "2.3",
+      "url": "https://github.com/microsoft/diskspd/releases/download/v2.3/DiskSpd.ZIP",
+      "sha256": "18609981e8b04b4f645f1fd182ad0541615fe71722de36a9a933c54f747218a3"
+    },
+    "smartmontools": {
+      "version": "7.5",
+      "url": "https://github.com/smartmontools/smartmontools/releases/download/RELEASE_7_5/smartmontools-7.5.win32-setup.exe",
+      "sha256": "896337fcc253220614cf8cdbd5cf2321c5aa326a37a04160a672a281e6104c70",
+      "smartctl_sha256": "b5db94e5082c042be44994b7a4fa8f7b5c8e713b2ab1c9a560d8f7a7995ea27d",
+      "drivedb_sha256": "dd39c6a520d38895da61923fe26fe7c9c5eb3f42325f2e4477a06ed7a61966d0",
+      "source_url": "https://github.com/smartmontools/smartmontools/releases/download/RELEASE_7_5/smartmontools-7.5.tar.gz",
+      "source_sha256": "690b83ca331378da9ea0d9d61008c4b22dde391387b9bbad7f29387f2595f76e"
+    },
+    "wimlib": {
+      "version": "1.14.5",
+      "source_url": "https://wimlib.net/downloads/wimlib-1.14.5.tar.gz",
+      "source_sha256": "84221a3abd5b91228f15f8e6065c335a336237b5738197b75bf419eea561a194",
+      "architectures": {
+        "win-arm64": {
+          "url": "https://wimlib.net/downloads/wimlib-1.14.5-windows-aarch64-bin.zip",
+          "sha256": "2c2e3e50cf21bfdd4ffd693b5052b231aa04a10c85f218ae61eb5a031dfcdd8f",
+          "exe_sha256": "fddb8c216732ab2a0f41064a305e07947a22f20338e36f44a2ceaffd44d8f908",
+          "dll_sha256": "b34549c6eff728a2f2fe68903a9fde28d8ac717f1b521e7f38b1e4106320c992"
+        },
+        "win-x64": {
+          "url": "https://wimlib.net/downloads/wimlib-1.14.5-windows-x86_64-bin.zip",
+          "sha256": "2f446d6fa3866582175f1a22a7be198eeee0aec7aba5b4e04ad25c99eae2d265",
+          "exe_sha256": "34c0c4165591ad1f592837ed99d08273c58d6ed3fe0ed6360cf34e7b0739b353",
+          "dll_sha256": "ba853ee1e3fc5f5798581f02e8e066ba07a0a2375f0bf444fe981431fd508495"
+        }
+      }
+    }
+  },
+  "smart_collector_architecture": "x64; Windows emulation on ARM64. Application and DiskSpd match the selected native architecture.",
+  "packaged_root_license_and_notices": "Matched repository text after CRLF/LF normalization. Native WIM binaries, library, source and upstream notices match pinned bytes.",
+  "runtime_notices": "Bundled .NET/WPF notices compared with official dotnet/runtime and dotnet/wpf v10.0.14 files; normalized content identical.",
+  "artifacts": [
+    {
+      "name": "SoopaDriveTool-0.2.1-arm64-Portable.zip",
+      "bytes": 65046940,
+      "sha256": "3ffff9ef032d90387139e9b33da872d2aa17efea7c7645eece7c5cca3b954334"
+    },
+    {
+      "name": "SoopaDriveTool-0.2.1-arm64-Setup.exe",
+      "bytes": 56020333,
+      "sha256": "274637342703aef28f07ea8a75249c373f2e79f508e93c761b4d9dbb4a420cbb"
+    },
+    {
+      "name": "SoopaDriveTool-0.2.1-x64-Portable.zip",
+      "bytes": 70090939,
+      "sha256": "473e8937594c58981a6e53177beb41503e5dd187f138014435236991b774773b"
+    },
+    {
+      "name": "SoopaDriveTool-0.2.1-x64-Setup.exe",
+      "bytes": 61269090,
+      "sha256": "6246b608aafde9fd87941110e0dbed58a0801679a1388c3088b612f20826b79f"
+    },
+    {
+      "name": "smartmontools-7.5.tar.gz",
+      "bytes": 1122317,
+      "sha256": "690b83ca331378da9ea0d9d61008c4b22dde391387b9bbad7f29387f2595f76e"
+    },
+    {
+      "name": "wimlib-1.14.5.tar.gz",
+      "bytes": 1073578,
+      "sha256": "84221a3abd5b91228f15f8e6065c335a336237b5738197b75bf419eea561a194"
+    }
+  ]
+}

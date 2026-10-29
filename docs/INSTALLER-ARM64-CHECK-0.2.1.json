@@ -1,0 +1,15 @@
+{
+  "SmartSourceIncluded": true,
+  "SmartCollectorMachine": "0x8664",
+  "WimSourceAndLicensesIncluded": true,
+  "EngineMachine": "0xaa64",
+  "Uninstall": "Passed",
+  "Installer": "Passed",
+  "Utc": "2026-10-29T03:13:46.9794891Z",
+  "Runtime": "win-arm64",
+  "VersionedReleaseGuideIncluded": true,
+  "WimLibraryMachine": "0xaa64",
+  "InstalledRender": "Passed",
+  "WimEngineMachine": "0xaa64",
+  "AppMachine": "0xaa64"
+}

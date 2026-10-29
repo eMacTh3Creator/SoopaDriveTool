@@ -1,0 +1,47 @@
+[
+    {
+        "ExitCode":  0,
+        "Page":  "Overview",
+        "Bytes":  145209
+    },
+    {
+        "ExitCode":  0,
+        "Page":  "Disk manager",
+        "Bytes":  125880
+    },
+    {
+        "ExitCode":  0,
+        "Page":  "Benchmark",
+        "Bytes":  112679
+    },
+    {
+        "ExitCode":  0,
+        "Page":  "Backup \u0026 restore",
+        "Bytes":  109600
+    },
+    {
+        "ExitCode":  0,
+        "Page":  "Clone \u0026 image",
+        "Bytes":  122337
+    },
+    {
+        "ExitCode":  0,
+        "Page":  "Recovery inspector",
+        "Bytes":  82887
+    },
+    {
+        "ExitCode":  0,
+        "Page":  "Health",
+        "Bytes":  129137
+    },
+    {
+        "ExitCode":  0,
+        "Page":  "Activity",
+        "Bytes":  136493
+    },
+    {
+        "ExitCode":  0,
+        "Page":  "About \u0026 roadmap",
+        "Bytes":  126736
+    }
+]

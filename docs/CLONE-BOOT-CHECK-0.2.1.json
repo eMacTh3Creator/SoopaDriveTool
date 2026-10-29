@@ -1,0 +1,557 @@
+{
+  "version": "0.2.1",
+  "checkedUtc": "2026-10-29T03:19:38.139964+00:00",
+  "sourceCodeCommit": "105dc5e6af742803f77ddc774728225b04862a0d",
+  "method": "Production QueueRunner and Windows clone backends, followed by independent guest verification with only the configured destination disk attached. Two distinct cold boots required per mode.",
+  "environment": {
+    "architecture": "ARM64",
+    "sourceAttachment": "Windows-native fixed VHD made from the independently booted private source disk; production clone destinations are separate Parallels disk images",
+    "sourceWindowsVersion": "10.0.26200",
+    "sourceWindowsBuild": 9711,
+    "sourceDiskBytes": 274877906944,
+    "sourceUsedBytesAfterFixturePreparation": 136697430016,
+    "bitLocker": "FullyDecrypted",
+    "sourceIndependentlyBooted": true,
+    "sourceRuntimeAfterTemporaryCacheCleanupVerified": true,
+    "temporaryCacheFilesRemovedFromPrivateFixture": 591457,
+    "harnessBuildCommit": "36a4d78bfe14c986b3f7d52c7f72c4bd64588cf2",
+    "harnessEngineSourcesMatchRelease": true,
+    "labTemporaryTaskOnlyAntivirusExclusionsUsed": true,
+    "labTemporaryTaskOnlyAntivirusExclusionsRemoved": true,
+    "harnessIncludedRuntime": "10.0.12",
+    "releasedIncludedRuntime": "10.0.14",
+    "releaseRuntimeValidation": "Native CI component/integration, installer and packaged UI checks; full OS harness uses identical committed engine sources."
+  },
+  "engineSourceSha256": {
+    "src/SoopaDriveTool.Windows/ProcessTool.cs": "e12a000336e5d647203ce141c559effd8c56d5eae5ad7121e77dc32a35ce5959",
+    "src/SoopaDriveTool.Windows/ToolProgressReader.cs": "6f2096aa711d91b5b2fa6b76ee41a9336fb68d6db3bdc370a117261b8304cc6c",
+    "scripts/dependencies.json": "61d48658e7fd0234aaa4e6a5e364e576e270f1f23f5634398e1076f6256d37e1",
+    "src/SoopaDriveTool.Windows/FileSystemCloneEngine.cs": "f5fbddf53bc12081ebb19136af173da832eb73110dd3f335544191c0b942bc47",
+    "src/SoopaDriveTool.Windows/WindowsRecovery.cs": "d7d0e9209eb5cdacb5f97df7daa94924ddaf5abc05860caa3c1054cee965e13b",
+    "src/SoopaDriveTool.Windows/RawDiskEngine.cs": "e13ca64e54636c8e402c96557f0f1b650480e5f2afe48b184e3dfea66f94f654",
+    "src/SoopaDriveTool.Windows/QueueRunner.cs": "d31c7d6ae404233f7d91643d127b2d756179a76d8584ef9576b46e3cefccb33a",
+    "src/SoopaDriveTool.Windows/StorageService.cs": "81589d3b1348c82fd8d91238a0522815bc4d6607bd031038926a44dcdb3feb80",
+    "src/SoopaDriveTool.Core/Models.cs": "6cc8ab8b5461d90caa0798569ca7f4cabccf69542e6c9fb309d5dd6448291810",
+    "tests/SoopaDriveTool.Qualification/Program.cs": "fcb6e02414f2737668099b02de598532920a1a0e74d5463260d7ecb6d0c2fa4b"
+  },
+  "temporaryEfiAndRecoveryLettersRemoved": true,
+  "sourceReadOnlyStateRestored": true,
+  "operations": [
+    {
+      "mode": "WindowsUefi",
+      "state": "Completed",
+      "startedUtc": "2026-10-29T02:33:43.4044875Z",
+      "completedUtc": "2026-10-29T03:01:27.5147036Z",
+      "sourceDiskBytes": 274877906944,
+      "fullTargetReadBackSha256Verified": false,
+      "freshGptIdentifiersVerified": true,
+      "coldBoots": [
+        {
+          "verifiedUtc": "2026-10-29T03:02:12.9965907Z",
+          "bootUtc": "2026-10-29T03:01:44.3519180Z",
+          "kernelBootEventUtc": "2026-10-29T03:01:44.5217327Z",
+          "onlyExpectedCloneImageAttached": true,
+          "attachedDiskCount": 1,
+          "systemDrive": "C:",
+          "secureBoot": true,
+          "checks": {
+            "DestinationPhysicalIdentityMatched": true,
+            "OnlyExpectedCloneImageAttached": true,
+            "BootAfterCloneCompletion": true,
+            "FixtureHashMatched": true,
+            "ProfileDocumentHashMatched": true,
+            "AlternateDataStreamMatched": true,
+            "OwnerSidMatched": true,
+            "SecurityDescriptorMatched": true,
+            "LocalUserSidMatched": true,
+            "LocalUserPasswordAndReadAccessVerified": true,
+            "RegistryMarkerMatched": true,
+            "InstalledAppHashMatched": true,
+            "InstalledAppRenderPassed": true
+          },
+          "recoveryImages": [
+            {
+              "Bytes": 793332035,
+              "Sha256": "2DD23EC3E27B4302F7E5F274D00B0CF6A1ED6B501A4D25853E48A19081FBF429",
+              "PartitionBytes": 1110441984,
+              "FreeBytes": 301740032,
+              "HasDriveLetter": false
+            }
+          ],
+          "windowsReStatus": "Disabled"
+        },
+        {
+          "verifiedUtc": "2026-10-29T03:02:53.5324075Z",
+          "bootUtc": "2026-10-29T03:02:25.3520260Z",
+          "kernelBootEventUtc": "2026-10-29T03:02:25.5214432Z",
+          "onlyExpectedCloneImageAttached": true,
+          "attachedDiskCount": 1,
+          "systemDrive": "C:",
+          "secureBoot": true,
+          "checks": {
+            "DestinationPhysicalIdentityMatched": true,
+            "OnlyExpectedCloneImageAttached": true,
+            "BootAfterCloneCompletion": true,
+            "FixtureHashMatched": true,
+            "ProfileDocumentHashMatched": true,
+            "AlternateDataStreamMatched": true,
+            "OwnerSidMatched": true,
+            "SecurityDescriptorMatched": true,
+            "LocalUserSidMatched": true,
+            "LocalUserPasswordAndReadAccessVerified": true,
+            "RegistryMarkerMatched": true,
+            "InstalledAppHashMatched": true,
+            "InstalledAppRenderPassed": true
+          },
+          "recoveryImages": [
+            {
+              "Bytes": 793332035,
+              "Sha256": "2DD23EC3E27B4302F7E5F274D00B0CF6A1ED6B501A4D25853E48A19081FBF429",
+              "PartitionBytes": 1110441984,
+              "FreeBytes": 301740032,
+              "HasDriveLetter": false
+            }
+          ],
+          "windowsReStatus": "Disabled"
+        }
+      ],
+      "phases": [
+        {
+          "utc": "2026-10-29T02:33:45.8440443Z",
+          "step": 0,
+          "phase": "Preflight",
+          "percent": null
+        },
+        {
+          "utc": "2026-10-29T02:33:49.023003Z",
+          "step": 0,
+          "phase": "Protecting source",
+          "percent": 0
+        },
+        {
+          "utc": "2026-10-29T02:33:49.9706207Z",
+          "step": 0,
+          "phase": "Finding Windows recovery",
+          "percent": 0
+        },
+        {
+          "utc": "2026-10-29T02:33:53.7166796Z",
+          "step": 0,
+          "phase": "Capturing used files",
+          "percent": null
+        },
+        {
+          "utc": "2026-10-29T02:34:08.321568Z",
+          "step": 0,
+          "phase": "Capturing used files",
+          "percent": 0
+        },
+        {
+          "utc": "2026-10-29T02:41:04.1944335Z",
+          "step": 0,
+          "phase": "Capturing used files",
+          "percent": 5.130000000000001
+        },
+        {
+          "utc": "2026-10-29T02:42:07.0978882Z",
+          "step": 0,
+          "phase": "Capturing used files",
+          "percent": 10.260000000000002
+        },
+        {
+          "utc": "2026-10-29T02:42:58.1702929Z",
+          "step": 0,
+          "phase": "Capturing used files",
+          "percent": 15.39
+        },
+        {
+          "utc": "2026-10-29T02:43:56.3809588Z",
+          "step": 0,
+          "phase": "Capturing used files",
+          "percent": 20.520000000000003
+        },
+        {
+          "utc": "2026-10-29T02:44:36.4064375Z",
+          "step": 0,
+          "phase": "Capturing used files",
+          "percent": 25.65
+        },
+        {
+          "utc": "2026-10-29T02:45:27.1656261Z",
+          "step": 0,
+          "phase": "Verifying captured image",
+          "percent": 30
+        },
+        {
+          "utc": "2026-10-29T02:49:15.7879904Z",
+          "step": 0,
+          "phase": "Verifying captured image",
+          "percent": 35
+        },
+        {
+          "utc": "2026-10-29T02:49:18.1389178Z",
+          "step": 0,
+          "phase": "Preparing destination",
+          "percent": 35
+        },
+        {
+          "utc": "2026-10-29T02:49:30.384762Z",
+          "step": 0,
+          "phase": "Applying used files",
+          "percent": 40
+        },
+        {
+          "utc": "2026-10-29T02:52:46.5924338Z",
+          "step": 0,
+          "phase": "Applying used files",
+          "percent": 45.4
+        },
+        {
+          "utc": "2026-10-29T02:54:09.1249466Z",
+          "step": 0,
+          "phase": "Applying used files",
+          "percent": 50.8
+        },
+        {
+          "utc": "2026-10-29T02:55:40.6683552Z",
+          "step": 0,
+          "phase": "Applying used files",
+          "percent": 56.2
+        },
+        {
+          "utc": "2026-10-29T02:56:57.8604461Z",
+          "step": 0,
+          "phase": "Applying used files",
+          "percent": 61.599999999999994
+        },
+        {
+          "utc": "2026-10-29T02:58:27.335135Z",
+          "step": 0,
+          "phase": "Applying used files",
+          "percent": 67
+        },
+        {
+          "utc": "2026-10-29T02:59:31.5555974Z",
+          "step": 0,
+          "phase": "Applying used files",
+          "percent": 72.4
+        },
+        {
+          "utc": "2026-10-29T03:00:30.3920656Z",
+          "step": 0,
+          "phase": "Applying used files",
+          "percent": 77.8
+        },
+        {
+          "utc": "2026-10-29T03:00:49.6397019Z",
+          "step": 0,
+          "phase": "Applying used files",
+          "percent": 85
+        },
+        {
+          "utc": "2026-10-29T03:00:49.9540929Z",
+          "step": 0,
+          "phase": "Preserving Windows drive letter",
+          "percent": 85
+        },
+        {
+          "utc": "2026-10-29T03:00:52.2618404Z",
+          "step": 0,
+          "phase": "Configuring UEFI boot",
+          "percent": 86
+        },
+        {
+          "utc": "2026-10-29T03:00:57.6598364Z",
+          "step": 0,
+          "phase": "Registering Windows recovery",
+          "percent": 90
+        },
+        {
+          "utc": "2026-10-29T03:00:58.0175917Z",
+          "step": 0,
+          "phase": "Verifying filesystem",
+          "percent": 94
+        },
+        {
+          "utc": "2026-10-29T03:01:20.3772101Z",
+          "step": 0,
+          "phase": "Verified",
+          "percent": 100
+        },
+        {
+          "utc": "2026-10-29T03:01:27.5124109Z",
+          "step": 0,
+          "phase": "Verified",
+          "percent": 100
+        }
+      ]
+    },
+    {
+      "mode": "ByteExact",
+      "state": "Completed",
+      "startedUtc": "2026-10-29T03:03:50.2776967Z",
+      "completedUtc": "2026-10-29T03:09:18.0234892Z",
+      "sourceDiskBytes": 274877906944,
+      "fullTargetReadBackSha256Verified": true,
+      "freshGptIdentifiersVerified": false,
+      "coldBoots": [
+        {
+          "verifiedUtc": "2026-10-29T03:11:35.5917773Z",
+          "bootUtc": "2026-10-29T03:10:37.3552060Z",
+          "kernelBootEventUtc": "2026-10-29T03:10:37.5241962Z",
+          "onlyExpectedCloneImageAttached": true,
+          "attachedDiskCount": 1,
+          "systemDrive": "C:",
+          "secureBoot": true,
+          "checks": {
+            "DestinationPhysicalIdentityMatched": true,
+            "OnlyExpectedCloneImageAttached": true,
+            "BootAfterCloneCompletion": true,
+            "FixtureHashMatched": true,
+            "ProfileDocumentHashMatched": true,
+            "AlternateDataStreamMatched": true,
+            "OwnerSidMatched": true,
+            "SecurityDescriptorMatched": true,
+            "LocalUserSidMatched": true,
+            "LocalUserPasswordAndReadAccessVerified": true,
+            "RegistryMarkerMatched": true,
+            "InstalledAppHashMatched": true,
+            "InstalledAppRenderPassed": true
+          },
+          "recoveryImages": [
+            {
+              "Bytes": 793332035,
+              "Sha256": "2DD23EC3E27B4302F7E5F274D00B0CF6A1ED6B501A4D25853E48A19081FBF429",
+              "PartitionBytes": 890241024,
+              "FreeBytes": 78651392,
+              "HasDriveLetter": false
+            }
+          ],
+          "windowsReStatus": "Disabled"
+        },
+        {
+          "verifiedUtc": "2026-10-29T03:12:46.5313209Z",
+          "bootUtc": "2026-10-29T03:11:47.3555720Z",
+          "kernelBootEventUtc": "2026-10-29T03:11:47.5242415Z",
+          "onlyExpectedCloneImageAttached": true,
+          "attachedDiskCount": 1,
+          "systemDrive": "C:",
+          "secureBoot": true,
+          "checks": {
+            "DestinationPhysicalIdentityMatched": true,
+            "OnlyExpectedCloneImageAttached": true,
+            "BootAfterCloneCompletion": true,
+            "FixtureHashMatched": true,
+            "ProfileDocumentHashMatched": true,
+            "AlternateDataStreamMatched": true,
+            "OwnerSidMatched": true,
+            "SecurityDescriptorMatched": true,
+            "LocalUserSidMatched": true,
+            "LocalUserPasswordAndReadAccessVerified": true,
+            "RegistryMarkerMatched": true,
+            "InstalledAppHashMatched": true,
+            "InstalledAppRenderPassed": true
+          },
+          "recoveryImages": [
+            {
+              "Bytes": 793332035,
+              "Sha256": "2DD23EC3E27B4302F7E5F274D00B0CF6A1ED6B501A4D25853E48A19081FBF429",
+              "PartitionBytes": 890241024,
+              "FreeBytes": 78651392,
+              "HasDriveLetter": false
+            }
+          ],
+          "windowsReStatus": "Disabled"
+        }
+      ],
+      "phases": [
+        {
+          "utc": "2026-10-29T03:03:52.8575567Z",
+          "step": 0,
+          "phase": "Preflight",
+          "percent": null
+        },
+        {
+          "utc": "2026-10-29T03:03:56.5418622Z",
+          "step": 0,
+          "phase": "Verified",
+          "percent": 100
+        },
+        {
+          "utc": "2026-10-29T03:03:57.7595299Z",
+          "step": 0,
+          "phase": "Verified",
+          "percent": 100
+        },
+        {
+          "utc": "2026-10-29T03:03:58.9705956Z",
+          "step": 1,
+          "phase": "Preflight",
+          "percent": null
+        },
+        {
+          "utc": "2026-10-29T03:04:02.3613851Z",
+          "step": 1,
+          "phase": "Verified",
+          "percent": 100
+        },
+        {
+          "utc": "2026-10-29T03:04:03.591513Z",
+          "step": 1,
+          "phase": "Verified",
+          "percent": 100
+        },
+        {
+          "utc": "2026-10-29T03:04:05.0671058Z",
+          "step": 2,
+          "phase": "Preflight",
+          "percent": null
+        },
+        {
+          "utc": "2026-10-29T03:04:07.9208814Z",
+          "step": 2,
+          "phase": "Copying sectors",
+          "percent": 0.08077621459960938
+        },
+        {
+          "utc": "2026-10-29T03:04:24.647787Z",
+          "step": 2,
+          "phase": "Copying sectors",
+          "percent": 5.085964202880859
+        },
+        {
+          "utc": "2026-10-29T03:04:42.7474239Z",
+          "step": 2,
+          "phase": "Copying sectors",
+          "percent": 10.152835845947266
+        },
+        {
+          "utc": "2026-10-29T03:05:02.4725996Z",
+          "step": 2,
+          "phase": "Copying sectors",
+          "percent": 15.211315155029297
+        },
+        {
+          "utc": "2026-10-29T03:05:20.8814417Z",
+          "step": 2,
+          "phase": "Copying sectors",
+          "percent": 20.24188995361328
+        },
+        {
+          "utc": "2026-10-29T03:05:42.2877569Z",
+          "step": 2,
+          "phase": "Copying sectors",
+          "percent": 25.3045654296875
+        },
+        {
+          "utc": "2026-10-29T03:06:03.890666Z",
+          "step": 2,
+          "phase": "Copying sectors",
+          "percent": 30.340805053710938
+        },
+        {
+          "utc": "2026-10-29T03:06:26.8396333Z",
+          "step": 2,
+          "phase": "Copying sectors",
+          "percent": 35.386695861816406
+        },
+        {
+          "utc": "2026-10-29T03:06:47.638627Z",
+          "step": 2,
+          "phase": "Copying sectors",
+          "percent": 40.398597717285156
+        },
+        {
+          "utc": "2026-10-29T03:07:08.2407842Z",
+          "step": 2,
+          "phase": "Copying sectors",
+          "percent": 45.44952392578125
+        },
+        {
+          "utc": "2026-10-29T03:07:22.3355507Z",
+          "step": 2,
+          "phase": "Copying sectors",
+          "percent": 50.474853515625
+        },
+        {
+          "utc": "2026-10-29T03:07:33.297941Z",
+          "step": 2,
+          "phase": "Read-back verification",
+          "percent": 55.083770751953125
+        },
+        {
+          "utc": "2026-10-29T03:07:44.8980413Z",
+          "step": 2,
+          "phase": "Read-back verification",
+          "percent": 60.14503479003906
+        },
+        {
+          "utc": "2026-10-29T03:07:56.6980089Z",
+          "step": 2,
+          "phase": "Read-back verification",
+          "percent": 65.18638610839844
+        },
+        {
+          "utc": "2026-10-29T03:08:08.2981571Z",
+          "step": 2,
+          "phase": "Read-back verification",
+          "percent": 70.21434783935547
+        },
+        {
+          "utc": "2026-10-29T03:08:20.0978748Z",
+          "step": 2,
+          "phase": "Read-back verification",
+          "percent": 75.22651672363281
+        },
+        {
+          "utc": "2026-10-29T03:08:31.8988403Z",
+          "step": 2,
+          "phase": "Read-back verification",
+          "percent": 80.301513671875
+        },
+        {
+          "utc": "2026-10-29T03:08:43.499817Z",
+          "step": 2,
+          "phase": "Read-back verification",
+          "percent": 85.31728744506836
+        },
+        {
+          "utc": "2026-10-29T03:08:55.1001332Z",
+          "step": 2,
+          "phase": "Read-back verification",
+          "percent": 90.39091110229492
+        },
+        {
+          "utc": "2026-10-29T03:09:06.5001596Z",
+          "step": 2,
+          "phase": "Read-back verification",
+          "percent": 95.47603607177734
+        },
+        {
+          "utc": "2026-10-29T03:09:18.0219672Z",
+          "step": 2,
+          "phase": "Verified",
+          "percent": 100
+        }
+      ]
+    }
+  ],
+  "privacy": "Disk images, account credentials, SIDs, host paths, raw inventories and diagnostic traces are excluded from this public receipt.",
+  "limits": [
+    "Full Windows boot qualification is ARM64 on Parallels UEFI, not x64 OS boot or physical hardware.",
+    "Inactive unencrypted Windows sources only; no live OS/VSS clone qualification.",
+    "No activation, TPM/Windows Hello, encrypted-source or dissimilar-hardware guarantee."
+  ],
+  "upgrade": {
+    "Guest": "Independent Windows-aware clone",
+    "OldReleaseGuideReplaced": true,
+    "InstalledFilesMatchFinalPortable": true,
+    "After": "0.2.1.0",
+    "InstallerSha256": "274637342703aef28f07ea8a75249c373f2e79f508e93c761b4d9dbb4a420cbb",
+    "Before": "0.2.0.0",
+    "DesktopInputUsed": false,
+    "UpgradedInstalledRender": "Passed",
+    "Installer": "Passed",
+    "SourceCodeCommit": "105dc5e6af742803f77ddc774728225b04862a0d"
+  }
+}

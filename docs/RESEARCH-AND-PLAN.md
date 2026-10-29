@@ -1,6 +1,6 @@
 # SoopaDriveTool — research and engineering plan
 
-> Version 0.2 update: [current clone/wipe/queue/SMART behavior](DRIVE-WORKFLOWS-0.2.md) and [current validation](VALIDATION-0.2.md). The matrix below records the original 0.1 baseline; several items, including used-file cloning, inactive-Windows boot configuration, SMART exports and dependent chains, have since been implemented.
+> Version 0.2.1 update: [current clone/wipe/queue/SMART behavior](DRIVE-WORKFLOWS-0.2.md) and [current validation](VALIDATION-0.2.1.md). The matrix below records the original 0.1 baseline; several items, including used-file cloning, inactive-Windows boot configuration, SMART exports and dependent chains, have since been implemented.
 
 Research date: October 28, 2026. Target: native Windows 11 ARM64 and x64. Author/owner: Everett Jenkins. Status: an installable **0.1.0 development preview**, with advanced parity work explicitly outstanding.
 
