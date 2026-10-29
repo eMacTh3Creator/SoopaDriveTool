@@ -54,6 +54,9 @@ try{
  Copy-Item $wimSource "$publish\Licenses\wimlib-1.14.5.tar.gz"
  Copy-Item "$root\docs\wimlib" "$publish\Licenses\wimlib" -Recurse
  Copy-Item "$root\docs\DotNet-LICENSE.txt","$root\docs\DotNet-THIRD-PARTY-NOTICES.txt","$root\docs\WPF-LICENSE.txt","$root\docs\WPF-THIRD-PARTY-NOTICES.txt" $publish
+ # Host shares can preserve Hidden/System on staged dependency licenses.
+ # Normalize only the owned publish tree so both installer and ZIP include them.
+ Get-ChildItem $publish -Recurse -Force | ForEach-Object {$_.Attributes=$_.Attributes -band (-bnot ([IO.FileAttributes]::Hidden -bor [IO.FileAttributes]::System -bor [IO.FileAttributes]::ReadOnly))}
  if(!$Compiler){$candidates=@("$tools\InnoSetup\ISCC.exe",'C:\Program Files\Inno Setup 6\ISCC.exe','C:\Program Files (x86)\Inno Setup 6\ISCC.exe','C:\Program Files (x86)\Inno Setup 7\ISCC.exe','C:\Program Files\Inno Setup 7\ISCC.exe');$Compiler=$candidates | Where-Object {Test-Path $_} | Select-Object -First 1}
  if(!$Compiler){throw 'Install Inno Setup 6.7+ or pass -Compiler with the ISCC.exe path.'}
  & $Compiler /Qp "/DAppVersion=$Version" "/DRuntime=$Runtime" "/DPublishDir=$publish" "/DOutDir=$output" "$PSScriptRoot\installer.iss"
