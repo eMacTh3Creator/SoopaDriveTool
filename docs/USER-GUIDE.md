@@ -1,8 +1,8 @@
 # SoopaDriveTool user guide
 
-This guide covers version 0.3.1 on Windows 11. Install ARM64 on Windows on ARM, or x64 on Intel/AMD PCs. The .NET runtime and required engines are included.
+This guide covers version 0.3.2 on Windows 11. Install ARM64 on Windows on ARM, or x64 on Intel/AMD PCs. The .NET runtime and required engines are included.
 
-Drive changes, raw reads, SMART, and VSS need administrator access. Choose **Restart as administrator** inside the app. Pending operations are retained, but you must review them again before applying.
+When you launch SoopaDriveTool, Windows requests administrator approval (UAC) before the window opens, unless the process is already elevated. If you decline, the app closes. Review queued disk changes before applying them.
 
 ## Manage partitions
 
@@ -66,6 +66,8 @@ Changing a repository passphrase rewraps its key. Update any saved schedules wit
 ### Schedule a backup
 
 Schedules can run daily, every Sunday, hourly, or at logon. A logged-on-user task runs with that user's access. An installed SYSTEM task can run before login and requires administrator access, an executable in Program Files, and suitable machine-account access to network shares.
+
+Background jobs do not show the app's startup UAC prompt. Existing tasks keep their configured account and run level. A scheduled VSS backup needs an elevated task.
 
 Secrets are protected with Windows DPAPI and restricted job folders. The schedule panel can run, enable, disable, and remove jobs, and shows their last recorded result.
 

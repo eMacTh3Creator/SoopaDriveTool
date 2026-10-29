@@ -8,7 +8,7 @@ Do not include drive serial numbers, recovery keys, personal filenames, disk ima
 
 ## Administrator access and disk writes
 
-The application starts without administrator privileges. Disk changes require elevation and review before Apply. Restore and erase operations also require confirmation of the destination. A pending queue is retained when the app restarts as administrator and must be reviewed again.
+The interactive application requests elevation through Windows UAC before opening its window. An already-elevated launch continues without another prompt. Declining approval closes the app. Disk changes require review before Apply; restore and erase operations also require confirmation of the destination. Restored pending queues must be reviewed again before they run.
 
 Elevated operations accept typed requests through fixed providers. There is no endpoint for arbitrary elevated scripts, and the app does not download and run updates automatically.
 
@@ -31,6 +31,8 @@ A failed restore retains them for another attempt. Before writing to the destina
 Protect the repository device and remove retained temporary files when they are no longer needed. Deleting a file does not securely erase its contents.
 
 ## Scheduled jobs
+
+Background jobs use the Windows account and run level configured in Task Scheduler and do not show the application's startup UAC prompt. Existing tasks retain those settings. VSS tasks require elevation, and creating VSS or SYSTEM schedules requires administrator access.
 
 Windows DPAPI protects schedule secrets. SYSTEM jobs require an installed executable in Program Files and restricted job storage. The parent and job directories are created atomically with administrator ownership. Existing directories with untrusted owners or permissions are rejected. Ownership and permissions are checked before the SYSTEM task reads a job.
 

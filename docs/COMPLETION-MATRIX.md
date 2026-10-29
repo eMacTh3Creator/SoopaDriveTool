@@ -1,6 +1,6 @@
 # Supported operations and test coverage
 
-This page summarizes version 0.3.1. The [user guide](USER-GUIDE.md) describes how to use each tool. The [latest validation report](VALIDATION-0.3.1.md) and [test record](QUALIFICATION-0.3.0.json) document the checks completed for this release.
+This page summarizes version 0.3.2. The [user guide](USER-GUIDE.md) describes how to use each tool. The [latest validation report](VALIDATION-0.3.2.md) and [test record](QUALIFICATION-0.3.0.json) document the checks completed for this release.
 
 ## Available operations
 
