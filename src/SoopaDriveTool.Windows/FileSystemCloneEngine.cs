@@ -51,7 +51,8 @@ public static class FileSystemCloneEngine
             progress?.Report(new("Preparing destination",35,"Creating fresh partition identifiers and the destination filesystem layout."));
             var letters=await CreateDestinationLayoutAsync(op,target,recovery!=null,recoveryBytes);
             targetTouched=true;volume=letters.Windows[0];if(letters.Efi.Length>0)efi=letters.Efi[0];if(letters.Recovery.Length>0)recoveryLetter=letters.Recovery[0];
-            await Tool(SystemTool("dism.exe"),["/English","/Apply-Image","/ImageFile:"+image,"/Index:1","/ApplyDir:"+volume+@":\","/CheckIntegrity","/Verify","/EA",windows?"/NoRpFix":"/English"],"Applying used files",40,45);
+            var apply=new List<string>{"/English","/Apply-Image","/ImageFile:"+image,"/Index:1","/ApplyDir:"+volume+@":\","/CheckIntegrity","/Verify","/EA"};if(windows)apply.Add("/NoRpFix");
+            await Tool(SystemTool("dism.exe"),apply.ToArray(),"Applying used files",40,45);
             if(windows)
             {
                 progress?.Report(new("Preserving Windows drive letter",85,"Remapping the cloned SYSTEM hive to the destination volume identifier."));

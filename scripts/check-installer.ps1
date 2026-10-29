@@ -19,9 +19,20 @@ try{
   $snapshotMachine=Machine (Join-Path $testDir 'Tools\SoopaNative.exe');$recoveryMachine=Machine (Join-Path $testDir 'Tools\SoopaRecovery.exe')
   if($machine -ne $expected -or $engine -ne $expected -or $wimMachine -ne $expected -or $wimDllMachine -ne $expected -or $snapshotMachine -ne $expected -or $recoveryMachine -ne $expected){throw 'Wrong native architecture in installed package'}
   if(!(Test-Path (Join-Path $testDir 'Licenses\native\json-LICENSE.MIT')) -or !(Test-Path (Join-Path $testDir 'Licenses\native\LICENSE'))){throw 'Native recovery component licenses missing'}
+  Add-Type -AssemblyName System.IO.Compression.FileSystem
+  $portable=Join-Path $output "SoopaDriveTool-$Version-$arch-Portable.zip";$archive=[IO.Compression.ZipFile]::OpenRead($portable)
+  try{
+    foreach($relative in @('Tools/SoopaNative.exe','Tools/SoopaRecovery.exe','Licenses/native/json-LICENSE.MIT','Licenses/native/LICENSE','Licenses/smartmontools-7.5.tar.gz','Licenses/wimlib-1.14.5.tar.gz')){
+      $entry=@($archive.Entries|Where-Object {$_.FullName.Replace('\','/') -eq $relative})
+      if($entry.Count -ne 1){throw ('Portable package is missing '+$relative)}
+      $stream=$entry[0].Open();$hash=[Security.Cryptography.SHA256]::Create()
+      try{$actual=[BitConverter]::ToString($hash.ComputeHash($stream)).Replace('-','')}finally{$hash.Dispose();$stream.Dispose()}
+      if($actual -ne (Get-FileHash (Join-Path $testDir $relative)).Hash){throw ('Portable/installed resource differs: '+$relative)}
+    }
+  }finally{$archive.Dispose()}
   $p=Start-Process (Join-Path $testDir 'unins000.exe') -ArgumentList '/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART' -Wait -PassThru
   if($p.ExitCode -ne 0 -or (Test-Path $exe)){throw 'Uninstall failed'}
-  @{Runtime=$Runtime;Installer='Passed';InstalledRender='Passed';AppMachine=('0x{0:x4}' -f $machine);EngineMachine=('0x{0:x4}' -f $engine);SmartCollectorMachine=('0x{0:x4}' -f $smart);SmartSourceIncluded=$true;WimEngineMachine=('0x{0:x4}' -f $wimMachine);WimLibraryMachine=('0x{0:x4}' -f $wimDllMachine);WimSourceAndLicensesIncluded=$true;VersionedReleaseGuideIncluded=$true;Uninstall='Passed';Utc=[DateTime]::UtcNow.ToString('O')} | ConvertTo-Json | Set-Content "$output\installer-check.json"
+  @{Runtime=$Runtime;Installer='Passed';InstalledRender='Passed';AppMachine=('0x{0:x4}' -f $machine);EngineMachine=('0x{0:x4}' -f $engine);SmartCollectorMachine=('0x{0:x4}' -f $smart);SmartSourceIncluded=$true;WimEngineMachine=('0x{0:x4}' -f $wimMachine);WimLibraryMachine=('0x{0:x4}' -f $wimDllMachine);WimSourceAndLicensesIncluded=$true;VersionedReleaseGuideIncluded=$true;SnapshotHostMachine=('0x{0:x4}' -f $snapshotMachine);RecoveryHostMachine=('0x{0:x4}' -f $recoveryMachine);NativeLicensesIncluded=$true;PortableCriticalResourcesMatchInstalled=$true;Uninstall='Passed';Utc=[DateTime]::UtcNow.ToString('O')} | ConvertTo-Json | Set-Content "$output\installer-check.json"
   Get-Content "$output\installer-check.json"
 }finally{
   if(Test-Path (Join-Path $testDir 'unins000.exe')){Start-Process (Join-Path $testDir 'unins000.exe') -ArgumentList '/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART' -Wait | Out-Null}
