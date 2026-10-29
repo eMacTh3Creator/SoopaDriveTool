@@ -19,6 +19,26 @@ inline void NoLinks(fs::path path){for(path=fs::absolute(path);!path.empty();pat
 inline std::wstring WindowsRoot(){wchar_t path[MAX_PATH];Need(GetWindowsDirectoryW(path,MAX_PATH)>0,"Cannot locate Windows");return path;}
 inline GUID Partition(const fs::path& windows){wchar_t root[MAX_PATH];Need(GetVolumePathNameW(windows.c_str(),root,MAX_PATH)!=FALSE,"Cannot bind Windows recovery to a volume");std::wstring name=L"\\\\.\\";name+=root;while(name.back()==L'\\')name.pop_back();HANDLE h=CreateFileW(name.c_str(),GENERIC_READ,FILE_SHARE_READ|FILE_SHARE_WRITE,nullptr,OPEN_EXISTING,0,nullptr);Need(h!=INVALID_HANDLE_VALUE,"Cannot open the Windows volume");PARTITION_INFORMATION_EX info{};DWORD got=0;BOOL ok=DeviceIoControl(h,IOCTL_DISK_GET_PARTITION_INFO_EX,nullptr,0,&info,sizeof(info),&got,nullptr);CloseHandle(h);Need(ok&&got>=sizeof(info)&&info.PartitionStyle==PARTITION_STYLE_GPT,"Recovery registration needs a GPT Windows volume");return info.Gpt.PartitionId;}
 inline void Privilege(const wchar_t* name){HANDLE token=nullptr;Need(OpenProcessToken(GetCurrentProcess(),TOKEN_ADJUST_PRIVILEGES|TOKEN_QUERY,&token)!=FALSE,"Cannot open recovery privileges");TOKEN_PRIVILEGES p{};p.PrivilegeCount=1;BOOL found=LookupPrivilegeValueW(nullptr,name,&p.Privileges[0].Luid);p.Privileges[0].Attributes=SE_PRIVILEGE_ENABLED;SetLastError(0);BOOL ok=found&&AdjustTokenPrivileges(token,FALSE,&p,0,nullptr,nullptr);DWORD error=GetLastError();CloseHandle(token);Need(ok&&error==ERROR_SUCCESS,"Recovery registration requires backup/restore privileges");}
+inline void CancelOwnPendingDelete(HKEY root,const std::wstring& control,const fs::path& windows)
+{
+    Key session;LONG opened=RegOpenKeyExW(root,(control+L"\\Control\\Session Manager").c_str(),0,KEY_QUERY_VALUE|KEY_SET_VALUE,&session.h);
+    if(opened==ERROR_FILE_NOT_FOUND)return;Need(opened==ERROR_SUCCESS,"Cannot inspect pending recovery cleanup");
+    DWORD type=0,size=0;LONG result=RegQueryValueExW(session.h,L"PendingFileRenameOperations",nullptr,&type,nullptr,&size);
+    if(result==ERROR_FILE_NOT_FOUND)return;Need(result==ERROR_SUCCESS&&type==REG_MULTI_SZ&&size<=1024*1024&&size%sizeof(wchar_t)==0,"Invalid pending file operations");
+    std::vector<wchar_t> data(size/sizeof(wchar_t)+2,0);Need(RegQueryValueExW(session.h,L"PendingFileRenameOperations",nullptr,&type,reinterpret_cast<BYTE*>(data.data()),&size)==ERROR_SUCCESS,"Cannot read pending file operations");
+    auto path=fs::absolute(windows).lexically_normal();while(path.filename().empty()&&path!=path.parent_path())path=path.parent_path();auto relative=path.relative_path().wstring();std::wstring suffix=L"\\"+(relative.empty()?L"":relative+L"\\")+L"System32\\"+FileName;
+    size_t offset=0,characters=size/sizeof(wchar_t);bool changed=false;std::vector<wchar_t> kept;
+    auto next=[&](){size_t begin=offset;while(offset<characters&&data[offset])offset++;Need(offset<characters,"Truncated pending file operation");std::wstring value(data.data()+begin,offset-begin);offset++;return value;};
+    while(offset<characters&&data[offset]){
+        auto source=next(),destination=next();size_t prefix=source.rfind(L"\\??\\",0)==0?4:0;
+        bool own=source.size()==prefix+2+suffix.size()&&((source[prefix]>=L'A'&&source[prefix]<=L'Z')||(source[prefix]>=L'a'&&source[prefix]<=L'z'))&&source[prefix+1]==L':'&&_wcsicmp(source.c_str()+prefix+2,suffix.c_str())==0;
+        if(own&&destination.empty()){changed=true;continue;}
+        for(const auto& item:{source,destination}){kept.insert(kept.end(),item.begin(),item.end());kept.push_back(0);}
+    }
+    if(!changed)return;
+    if(kept.empty())Need(RegDeleteValueW(session.h,L"PendingFileRenameOperations")==ERROR_SUCCESS,"Cannot cancel previous recovery cleanup");
+    else{kept.push_back(0);Need(RegSetValueExW(session.h,L"PendingFileRenameOperations",0,REG_MULTI_SZ,reinterpret_cast<const BYTE*>(kept.data()),static_cast<DWORD>(kept.size()*sizeof(wchar_t)))==ERROR_SUCCESS,"Cannot preserve unrelated pending file operations");}
+}
 inline void Stage(const fs::path& windows,const GUID& expected,const fs::path& host)
 {
     NoLinks(windows);NoLinks(host);Need(fs::exists(windows/L"System32"/L"Config"/L"SYSTEM"),"Missing target SYSTEM hive");Need(IsEqualGUID(Partition(windows),expected),"Target Windows partition changed");
@@ -29,7 +49,7 @@ inline void Stage(const fs::path& windows,const GUID& expected,const fs::path& h
     Privilege(SE_BACKUP_NAME);Privilege(SE_RESTORE_NAME);std::wstring mount=L"SoopaRecoveryOnceStage_"+std::to_wstring(GetCurrentProcessId());Need(RegLoadKeyW(HKEY_LOCAL_MACHINE,mount.c_str(),(windows/L"System32"/L"Config"/L"SYSTEM").c_str())==ERROR_SUCCESS,"Cannot open offline recovery registration hive");
     try{
         Key root;Need(RegOpenKeyExW(HKEY_LOCAL_MACHINE,mount.c_str(),0,KEY_READ|KEY_WRITE,&root.h)==ERROR_SUCCESS,"Cannot inspect offline control sets");bool created=false;
-        for(DWORD i=0;;i++){wchar_t name[256];DWORD n=256;LONG result=RegEnumKeyExW(root.h,i,name,&n,nullptr,nullptr,nullptr,nullptr);if(result==ERROR_NO_MORE_ITEMS)break;Need(result==ERROR_SUCCESS,"Cannot enumerate offline control sets");std::wstring control(name,n);if(control.size()!=13||control.rfind(L"ControlSet",0)!=0)continue;Key service;Need(RegCreateKeyExW(root.h,(control+L"\\Services\\"+ServiceName).c_str(),0,nullptr,0,KEY_WRITE,nullptr,&service.h,nullptr)==ERROR_SUCCESS,"Cannot stage recovery startup service");
+        for(DWORD i=0;;i++){wchar_t name[256];DWORD n=256;LONG result=RegEnumKeyExW(root.h,i,name,&n,nullptr,nullptr,nullptr,nullptr);if(result==ERROR_NO_MORE_ITEMS)break;Need(result==ERROR_SUCCESS,"Cannot enumerate offline control sets");std::wstring control(name,n);if(control.size()!=13||control.rfind(L"ControlSet",0)!=0)continue;CancelOwnPendingDelete(root.h,control,windows);Key service;Need(RegCreateKeyExW(root.h,(control+L"\\Services\\"+ServiceName).c_str(),0,nullptr,0,KEY_WRITE,nullptr,&service.h,nullptr)==ERROR_SUCCESS,"Cannot stage recovery startup service");
             auto number=[&](const wchar_t* key,DWORD value){Need(RegSetValueExW(service.h,key,0,REG_DWORD,reinterpret_cast<const BYTE*>(&value),sizeof(value))==ERROR_SUCCESS,"Cannot set recovery startup value");};
             auto text=[&](const wchar_t* key,const std::wstring& value,DWORD type=REG_SZ){Need(RegSetValueExW(service.h,key,0,type,reinterpret_cast<const BYTE*>(value.c_str()),static_cast<DWORD>((value.size()+1)*sizeof(wchar_t)))==ERROR_SUCCESS,"Cannot set recovery startup text");};
             number(L"Type",SERVICE_WIN32_OWN_PROCESS);number(L"Start",SERVICE_AUTO_START);number(L"ErrorControl",SERVICE_ERROR_NORMAL);text(L"ObjectName",L"LocalSystem");text(L"DisplayName",L"SoopaDriveTool one time Windows recovery registration");text(L"Description",L"Registers the restored WinRE image on first startup, then removes this service.");text(L"ImagePath",L"\"%SystemRoot%\\System32\\SoopaDriveToolRecoveryOnce.exe\" --first-boot-winre "+GuidText(expected),REG_EXPAND_SZ);created=true;

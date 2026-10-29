@@ -43,7 +43,7 @@ static void DifferentVolume(const fs::path& path,int target)
 }
 static std::wstring Quote(const std::wstring& value){std::wstring out=L"\"";size_t slashes=0;for(wchar_t c:value){if(c==L'\\'){slashes++;continue;}if(c==L'\"'){out.append(slashes*2+1,L'\\');out+=c;slashes=0;continue;}out.append(slashes,L'\\');slashes=0;out+=c;}out.append(slashes*2,L'\\');out+=L'\"';return out;}
 static thread_local fs::path utilityLog;
-static void Run(const std::wstring& executable,const std::vector<std::wstring>& args)
+static void Run(const std::wstring& executable,const std::vector<std::wstring>& args,DWORD alternateSuccess=ERROR_SUCCESS)
 {
     std::wstring command=Quote(executable);for(const auto& a:args)command+=L" "+Quote(a);
     wchar_t temp[MAX_PATH],name[MAX_PATH];Win(GetTempPathW(MAX_PATH,temp)>0&&GetTempFileNameW(temp,L"sdt",0,name)!=0,"Create utility log");
@@ -55,7 +55,7 @@ static void Run(const std::wstring& executable,const std::vector<std::wstring>& 
     else if(!data.empty()){int n=MultiByteToWideChar(CP_OEMCP,0,reinterpret_cast<const char*>(data.data()),static_cast<int>(data.size()),nullptr,0);text.resize(static_cast<size_t>(n));MultiByteToWideChar(CP_OEMCP,0,reinterpret_cast<const char*>(data.data()),static_cast<int>(data.size()),text.data(),n);}
     if(!text.empty())Status(fs::path(executable).filename().wstring()+L":\r\n"+text);
     if(!utilityLog.empty()){NoLinks(utilityLog);std::ofstream log(utilityLog,std::ios::app);log<<Utf8(executable)<<" exit "<<code<<"\n"<<Utf8(text)<<"\n";}
-    if(code!=0)throw std::runtime_error("Windows recovery utility "+Utf8(fs::path(executable).filename().wstring())+" failed ("+std::to_string(code)+"): "+Utf8(text));
+    if(code!=0&&code!=alternateSuccess)throw std::runtime_error("Windows recovery utility "+Utf8(fs::path(executable).filename().wstring())+" failed ("+std::to_string(code)+"): "+Utf8(text));
 }
 static std::string HashResource(HANDLE handle,long long length,const std::wstring& phase)
 {
@@ -154,7 +154,7 @@ static void RepairBoot(const fs::path& windows,int target,const std::string& exp
         Run(SystemExe(L"bcdboot.exe"),{windows.wstring(),L"/s",std::wstring(1,letter)+L":",L"/f",L"UEFI",L"/v"});Require(fs::exists(fs::path(mount)/L"EFI"/L"Microsoft"/L"Boot"/L"BCD"),"Rebuilt BCD store is missing");
         fs::path recoveryFolder=windows/L"System32"/L"Recovery";
         if(!recoveryVolumes.empty()){recoveryMount=Root(FreeLetter(used));Win(SetVolumeMountPointW(recoveryMount.c_str(),recoveryVolumes[0].c_str())!=FALSE,"Mount selected Windows recovery volume");recoveryFolder=fs::path(recoveryMount)/L"Recovery"/L"WindowsRE";}
-        if(fs::exists(recoveryFolder/L"Winre.wim")){NoLinks(recoveryFolder/L"Winre.wim");Status(L"Registering Windows RE after rebuilding the BCD store");Run((windows/L"System32"/L"reagentc.exe").wstring(),{L"/setreimage",L"/path",recoveryFolder.wstring(),L"/target",windows.wstring()});wchar_t module[MAX_PATH];Win(GetModuleFileNameW(nullptr,module,MAX_PATH)>0,"Find recovery registration helper");recoveryonce::Stage(windows,winInfo.Gpt.PartitionId,fs::path(module).parent_path()/L"SoopaNative.exe");Status(L"Windows RE activation will complete on the destination next startup; its one time service removes itself");}
+        if(fs::exists(recoveryFolder/L"Winre.wim")){NoLinks(recoveryFolder/L"Winre.wim");Status(L"Registering Windows RE after rebuilding the BCD store");Run((windows/L"System32"/L"reagentc.exe").wstring(),{L"/setreimage",L"/path",recoveryFolder.wstring(),L"/target",windows.wstring()},ERROR_ALREADY_EXISTS);wchar_t module[MAX_PATH];Win(GetModuleFileNameW(nullptr,module,MAX_PATH)>0,"Find recovery registration helper");recoveryonce::Stage(windows,winInfo.Gpt.PartitionId,fs::path(module).parent_path()/L"SoopaNative.exe");Status(L"Windows RE activation will complete on the destination next startup; its one time service removes itself");}
         else Status(L"No standard Windows RE image was found on this disk. Boot files were repaired; configure and verify Windows RE separately.");
         if(!recoveryMount.empty())DeleteVolumeMountPointW(recoveryMount.c_str());Status(L"UEFI boot files rebuilt. Original EFI files retained at "+backup.wstring(),100);DeleteVolumeMountPointW(mount.c_str());
     }catch(...){if(!recoveryMount.empty())DeleteVolumeMountPointW(recoveryMount.c_str());DeleteVolumeMountPointW(mount.c_str());throw;}
