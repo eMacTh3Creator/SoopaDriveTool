@@ -1,0 +1,137 @@
+{
+  "version": "0.2.1",
+  "checkedUtc": "2026-10-29T03:30:51.841703+00:00",
+  "releaseUrl": "https://github.com/eMacTh3Creator/SoopaDriveTool/releases/tag/v0.2.1",
+  "publishedUtc": "2026-10-29T03:27:09Z",
+  "prerelease": true,
+  "sourceCodeCommit": "105dc5e6af742803f77ddc774728225b04862a0d",
+  "tagCommit": "cee9ec78960f69498baa9c25a02d3ce02464b476",
+  "remoteMainAndTagVerifiedBeforeReceiptCommit": true,
+  "assets": [
+    {
+      "name": "BUILD-PROVENANCE.json",
+      "bytes": 4328,
+      "sha256": "340fb7b891e21e18cdcdb8f520cb0d50f3270943b80b4c0d179129c65a216bdc",
+      "serverDigestMatched": true,
+      "publicHttpStatus": 200,
+      "url": "https://github.com/eMacTh3Creator/SoopaDriveTool/releases/download/v0.2.1/BUILD-PROVENANCE.json"
+    },
+    {
+      "name": "SHA256SUMS.txt",
+      "bytes": 592,
+      "sha256": "3ea0090d18bf47aafaa00c61892d884eb28a908b3e694cdc13749cd86e543529",
+      "serverDigestMatched": true,
+      "publicHttpStatus": 200,
+      "url": "https://github.com/eMacTh3Creator/SoopaDriveTool/releases/download/v0.2.1/SHA256SUMS.txt"
+    },
+    {
+      "name": "smartmontools-7.5.tar.gz",
+      "bytes": 1122317,
+      "sha256": "690b83ca331378da9ea0d9d61008c4b22dde391387b9bbad7f29387f2595f76e",
+      "serverDigestMatched": true,
+      "publicHttpStatus": 200,
+      "url": "https://github.com/eMacTh3Creator/SoopaDriveTool/releases/download/v0.2.1/smartmontools-7.5.tar.gz"
+    },
+    {
+      "name": "SoopaDriveTool-0.2.1-arm64-Portable.zip",
+      "bytes": 65046940,
+      "sha256": "3ffff9ef032d90387139e9b33da872d2aa17efea7c7645eece7c5cca3b954334",
+      "serverDigestMatched": true,
+      "publicHttpStatus": 200,
+      "url": "https://github.com/eMacTh3Creator/SoopaDriveTool/releases/download/v0.2.1/SoopaDriveTool-0.2.1-arm64-Portable.zip"
+    },
+    {
+      "name": "SoopaDriveTool-0.2.1-arm64-Setup.exe",
+      "bytes": 56020333,
+      "sha256": "274637342703aef28f07ea8a75249c373f2e79f508e93c761b4d9dbb4a420cbb",
+      "serverDigestMatched": true,
+      "publicHttpStatus": 200,
+      "url": "https://github.com/eMacTh3Creator/SoopaDriveTool/releases/download/v0.2.1/SoopaDriveTool-0.2.1-arm64-Setup.exe"
+    },
+    {
+      "name": "SoopaDriveTool-0.2.1-x64-Portable.zip",
+      "bytes": 70090939,
+      "sha256": "473e8937594c58981a6e53177beb41503e5dd187f138014435236991b774773b",
+      "serverDigestMatched": true,
+      "publicHttpStatus": 200,
+      "url": "https://github.com/eMacTh3Creator/SoopaDriveTool/releases/download/v0.2.1/SoopaDriveTool-0.2.1-x64-Portable.zip"
+    },
+    {
+      "name": "SoopaDriveTool-0.2.1-x64-Setup.exe",
+      "bytes": 61269090,
+      "sha256": "6246b608aafde9fd87941110e0dbed58a0801679a1388c3088b612f20826b79f",
+      "serverDigestMatched": true,
+      "publicHttpStatus": 200,
+      "url": "https://github.com/eMacTh3Creator/SoopaDriveTool/releases/download/v0.2.1/SoopaDriveTool-0.2.1-x64-Setup.exe"
+    },
+    {
+      "name": "wimlib-1.14.5.tar.gz",
+      "bytes": 1073578,
+      "sha256": "84221a3abd5b91228f15f8e6065c335a336237b5738197b75bf419eea561a194",
+      "serverDigestMatched": true,
+      "publicHttpStatus": 200,
+      "url": "https://github.com/eMacTh3Creator/SoopaDriveTool/releases/download/v0.2.1/wimlib-1.14.5.tar.gz"
+    }
+  ],
+  "site": {
+    "url": "https://emacth3creator.github.io/SoopaDriveTool/",
+    "deployment": {
+      "conclusion": "success",
+      "headSha": "cee9ec78960f69498baa9c25a02d3ce02464b476",
+      "status": "completed",
+      "url": "https://github.com/eMacTh3Creator/SoopaDriveTool/actions/runs/40812272039"
+    },
+    "files": [
+      {
+        "path": "index.html",
+        "httpStatus": 200,
+        "sha256": "658b08d51047584027c5e90acac19a90096d4ccfa68d5504c6ef213b2be5d6e1",
+        "matchesCommittedSource": true
+      },
+      {
+        "path": "style.css",
+        "httpStatus": 200,
+        "sha256": "d0a6c6327f725e6ba0bbe6789b33302a59282195e95bdf3b08023a731e6090fa",
+        "matchesCommittedSource": true
+      },
+      {
+        "path": "assets/app-preview.png",
+        "httpStatus": 200,
+        "sha256": "959085e7af93338fbdd766648bed885887c934d4e8d5ec7ce8d77abe905d1ee5",
+        "matchesCommittedSource": true
+      },
+      {
+        "path": "assets/activity-preview.png",
+        "httpStatus": 200,
+        "sha256": "4d6c9ba7a0ba277d163d3bf0630c2e78b2bc53393663790e1c2aa527dd6fff85",
+        "matchesCommittedSource": true
+      },
+      {
+        "path": "assets/logo.png",
+        "httpStatus": 200,
+        "sha256": "d0960d15b4b6263367da0d8a53370596db5e3b954d747631e519ef453a924fd0",
+        "matchesCommittedSource": true
+      }
+    ],
+    "version": "0.2.1",
+    "qualificationScope": "Independent ARM64 Windows-aware and byte-exact cold boots; x64 OS boot and physical hardware unqualified.",
+    "publicHiddenBrowser": {
+      "viewportWidth": 390,
+      "horizontalScrollWidth": 390,
+      "allSixImagesLoaded": true,
+      "versionVisible": true,
+      "cloneBootQualificationVisible": true,
+      "consoleWarningsAndErrors": 0,
+      "desktopInputUsed": false
+    }
+  },
+  "cleanup": {
+    "temporaryRawCloneAndStagingDisksRemoved": true,
+    "obsoletePreparationImagesRemoved": true,
+    "ownedTestVirtualMachinesStopped": true,
+    "workingWindowsVmRunning": true,
+    "workingVmDisabledTestDiskEntriesRemoved": true,
+    "temporaryLabAntivirusExclusionsRemoved": true,
+    "desktopInputUsed": false
+  }
+}
