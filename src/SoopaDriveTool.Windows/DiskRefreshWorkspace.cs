@@ -44,7 +44,7 @@ public partial class MainWindow
             using var timeout=CancellationTokenSource.CreateLinkedTokenSource(inventoryLifetime.Token);timeout.CancelAfter(TimeSpan.FromSeconds(90));
             var latest=await StorageService.InventoryAsync(timeout.Token);
             // A result read before a write or queue edit must not replace newer state.
-            if(windowClosed||busy||revision!=inventoryRevision||!IsEnabled||OwnedWindows.Count>0||!Preferences.Current.AutoRefreshDisks)return;
+            if(windowClosed||busy||revision!=inventoryRevision||partitionMenuOpen||!IsEnabled||OwnedWindows.Count>0||!Preferences.Current.AutoRefreshDisks)return;
             AcceptInventory(latest);status.Text=InventoryStatus();
         }
         catch(OperationCanceledException){if(!windowClosed)status.Text="Automatic disk refresh timed out. Use Refresh to try again.";}
