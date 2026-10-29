@@ -26,7 +26,7 @@
       <h1 id="hero-title">Disk tools<br><span>for Windows.</span></h1>
       <p class="intro">SoopaDriveTool manages partitions, clones drives, creates backups, runs benchmarks, and exports drive health reports.</p>
       <div class="hero-actions">
-        <a class="button primary" href="#download">Download v0.3.2 <span>↓</span></a>
+        <a class="button primary" href="#download">Download v0.3.3 <span>↓</span></a>
         <a class="text-link" href="https://github.com/eMacTh3Creator/SoopaDriveTool/blob/main/docs/USER-GUIDE.md">User guide <span>↗</span></a>
       </div>
       <p class="small hero-note">Free and open source · No account required</p>
@@ -39,7 +39,7 @@
   </section>
 
   <div class="preview-notice">
-    <span class="notice-tag">VERSION 0.3.2 · PREVIEW</span>
+    <span class="notice-tag">VERSION 0.3.3 · PREVIEW</span>
     <p>This release is unsigned. Read the supported operations and known limits before making changes to a disk.</p>
     <a href="#boundaries">Known limits <span>↗</span></a>
   </div>
@@ -140,22 +140,22 @@
       <a class="text-link" href="https://github.com/eMacTh3Creator/SoopaDriveTool/blob/main/docs/COMPLETION-MATRIX.md">Supported operations and test coverage ↗</a>
     </div>
     <div class="boundary-list">
-      <details open><summary>Which Windows PCs are supported?</summary><p>Windows 11 on ARM64 or x64. Choose ARM64 for Snapdragon PCs and Windows VMs on Apple Silicon; choose x64 for Intel and AMD PCs. The .NET runtime is included. The app requests Windows administrator approval before opening.</p></details>
+      <details open><summary>Which Windows PCs are supported?</summary><p>Windows 11 on ARM64 or x64. Choose ARM64 for Snapdragon PCs and Windows VMs on Apple Silicon; choose x64 for Intel and AMD PCs. The .NET runtime is included. The app requests Windows administrator approval before opening. Internal disks, USB drives, and external hard drives appear in the disk list. Enable Auto refresh to check for changes automatically.</p></details>
       <details><summary>What do I need for recovery media?</summary><p>Install Microsoft's Windows ADK Deployment Tools and the matching WinPE add-on. SoopaDriveTool builds an ISO for the selected architecture and can include signed storage or network drivers. Microsoft boot files come from that ADK installation. Test that the media boots and can access your disks before relying on it.</p></details>
       <details><summary>What should I check before changing a disk?</summary><p>Keep a separate backup and review the selected disk. Applied changes are not automatically undone if a later step fails. The running Windows disk is protected from partition changes; BitLocker and unknown encryption states also block these changes. File-based cloning needs separate scratch storage. Quick reset leaves file contents recoverable. The user guide describes the additional requirements for conversions and recovery.</p></details>
-      <details><summary>What has been tested?</summary><p>Tests cover temporary disks, independent ARM64 Windows clone and image-restore boots, encrypted recovery, ARM64/x64 builds, and installer behavior. Physical firmware erasure, x64 recovery boots, USB bridges, power interruption, and complete accessibility coverage still need testing. The installers are unsigned.</p><a href="https://github.com/eMacTh3Creator/SoopaDriveTool/blob/main/docs/VALIDATION-0.3.2.md">Test results and remaining limits ↗</a></details>
+      <details><summary>What has been tested?</summary><p>Tests cover temporary disks, independent ARM64 Windows clone and image-restore boots, encrypted recovery, ARM64/x64 builds, and installer behavior. Physical firmware erasure, x64 recovery boots, USB bridges, power interruption, and complete accessibility coverage still need testing. The installers are unsigned.</p><a href="https://github.com/eMacTh3Creator/SoopaDriveTool/blob/main/docs/VALIDATION-0.3.3.md">Test results and remaining limits ↗</a></details>
     </div>
   </section>
 
   <section id="download" class="download">
-    <div class="download-top"><img src="assets/logo.png" alt="" width="68" height="68"><span class="release-tag">VERSION 0.3.2 · PREVIEW</span></div>
+    <div class="download-top"><img src="assets/logo.png" alt="" width="68" height="68"><span class="release-tag">VERSION 0.3.3 · PREVIEW</span></div>
     <h2>Download</h2>
     <p>Choose the installer for your Windows 11 PC.<br>The .NET runtime is included.</p>
     <div class="download-options">
-      <a class="download-option" href="https://github.com/eMacTh3Creator/SoopaDriveTool/releases/download/v0.3.2/SoopaDriveTool-0.3.2-arm64-Setup.exe"><div><span>WINDOWS ON ARM</span><strong>ARM64 installer <b>↓</b></strong><small>Snapdragon PCs · Windows VMs on Apple Silicon</small></div></a>
-      <a class="download-option" href="https://github.com/eMacTh3Creator/SoopaDriveTool/releases/download/v0.3.2/SoopaDriveTool-0.3.2-x64-Setup.exe"><div><span>INTEL / AMD WINDOWS</span><strong>x64 installer <b>↓</b></strong><small>64-bit Intel and AMD PCs</small></div></a>
+      <a class="download-option" href="https://github.com/eMacTh3Creator/SoopaDriveTool/releases/download/v0.3.3/SoopaDriveTool-0.3.3-arm64-Setup.exe"><div><span>WINDOWS ON ARM</span><strong>ARM64 installer <b>↓</b></strong><small>Snapdragon PCs · Windows VMs on Apple Silicon</small></div></a>
+      <a class="download-option" href="https://github.com/eMacTh3Creator/SoopaDriveTool/releases/download/v0.3.3/SoopaDriveTool-0.3.3-x64-Setup.exe"><div><span>INTEL / AMD WINDOWS</span><strong>x64 installer <b>↓</b></strong><small>64-bit Intel and AMD PCs</small></div></a>
     </div>
-    <div class="download-meta"><a href="https://github.com/eMacTh3Creator/SoopaDriveTool/releases/tag/v0.3.2">Portable ZIPs and release notes ↗</a><a href="https://github.com/eMacTh3Creator/SoopaDriveTool/releases/download/v0.3.2/SHA256SUMS.txt">SHA-256 checksums ↗</a><a href="https://github.com/eMacTh3Creator/SoopaDriveTool/blob/main/LICENSE">Source license ↗</a></div>
+    <div class="download-meta"><a href="https://github.com/eMacTh3Creator/SoopaDriveTool/releases/tag/v0.3.3">Portable ZIPs and release notes ↗</a><a href="https://github.com/eMacTh3Creator/SoopaDriveTool/releases/download/v0.3.3/SHA256SUMS.txt">SHA-256 checksums ↗</a><a href="https://github.com/eMacTh3Creator/SoopaDriveTool/blob/main/LICENSE">Source license ↗</a></div>
     <p class="unsigned">This preview is unsigned. Windows may show a publisher or SmartScreen warning. Check the downloaded file against the release's SHA-256 checksum.</p>
   </section>
 </main>
