@@ -70,7 +70,12 @@ partial class Program
                         WindowStartupLocation=WindowStartupLocation.Manual,Left=-32000,Top=-32000,
                         ShowInTaskbar=false,ShowActivated=false
                     };
-                    SetField(window,"disks",new List<DiskInfo>{disk});Call(window,"Navigate","Disk manager");
+                    SetField(window,"disks",new List<DiskInfo>{disk});
+                    // The constructor selected its original illustrative disk. A
+                    // replacement inventory intentionally does not inherit that
+                    // selection, so clear only this fixture's remembered choice.
+                    GetField<Dictionary<string,DiskInfo>>(window,"diskSelections").Clear();
+                    Call(window,"Navigate","Disk manager");
                     window.Show();await InterfaceRenderIdleAsync(token);
                     var root=(FrameworkElement)window.Content;
                     var segment=Descendants(root).OfType<Button>().Single(button=>button.Tag is PartitionMapTarget target&&target.Partition?.Number==second.Number);

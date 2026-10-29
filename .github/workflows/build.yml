@@ -39,6 +39,16 @@ jobs:
       - name: Build installer and portable package
         shell: pwsh
         run: ./scripts/build.ps1 -Runtime ${{ matrix.runtime }}
+      - name: Check partition interface rendering
+        shell: pwsh
+        run: |
+          $runtime='${{ matrix.runtime }}'
+          & dotnet build tests/SoopaDriveTool.Tests -c Release -r $runtime
+          if ($LASTEXITCODE -ne 0) { throw 'Interface test build failed' }
+          $folder="tests/SoopaDriveTool.Tests/bin/Release/net10.0-windows/$runtime"
+          Copy-Item "artifacts/$runtime/publish/SoopaDriveTool.dll","artifacts/$runtime/publish/SoopaDriveTool.Core.dll" $folder -Force
+          & dotnet "$folder/SoopaDriveTool.Tests.dll" --partition-interface-render "artifacts/$runtime/interface"
+          if ($LASTEXITCODE -ne 0) { throw 'Partition map/menu/confirmation rendering failed' }
       - name: Run native behavioral and benchmark checks
         shell: pwsh
         run: |
@@ -49,7 +59,7 @@ jobs:
           } else {
             ./scripts/test.ps1 -Runtime win-x64 -Integration
           }
-      - name: Check partition erasure and interactive controls
+      - name: Check selected-partition erasure and formatting
         shell: pwsh
         run: |
           $runtime='${{ matrix.runtime }}'
@@ -58,8 +68,6 @@ jobs:
           Copy-Item "artifacts/$runtime/publish/SoopaDriveTool.dll","artifacts/$runtime/publish/SoopaDriveTool.Core.dll" $folder -Force
           & dotnet "$folder/SoopaDriveTool.Tests.dll" --partition-erase-only
           if ($LASTEXITCODE -ne 0) { throw 'Selected-partition erase/format integration failed' }
-          & dotnet "$folder/SoopaDriveTool.Tests.dll" --partition-interface-render "artifacts/$runtime/interface"
-          if ($LASTEXITCODE -ne 0) { throw 'Partition map/menu/confirmation rendering failed' }
       - name: Install, render, and uninstall package
         shell: pwsh
         run: ./scripts/check-installer.ps1 -Runtime ${{ matrix.runtime }}
