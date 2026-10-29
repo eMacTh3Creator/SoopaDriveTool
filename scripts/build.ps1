@@ -42,7 +42,8 @@ try{
  & dotnet publish src\SoopaDriveTool.Windows -c Release -r $Runtime --self-contained true -p:Version=$Version -p:PublishSingleFile=false -o $publish
  if($LASTEXITCODE -ne 0){throw 'Publish failed'}
  if(!(Test-Path "$publish\Tools\diskspd.exe")){throw 'Native benchmark engine missing from publish output'}
- Copy-Item "$root\README.md","$root\LICENSE","$root\THIRD-PARTY-NOTICES.txt" $publish
+ Copy-Item "$root\LICENSE","$root\THIRD-PARTY-NOTICES.txt" $publish
+ $guide=(Get-Content "$root\docs\PACKAGE-README.txt" -Raw).Replace('@APP_VERSION@',$Version);[IO.File]::WriteAllText("$publish\README.txt",$guide,[Text.UTF8Encoding]::new($false))
  Copy-Item "$root\docs\Smartmontools-COPYING.txt" $publish
  New-Item -ItemType Directory -Force "$publish\Licenses"|Out-Null
  Copy-Item $smartSource "$publish\Licenses\smartmontools-7.5.tar.gz"

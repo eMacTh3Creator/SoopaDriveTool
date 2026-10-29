@@ -4,7 +4,7 @@
 
 An original Windows drive workspace for **ARM64 and x64**. Modern WPF interface, native Microsoft DiskSpd benchmarks, data-disk partition operations, verified disk images/clones, and compressed versioned file backups.
 
-**0.2.0 development preview — unsigned.** Adds clone modes, quick/thorough wiping, dependent action chains, live activity and full available SMART exports. Advanced commercial-suite parity is still in progress. Evaluate destructive operations on disposable data disks. The running system disk is protected.
+**0.2.1 development preview — unsigned.** Adds clone modes, quick/thorough wiping, dependent action chains, live activity and full available SMART exports. Advanced commercial-suite parity is still in progress. Evaluate destructive operations on disposable data disks. The running system disk is protected.
 
 [Download installers and portable builds](https://github.com/eMacTh3Creator/SoopaDriveTool/releases) · [Website](https://emacth3creator.github.io/SoopaDriveTool/) · [Deep research and plan](docs/RESEARCH-AND-PLAN.md) · [Report an issue](https://github.com/eMacTh3Creator/SoopaDriveTool/issues)
 

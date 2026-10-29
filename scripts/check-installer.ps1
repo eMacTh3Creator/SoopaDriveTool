@@ -8,6 +8,7 @@ foreach($base in @('HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall','
 try{
   $p=Start-Process $installer -ArgumentList '/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART','/SP-',"/DIR=$testDir",'/GROUP=SoopaDriveTool Install Check' -Wait -PassThru
   if($p.ExitCode -ne 0){throw "Installer failed: $($p.ExitCode)"}
+  $guide=Get-Content (Join-Path $testDir 'README.txt') -Raw;if(!$guide.Contains("Version $Version") -or $guide.Contains('@APP_VERSION@')){throw 'Installed release guide has the wrong version'}
   $exe=Join-Path $testDir 'SoopaDriveTool.exe';if(!(Test-Path $exe)){throw 'Installed executable missing'}
   $p=Start-Process $exe -ArgumentList '--render',"`"$preview`"" -PassThru -WindowStyle Hidden
   if(!$p.WaitForExit(30000)){$p.Kill();throw 'Installed render timeout'}
@@ -18,7 +19,7 @@ try{
   if($machine -ne $expected -or $engine -ne $expected -or $wimMachine -ne $expected -or $wimDllMachine -ne $expected){throw 'Wrong native architecture in installed package'}
   $p=Start-Process (Join-Path $testDir 'unins000.exe') -ArgumentList '/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART' -Wait -PassThru
   if($p.ExitCode -ne 0 -or (Test-Path $exe)){throw 'Uninstall failed'}
-  @{Runtime=$Runtime;Installer='Passed';InstalledRender='Passed';AppMachine=('0x{0:x4}' -f $machine);EngineMachine=('0x{0:x4}' -f $engine);SmartCollectorMachine=('0x{0:x4}' -f $smart);SmartSourceIncluded=$true;WimEngineMachine=('0x{0:x4}' -f $wimMachine);WimLibraryMachine=('0x{0:x4}' -f $wimDllMachine);WimSourceAndLicensesIncluded=$true;Uninstall='Passed';Utc=[DateTime]::UtcNow.ToString('O')} | ConvertTo-Json | Set-Content "$output\installer-check.json"
+  @{Runtime=$Runtime;Installer='Passed';InstalledRender='Passed';AppMachine=('0x{0:x4}' -f $machine);EngineMachine=('0x{0:x4}' -f $engine);SmartCollectorMachine=('0x{0:x4}' -f $smart);SmartSourceIncluded=$true;WimEngineMachine=('0x{0:x4}' -f $wimMachine);WimLibraryMachine=('0x{0:x4}' -f $wimDllMachine);WimSourceAndLicensesIncluded=$true;VersionedReleaseGuideIncluded=$true;Uninstall='Passed';Utc=[DateTime]::UtcNow.ToString('O')} | ConvertTo-Json | Set-Content "$output\installer-check.json"
   Get-Content "$output\installer-check.json"
 }finally{
   if(Test-Path (Join-Path $testDir 'unins000.exe')){Start-Process (Join-Path $testDir 'unins000.exe') -ArgumentList '/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART' -Wait | Out-Null}
