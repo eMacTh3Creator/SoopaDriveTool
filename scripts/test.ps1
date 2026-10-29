@@ -11,4 +11,6 @@ try{
  if($LASTEXITCODE -ne 0){throw 'Tests failed'}
  & dotnet "$root\tests\SoopaDriveTool.Tests\bin\Release\net10.0-windows\$Runtime\SoopaDriveTool.Tests.dll" --native-store-only
  if($LASTEXITCODE -ne 0){throw 'Native encrypted recovery compatibility tests failed'}
+ & dotnet "$root\tests\SoopaDriveTool.Tests\bin\Release\net10.0-windows\$Runtime\SoopaDriveTool.Tests.dll" --schedule-permissions-only
+ if($LASTEXITCODE -ne 0){throw 'SYSTEM schedule ownership/access checks failed'}
 }finally{Pop-Location}

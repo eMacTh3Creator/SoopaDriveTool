@@ -30,7 +30,10 @@ inline void CancelOwnPendingDelete(HKEY root,const std::wstring& control,const f
     size_t offset=0,characters=size/sizeof(wchar_t);bool changed=false;std::vector<wchar_t> kept;
     auto next=[&](){size_t begin=offset;while(offset<characters&&data[offset])offset++;Need(offset<characters,"Truncated pending file operation");std::wstring value(data.data()+begin,offset-begin);offset++;return value;};
     while(offset<characters&&data[offset]){
-        auto source=next(),destination=next();size_t prefix=source.rfind(L"\\??\\",0)==0?4:0;
+        auto source=next(),destination=next();
+        // Windows can flag delayed deletions with *1 before the NT path.
+        size_t marker=source.rfind(L"*1\\??\\",0)==0?2:0;
+        size_t prefix=source.rfind(L"\\??\\",marker)==marker?marker+4:0;
         bool own=source.size()==prefix+2+suffix.size()&&((source[prefix]>=L'A'&&source[prefix]<=L'Z')||(source[prefix]>=L'a'&&source[prefix]<=L'z'))&&source[prefix+1]==L':'&&_wcsicmp(source.c_str()+prefix+2,suffix.c_str())==0;
         if(own&&destination.empty()){changed=true;continue;}
         for(const auto& item:{source,destination}){kept.insert(kept.end(),item.begin(),item.end());kept.push_back(0);}

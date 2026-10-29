@@ -28,6 +28,32 @@ public static class BackupScheduleService
         foreach(var sid in new[]{new SecurityIdentifier(WellKnownSidType.LocalSystemSid,null),new SecurityIdentifier(WellKnownSidType.BuiltinAdministratorsSid,null)})security.AddAccessRule(new(sid,rights,inherit,PropagationFlags.None,AccessControlType.Allow));
         if(!system)security.AddAccessRule(new(WindowsIdentity.GetCurrent().User!,rights,inherit,PropagationFlags.None,AccessControlType.Allow));new DirectoryInfo(directory).SetAccessControl(security);
     }
+    static T SystemAcl<T>() where T:FileSystemSecurity,new()
+    {
+        var acl=new T();acl.SetAccessRuleProtection(true,false);acl.SetOwner(new SecurityIdentifier(WellKnownSidType.BuiltinAdministratorsSid,null));
+        var inherit=typeof(T)==typeof(DirectorySecurity)?InheritanceFlags.ContainerInherit|InheritanceFlags.ObjectInherit:InheritanceFlags.None;
+        foreach(var sid in new[]{WellKnownSidType.LocalSystemSid,WellKnownSidType.BuiltinAdministratorsSid})acl.AddAccessRule(new(new SecurityIdentifier(sid,null),FileSystemRights.FullControl,inherit,PropagationFlags.None,AccessControlType.Allow));return acl;
+    }
+    static void ValidateSystemAcl(FileSystemSecurity acl)
+    {
+        static bool Trusted(IdentityReference? sid)=>sid?.Value is "S-1-5-18" or "S-1-5-32-544";
+        var rules=acl.GetAccessRules(true,true,typeof(SecurityIdentifier)).Cast<FileSystemAccessRule>().ToArray();
+        if(!acl.AreAccessRulesProtected||!Trusted(acl.GetOwner(typeof(SecurityIdentifier)))||rules.Length!=2||rules.Select(r=>r.IdentityReference.Value).Distinct().Count()!=2||rules.Any(r=>r.AccessControlType!=AccessControlType.Allow||!Trusted(r.IdentityReference)||(r.FileSystemRights&FileSystemRights.FullControl)!=FileSystemRights.FullControl))throw new IOException("Unattended backup job storage must be owned and writable only by Administrators and SYSTEM. An administrator must move an untrusted existing SoopaDriveTool folder before recreating schedules.");
+    }
+    internal static void EnsureSystemStorage(string directory)
+    {
+        WindowsPrivileges.Enable("SeRestorePrivilege");
+        foreach(string path in new[]{Path.GetDirectoryName(directory)!,directory}){
+            BackupEngine.RejectExistingAncestorLinks(path);var info=new DirectoryInfo(path);
+            if(!info.Exists)info.Create(SystemAcl<DirectorySecurity>());
+            ValidateSystemAcl(info.GetAccessControl(AccessControlSections.Owner|AccessControlSections.Access));
+        }
+    }
+    static void ValidateSystemStorage()
+    {
+        string directory=DirectoryFor(true);foreach(string path in new[]{Path.GetDirectoryName(directory)!,directory}){BackupEngine.RejectExistingAncestorLinks(path);ValidateSystemAcl(new DirectoryInfo(path).GetAccessControl(AccessControlSections.Owner|AccessControlSections.Access));}
+    }
+    static void ProtectSystemJob(string path){WindowsPrivileges.Enable("SeRestorePrivilege");new FileInfo(path).SetAccessControl(SystemAcl<FileSecurity>());}
     public static async Task<VaultBackupJob> CreateAsync(string source,string repository,VaultOptions options,bool vss,string? password,bool system,string frequency,string time)
     {
         if(frequency is not ("Daily" or "Weekly" or "Hourly" or "At logon"))throw new IOException("Unsupported backup schedule.");if(!TimeOnly.TryParseExact(time,"HH:mm",System.Globalization.CultureInfo.InvariantCulture,System.Globalization.DateTimeStyles.None,out _))throw new IOException("Enter time as HH:mm.");
@@ -35,7 +61,7 @@ public static class BackupScheduleService
         var executable=Environment.ProcessPath??throw new IOException("Cannot identify the installed application.");
         if(system&&!BackupEngine.IsInside(executable,Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles)))throw new IOException("Install SoopaDriveTool in Program Files before scheduling unattended SYSTEM jobs. Portable applications can schedule logged-on-user jobs.");
         using(var vault=await VaultBackup.OpenAsync(repository,password,true))if(vault.Config.Encrypted!=options.Encrypted)throw new IOException("Schedule encryption does not match the repository.");
-        var job=new VaultBackupJob(2,Guid.NewGuid().ToString("N"),Path.GetFullPath(source),Path.GetFullPath(repository),options,vss,system,frequency,time,options.Encrypted?Seal(password!,system):"");string directory=DirectoryFor(system);BackupEngine.RejectExistingAncestorLinks(directory);Directory.CreateDirectory(directory);Protect(directory,system);await Data.SaveAsync(JobPath(job),job);
+        var job=new VaultBackupJob(2,Guid.NewGuid().ToString("N"),Path.GetFullPath(source),Path.GetFullPath(repository),options,vss,system,frequency,time,options.Encrypted?Seal(password!,system):"");string directory=DirectoryFor(system);BackupEngine.RejectExistingAncestorLinks(directory);if(system)EnsureSystemStorage(directory);else{Directory.CreateDirectory(directory);Protect(directory,false);}await Data.SaveAsync(JobPath(job),job);if(system)ProtectSystemJob(JobPath(job));
         var args=new List<string>{"/Create","/F","/TN","SoopaDriveTool-"+job.Id,"/TR","\""+executable+"\" --vault-job \""+JobPath(job)+"\"","/SC",frequency switch{"At logon"=>"ONLOGON","Weekly"=>"WEEKLY","Hourly"=>"HOURLY",_=>"DAILY"}};
         if(frequency!="At logon"){args.AddRange(["/ST",time]);if(frequency=="Weekly")args.AddRange(["/D","SUN"]);}
         if(system)args.AddRange(["/RU","SYSTEM","/RL","HIGHEST"]);else args.AddRange(["/IT","/RL",vss?"HIGHEST":"LIMITED"]);
@@ -50,7 +76,7 @@ public static class BackupScheduleService
     {
         var rows=new List<VaultBackupJob>();foreach(bool system in new[]{false,true}){string root=DirectoryFor(system);if(!Directory.Exists(root))continue;try{foreach(var file in Directory.GetFiles(root,"*.json").Where(p=>!p.EndsWith(".last-run.json",StringComparison.OrdinalIgnoreCase))){BackupEngine.RejectExistingAncestorLinks(file);var job=JsonSerializer.Deserialize<VaultBackupJob>(await File.ReadAllTextAsync(file),Data.Json)??throw new IOException("Invalid schedule.");Validate(job);rows.Add(job);}}catch(UnauthorizedAccessException)when(!StorageService.IsAdmin){}}return rows;
     }
-    public static async Task SetEnabledAsync(VaultBackupJob job,bool enabled){Validate(job);await TaskCommand(["/Change","/TN","SoopaDriveTool-"+job.Id,enabled?"/ENABLE":"/DISABLE"]);await Data.SaveAsync(JobPath(job),job with{Enabled=enabled});}
+    public static async Task SetEnabledAsync(VaultBackupJob job,bool enabled){Validate(job);if(job.SystemAccount)ValidateSystemStorage();await TaskCommand(["/Change","/TN","SoopaDriveTool-"+job.Id,enabled?"/ENABLE":"/DISABLE"]);await Data.SaveAsync(JobPath(job),job with{Enabled=enabled});if(job.SystemAccount)ProtectSystemJob(JobPath(job));}
     public static async Task RunNowAsync(VaultBackupJob job){Validate(job);await TaskCommand(["/Run","/TN","SoopaDriveTool-"+job.Id]);}
     public static async Task DeleteAsync(VaultBackupJob job){Validate(job);await TaskCommand(["/Delete","/TN","SoopaDriveTool-"+job.Id,"/F"]);File.Delete(JobPath(job));}
     public static async Task RemoveInstalledSchedulesAsync()
@@ -62,7 +88,7 @@ public static class BackupScheduleService
     }
     public static async Task RunJobAsync(string path)
     {
-        path=Path.GetFullPath(path);BackupEngine.RejectExistingAncestorLinks(path);if(new FileInfo(path).Length>1024*1024)throw new IOException("Invalid backup job length.");var job=JsonSerializer.Deserialize<VaultBackupJob>(await File.ReadAllTextAsync(path),Data.Json)??throw new IOException("Missing backup job.");Validate(job);if(path!=Path.GetFullPath(JobPath(job)))throw new IOException("Job is outside the protected schedule folder.");
+        path=Path.GetFullPath(path);BackupEngine.RejectExistingAncestorLinks(path);if(string.Equals(Path.GetDirectoryName(path),DirectoryFor(true),StringComparison.OrdinalIgnoreCase)){ValidateSystemStorage();ValidateSystemAcl(new FileInfo(path).GetAccessControl(AccessControlSections.Owner|AccessControlSections.Access));}if(new FileInfo(path).Length>1024*1024)throw new IOException("Invalid backup job length.");var job=JsonSerializer.Deserialize<VaultBackupJob>(await File.ReadAllTextAsync(path),Data.Json)??throw new IOException("Missing backup job.");Validate(job);if(path!=Path.GetFullPath(JobPath(job)))throw new IOException("Job is outside the protected schedule folder.");
         try{string? password=job.Options.Encrypted?Seal(job.Secret,job.SystemAccount,true):null;string id=await RunBackupAsync(job.Source,job.Repository,job.Options,job.Vss,password);await Data.SaveAsync(path+".last-run.json",new{Success=true,Snapshot=id,CompletedUtc=DateTime.UtcNow});}
         catch(Exception e){await Data.SaveAsync(path+".last-run.json",new{Success=false,Error=e.Message,CompletedUtc=DateTime.UtcNow});throw;}
     }

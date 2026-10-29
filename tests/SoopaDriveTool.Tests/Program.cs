@@ -46,6 +46,7 @@ partial class Program
             V02CoreTests();
             if(args.Contains("--native-store-only")){await NativeStoreCheck(root);Console.WriteLine($"ALL {passed} CHECKS PASSED");return 0;}
             if(args.Contains("--metadata-only")){await MetadataAclCheck(root);Console.WriteLine($"ALL {passed} CHECKS PASSED");return 0;}
+            if(args.Contains("--schedule-permissions-only")){SchedulePermissions(root);Console.WriteLine($"ALL {passed} CHECKS PASSED");return 0;}
             if(args.Length==2&&args[0]=="--build-recovery-iso"){if(Environment.MachineName!="SDTLAB")throw new Exception("Spare only");await RecoveryMediaService.BuildIsoAsync(args[1],RecoveryMediaService.DefaultAdk,[],new CollectProgress([]));Console.WriteLine("RECOVERY ISO BUILT");return 0;}
             if(args.Contains("--browse-only")){await V10MigrationChecks(root,true);Console.WriteLine($"ALL {passed} CHECKS PASSED");return 0;}
             if(args.Length==2&&args[0]=="--prepare-pe-fixture"){await PreparePeFixture(args[1]);return 0;}
