@@ -1,6 +1,6 @@
 # SoopaDriveTool user guide
 
-This guide covers version 0.3.0 on Windows 11. Install ARM64 on Windows on ARM, or x64 on Intel/AMD PCs. The .NET runtime and required engines are included.
+This guide covers version 0.3.1 on Windows 11. Install ARM64 on Windows on ARM, or x64 on Intel/AMD PCs. The .NET runtime and required engines are included.
 
 Drive changes, raw reads, SMART, and VSS need administrator access. Choose **Restart as administrator** inside the app. Pending operations are retained, but you must review them again before applying.
 
@@ -31,7 +31,7 @@ Dynamic-to-basic conversion supports contiguous, single-disk NTFS volumes. The d
 
 ## Clone a drive
 
-Open **Clone & image → Clone & wipe**. Choose the source, destination, and clone mode. The destination's contents will be replaced.
+Open **Clone & image → Clone**. Choose the source, destination, and clone mode. The destination's contents will be replaced.
 
 | Mode | What it copies | Requirements |
 |---|---|---|

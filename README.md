@@ -2,20 +2,20 @@
 
 [![Windows builds](https://github.com/eMacTh3Creator/SoopaDriveTool/actions/workflows/build.yml/badge.svg)](https://github.com/eMacTh3Creator/SoopaDriveTool/actions/workflows/build.yml)
 
-SoopaDriveTool is an open-source disk utility for Windows 11. It manages partitions, clones drives, creates backups, runs storage benchmarks, and exports SMART reports. Builds are available for ARM64 and x64.
+SoopaDriveTool is an open-source disk utility for Windows 11. It manages partitions, clones drives, creates backups, runs storage benchmarks, and exports SMART reports. Builds are available for ARM64 and x64. Developed by Ev-Tech Solutions, LLC.
 
-[Website](https://emacth3creator.github.io/SoopaDriveTool/) · [User guide](docs/USER-GUIDE.md) · [Release notes](docs/RELEASE-NOTES-0.3.0.md) · [Test results](docs/VALIDATION-0.3.0.md)
+[Website](https://emacth3creator.github.io/SoopaDriveTool/) · [User guide](docs/USER-GUIDE.md) · [Release notes](docs/RELEASE-NOTES-0.3.1.md) · [Test results](docs/VALIDATION-0.3.1.md)
 
 ## Download
 
-Version **0.3.0** is an unsigned preview. Windows may show a publisher or SmartScreen warning.
+Version **0.3.1** is an unsigned preview. Windows may show a publisher or SmartScreen warning.
 
 | Windows PC | Installer | Portable |
 |---|---|---|
-| ARM64, including Snapdragon PCs and Windows VMs on Apple Silicon | [ARM64 installer](https://github.com/eMacTh3Creator/SoopaDriveTool/releases/download/v0.3.0/SoopaDriveTool-0.3.0-arm64-Setup.exe) | [ARM64 ZIP](https://github.com/eMacTh3Creator/SoopaDriveTool/releases/download/v0.3.0/SoopaDriveTool-0.3.0-arm64-Portable.zip) |
-| 64-bit Intel or AMD | [x64 installer](https://github.com/eMacTh3Creator/SoopaDriveTool/releases/download/v0.3.0/SoopaDriveTool-0.3.0-x64-Setup.exe) | [x64 ZIP](https://github.com/eMacTh3Creator/SoopaDriveTool/releases/download/v0.3.0/SoopaDriveTool-0.3.0-x64-Portable.zip) |
+| ARM64, including Snapdragon PCs and Windows VMs on Apple Silicon | [ARM64 installer](https://github.com/eMacTh3Creator/SoopaDriveTool/releases/download/v0.3.1/SoopaDriveTool-0.3.1-arm64-Setup.exe) | [ARM64 ZIP](https://github.com/eMacTh3Creator/SoopaDriveTool/releases/download/v0.3.1/SoopaDriveTool-0.3.1-arm64-Portable.zip) |
+| 64-bit Intel or AMD | [x64 installer](https://github.com/eMacTh3Creator/SoopaDriveTool/releases/download/v0.3.1/SoopaDriveTool-0.3.1-x64-Setup.exe) | [x64 ZIP](https://github.com/eMacTh3Creator/SoopaDriveTool/releases/download/v0.3.1/SoopaDriveTool-0.3.1-x64-Portable.zip) |
 
-The .NET runtime is included. Extract the portable ZIP before running it. [Release checksums](https://github.com/eMacTh3Creator/SoopaDriveTool/releases/download/v0.3.0/SHA256SUMS.txt) are available for each download.
+The .NET runtime is included. Extract the portable ZIP before running it. [Release checksums](https://github.com/eMacTh3Creator/SoopaDriveTool/releases/download/v0.3.1/SHA256SUMS.txt) are available for each download.
 
 ## Features
 
@@ -42,7 +42,7 @@ The running Windows disk is protected from partition changes and raw writes. Liv
 
 Recovery-media creation requires Microsoft's Windows ADK Deployment Tools and the matching WinPE add-on. Microsoft boot files are supplied by your ADK installation.
 
-ARM64 Windows clones, image restores, and boot repair have passed independent Secure Boot tests in spare VMs. Physical firmware erasure, x64 recovery boots, USB/4Kn hardware, power interruption, and migration between different hardware still need testing. VM benchmark results do not measure physical-drive performance. See the [validation report](docs/VALIDATION-0.3.0.md) for the full scope and remaining limits.
+ARM64 Windows clones, image restores, and boot repair have passed independent Secure Boot tests in spare VMs. Physical firmware erasure, x64 recovery boots, USB/4Kn hardware, power interruption, and migration between different hardware still need testing. VM benchmark results do not measure physical-drive performance. See the [validation report](docs/VALIDATION-0.3.1.md) for the full scope and remaining limits.
 
 ## Build from source
 
