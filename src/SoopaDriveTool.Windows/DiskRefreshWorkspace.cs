@@ -11,7 +11,7 @@ public partial class MainWindow
     readonly List<Action> inventoryObservers=[];
     readonly CheckBox automaticRefresh=new(){Content="Auto refresh",VerticalAlignment=VerticalAlignment.Center,Margin=new Thickness(0,0,12,0)};
     bool inventoryRefreshing,windowClosed;long inventoryRevision;
-    string? queueIssue,smartReportIdentity;TextBlock? queueWarning;Button? queueApply;
+    string? queueIssue,smartReportIdentity;TextBlock? queueWarning;Button? queueApply;CheckBox? settingsAutomaticRefresh;
     DateTime? inventoryUpdated;
     void InitializeDiskRefresh(StackPanel actions)
     {
@@ -20,7 +20,7 @@ public partial class MainWindow
         automaticRefresh.Click+=async(_,_)=>
         {
             automaticRefresh.IsEnabled=false;
-            try{await Preferences.SaveAsync(Preferences.Current with{AutoRefreshDisks=automaticRefresh.IsChecked==true});ConfigureDiskRefresh();}
+            try{await Preferences.SaveAsync(Preferences.Current with{AutoRefreshDisks=automaticRefresh.IsChecked==true});ConfigureDiskRefresh();if(settingsAutomaticRefresh!=null)settingsAutomaticRefresh.IsChecked=Preferences.Current.AutoRefreshDisks;}
             catch(Exception ex){automaticRefresh.IsChecked=Preferences.Current.AutoRefreshDisks;Error(ex);}
             finally{automaticRefresh.IsEnabled=true;}
         };
