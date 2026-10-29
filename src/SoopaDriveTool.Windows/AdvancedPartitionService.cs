@@ -52,7 +52,7 @@ public static class AdvancedPartitionService
         }
         if(new DriveInfo(Path.GetPathRoot(stage)!).AvailableFreeSpace<source.Size-source.Free+256L*1024*1024)throw new IOException("Insufficient checkpoint space for a verified copy of all source files.");
         await Data.SaveAsync(Path.Combine(stage,"plan.json"),new{Operation=op,Disk=disk,Source=source,State="Capturing"});
-        await ProtectedImageService.Tool(engine,["capture",source.Letter+@":\",wim,"SoopaDriveTool preserved content","--compress=XPRESS","--strict-acls","--norpfix","--check"],"Saving recoverable partition contents",progress);
+        await ProtectedImageService.Tool(engine,["capture",source.Letter+@":\",wim,"SoopaDriveTool preserved content","--compress=XPRESS","--strict-acls",op.Kind==OperationKind.MergePartition?"--rpfix":"--norpfix","--check"],"Saving recoverable partition contents",progress);
         await ProtectedImageService.Tool(engine,["verify",wim],"Verifying recovery checkpoint",progress);
         var before=(await StorageService.InventoryAsync()).Single(d=>d.Number==disk.Number);QueuePlanner.AssertUnchanged(disk,before);await Data.SaveAsync(Path.Combine(stage,"checkpoint.json"),new{State="Verified backup; destructive stage may begin",RecoveryWim=wim,DiskIdentity=disk.Identity,Source=source});
         string destination=partition.Letter+@":\";
@@ -77,7 +77,7 @@ public static class AdvancedPartitionService
             var label=Convert.ToBase64String(Encoding.UTF8.GetBytes(partition.Label));await StorageService.PowerShellAsync($"$label=[Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('{label}')); Format-Volume -DriveLetter '{partition.Letter}' -FileSystem '{fs}' -NewFileSystemLabel $label -Confirm:$false{extra} | Out-Null",progress:progress);
         }
         bool ntfs=op.Kind==OperationKind.MergePartition||op.Kind==OperationKind.ChangeClusterSize&&partition.FileSystem=="NTFS"||op.Kind==OperationKind.ChangeFileSystem&&op.FileSystem=="NTFS";
-        await ProtectedImageService.Tool(engine,["apply",wim,"1",destination,"--check",ntfs?"--strict-acls":"--no-acls","--norpfix"],"Restoring preserved contents",progress);
+        await ProtectedImageService.Tool(engine,["apply",wim,"1",destination,"--check",ntfs?"--strict-acls":"--no-acls",op.Kind==OperationKind.MergePartition?"--rpfix":"--norpfix"],"Restoring preserved contents",progress);
         if(ntfs)await StorageService.PowerShellAsync($"$r=Repair-Volume -DriveLetter '{partition.Letter}' -Scan;if($r -and [string]$r -ne 'NoErrorsFound'){{throw ('Filesystem scan: '+[string]$r)}}");
         await Data.SaveAsync(Path.Combine(stage,"completed.json"),new{State="Completed",Utc=DateTime.UtcNow});return "Content migration completed and filesystem checked. The verified recovery archive is retained at "+stage;
     }

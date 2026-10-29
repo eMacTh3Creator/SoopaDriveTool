@@ -3,7 +3,7 @@ using System.Security.Cryptography;
 using System.Text.Json;
 using SoopaDriveTool.Core;
 namespace SoopaDriveTool.Windows;
-public record ProtectedImageInfo(int Version,string Kind,long Length,int SectorSize,string Architecture,DateTime CreatedUtc,DiskTable? Table,string WindowsLetter="",byte[]? WindowsMapping=null,bool Recovery=false);
+public record ProtectedImageInfo(int Version,string Kind,long Length,int SectorSize,string Architecture,DateTime CreatedUtc,DiskTable? Table,string WindowsLetter="",byte[]? WindowsMapping=null,bool Recovery=false,long UsedBytes=0);
 public static class ProtectedImageService
 {
     public static async Task<string> CaptureRawAsync(DiskInfo disk,string repository,string? password,string policy,IProgress<DriveProgress>? progress=null,CancellationToken ct=default)
@@ -24,7 +24,7 @@ public static class ProtectedImageService
             await Tool(tool,["verify",wim],"Verifying Windows image",progress,ct);
             if(recovery!=null)File.Copy(snapshot.PathFor(recovery),Path.Combine(staging,"recovery.wim"));
             using var map=Microsoft.Win32.Registry.LocalMachine.OpenSubKey("SYSTEM\\MountedDevices");byte[] mapping=map?.GetValue(@"\DosDevices\"+partition.Letter+":") as byte[]??throw new IOException("Windows volume mapping is unavailable.");
-            await Data.SaveAsync(Path.Combine(staging,"disk.json"),new ProtectedImageInfo(1,"WindowsWim",disk.Size,disk.SectorSize,RuntimeInformation.OSArchitecture.ToString(),DateTime.UtcNow,null,partition.Letter,mapping,recovery!=null));
+            await Data.SaveAsync(Path.Combine(staging,"disk.json"),new ProtectedImageInfo(1,"WindowsWim",disk.Size,disk.SectorSize,RuntimeInformation.OSArchitecture.ToString(),DateTime.UtcNow,null,partition.Letter,mapping,recovery!=null,partition.Size-partition.Free));
             using var vault=await VaultBackup.OpenAsync(repository,password,true,ct:ct);var inputs=Directory.GetFiles(staging).Select(file=>new VaultInput(Path.GetFileName(file),new FileInfo(file).Length,()=>File.OpenRead(file))).ToList();
             string id=await vault.CreateStreamsAsync(inputs,disk.Display+" Windows VSS",policy,progress,ct);await vault.VerifyAsync(id,ct:ct,activity:progress);await snapshot.CompleteAsync();return id;
         }

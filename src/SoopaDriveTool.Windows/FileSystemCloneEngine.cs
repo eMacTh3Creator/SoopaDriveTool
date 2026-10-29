@@ -65,7 +65,10 @@ public static class FileSystemCloneEngine
                     var dir=Path.Combine(letters.Recovery+@":\",@"Recovery\WindowsRE");Directory.CreateDirectory(dir);var copy=Path.Combine(dir,"Winre.wim");File.Copy(recovery,copy,false);
                     using(var original=File.OpenRead(recovery))using(var copied=File.OpenRead(copy))
                     {if(!SHA256.HashData(original).SequenceEqual(SHA256.HashData(copied)))throw new IOException("Windows recovery image verification failed.");}
-                    await Tool(SystemTool("reagentc.exe"),["/Setreimage","/Path",dir,"/Target",volume+@":\Windows"],"Registering Windows recovery",90,3);
+                    await Tool(SystemTool("reagentc.exe"),["/Setreimage","/Path",dir,"/Target",volume+@":\Windows"],"Registering Windows recovery",90,2);
+                    var restored=(await StorageService.InventoryAsync()).Single(d=>d.Number==target.Number).Partitions.Single(x=>x.Letter==volume.ToString());
+                    string guid=await StorageService.PowerShellAsync($"(Get-Partition -DiskNumber {target.Number} -PartitionNumber {restored.Number}).Guid");
+                    await Tool(Path.Combine(AppContext.BaseDirectory,"Tools","SoopaNative.exe"),["stage-recovery",volume+@":\Windows",guid.Trim()],"Preparing first startup recovery registration",92,1);
                 }
             }
             progress?.Report(new("Verifying filesystem",94,"Checking the applied filesystem. The captured archive and applied file resources were verified."));
@@ -73,7 +76,7 @@ public static class FileSystemCloneEngine
             var after=(await StorageService.InventoryAsync()).Single(d=>d.Number==target.Number);
             if(after.Identity!=target.Identity||after.Protected||after.Style!="GPT"||!after.Partitions.Any(p=>p.Letter==volume.ToString()&&p.FileSystem=="NTFS"))throw new IOException("Destination layout verification failed.");
             if(snapshot!=null)await snapshot.CompleteAsync();
-            progress?.Report(new("Verified",100,windows?"Windows image, NTFS layout, EFI loader and BCD store verified. Independent boot testing is still required.":"Used-file data clone applied and verified."));
+            progress?.Report(new("Verified",100,windows?"Windows image, NTFS layout, EFI loader and BCD store verified. WinRE activation completes on first destination startup. Independently boot-test the destination.":"Used-file data clone applied and verified."));
             return windows?(live?"Live VSS Windows-aware clone complete: ":"Offline Windows-aware clone complete: ")+" fresh GPT/EFI/MSR/Windows layout, verified WIM resources, EFI loader and BCD store. Disconnect the source and independently boot-test the destination. Hardware binding, BitLocker, activation and all firmware configurations are not guaranteed.":"Filesystem-aware NTFS clone complete. Used files were captured into a verified WIM archive and applied with DISM integrity verification; unused sectors were not copied.";
         }
         finally

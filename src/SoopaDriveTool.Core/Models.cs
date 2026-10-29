@@ -93,7 +93,7 @@ public static class OperationPolicy
         bool liveRead=op.Kind==OperationKind.CloneDisk&&op.CloneMode==CloneMode.WindowsLiveUefi;
         if(disk.Protected&&!liveRead) throw new InvalidOperationException("Changes to the running system/boot disk are blocked in this release.");
         if(string.IsNullOrWhiteSpace(disk.UniqueId) || disk.Size<=0) throw new InvalidOperationException("The disk cannot be identified safely.");
-        if(disk.ReadOnly && op.Kind is not (OperationKind.ReadWrite or OperationKind.BackupImage or OperationKind.CheckFileSystem or OperationKind.CloneDisk)) throw new InvalidOperationException("Disk is read-only.");
+        if(disk.ReadOnly && op.Kind is not (OperationKind.ReadWrite or OperationKind.Online or OperationKind.BackupImage or OperationKind.CheckFileSystem or OperationKind.CloneDisk)) throw new InvalidOperationException("Disk is read-only.");
         var raw=op.Kind is OperationKind.BackupImage or OperationKind.RestoreImage or OperationKind.WipeDisk or OperationKind.MovePartition or OperationKind.ConvertTable or OperationKind.SetPartitionKind || op.Kind==OperationKind.CloneDisk&&op.CloneMode is CloneMode.ByteExact or CloneMode.ByteExactGrow;
         if(raw && !disk.Offline) throw new InvalidOperationException("Take the data disk offline before raw imaging, cloning or wiping.");
         if(!raw && disk.Offline && op.Kind is not (OperationKind.Online or OperationKind.ReadOnly or OperationKind.ReadWrite)) throw new InvalidOperationException("Bring this data disk online first.");

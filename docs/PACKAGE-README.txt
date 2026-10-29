@@ -1,43 +1,78 @@
 SoopaDriveTool
-Version @APP_VERSION@ - unsigned development preview
+Version @APP_VERSION@ - unsigned storage suite preview
 Windows 11 ARM64 and x64
 
-Start SoopaDriveTool.exe. The .NET runtime is included. Administrator access
-is required to apply disk changes. Review the queued actions before Apply.
-Completed actions are not automatically rolled back if a later action fails.
+Start SoopaDriveTool.exe. The .NET runtime is included. Restart as administrator
+inside the app for disk changes. Prepare a chain, review its targets, then Apply.
+If a step fails, later steps stop; completed disk changes are not rolled back.
+
+Partition management
+Create, delete, rename, format, resize, move, split, merge and redistribute data
+partitions. Convert nonempty GPT/MBR, primary/logical and eligible simple dynamic
+NTFS volumes. Filesystem and allocation-unit migration uses a verified WIM
+checkpoint on separate storage. Review the supported conditions in each dialog.
+Move/conversion recovery checkpoints are retained when needed after interruption.
 
 Clone modes
-- Byte-exact: matching disk and sector sizes; both disks must be offline.
-  All copied sectors receive complete SHA-256 target read-back verification.
-- Filesystem-aware: one inactive, unencrypted NTFS volume, a separate target,
-  and local scratch storage on a third disk. Copies used files through a
-  verified WIM archive; unused sectors and Windows imaging exclusions are
-  not copied.
-- Windows-aware UEFI: an inactive Windows installation of the host architecture.
-  Builds fresh GPT/EFI/MSR/Windows layout, remaps the Windows drive letter,
-  configures destination boot files, and copies/registers available WinRE.
-  The currently running OS cannot be cloned. No WinPE environment is included.
+- Byte-exact: equal disk/sector sizes, offline source and destination, complete
+  target SHA-256 read-back. The larger-target mode relocates backup GPT metadata.
+- Filesystem-aware: copies used NTFS files through a verified WIM archive.
+- Windows-aware UEFI: fresh GPT/EFI/MSR/Windows layout, preserved Windows volume
+  mapping, boot files and available WinRE. Choose an inactive Windows installation
+  or the live VSS mode for the running system. Architecture must match the host.
+Used-file and Windows modes need scratch storage on another physical disk.
+Disconnect the source before independently boot-testing the destination.
+BitLocker, TPM/Windows Hello, activation and dissimilar hardware need separate
+qualification. The running Windows disk cannot be overwritten or repartitioned.
 
-Disconnect the source before boot-testing the destination. Byte-exact clones
-retain duplicate disk identifiers. Boot qualification, hardware binding,
-BitLocker, TPM/Windows Hello and activation vary by configuration. Check the
-latest validation report before relying on a migration.
+Protected backups and images
+AES-256-GCM authenticated encryption, compressed/deduplicated chunks, encrypted
+file names, full/incremental/differential restore points, retention, exclusions,
+passphrase rotation and selective restore. NTFS permissions, streams, hardlinks,
+links and timestamps are preserved where the destination supports them.
+VSS backs up open local files and the running Windows volume consistently.
+Network repositories use the Windows account's existing share permissions.
+Daily, weekly, hourly and logon schedules support logged-on-user or installed
+SYSTEM execution; schedule secrets use Windows DPAPI and restricted job folders.
+Keep passphrases separately: there is no recovery backdoor.
 
-Quick wipe resets metadata and leaves data recoverable. Thorough overwrite
-verifies each pass, but does not replace firmware SSD sanitize. File snapshots
-are unencrypted and do not preserve all NTFS metadata. SMART exports contain
-all information the drive/controller exposes; unsupported data is identified.
-Keep independent backups before making disk changes.
+Protected raw images support verified desktop restore and read-only VHD browsing
+(512-byte images up to 2040 GiB). Export WIM resources for selective extraction.
+Windows image restoration runs from architecture-matched recovery media.
+
+Recovery media
+Install Microsoft's Windows ADK Deployment Tools and matching WinPE add-on.
+Use Recovery media to build an ISO, optionally include signed drivers, then
+write a selected USB drive. Microsoft boot files are supplied by your ADK,
+not bundled in the installer. Boot-test media with your storage before relying
+on it. The native recovery app restores protected raw/Windows images, clones
+whole disks, verifies overwrites, requests eligible ATA erasure and repairs
+UEFI boot files while retaining an EFI backup.
+
+Recovery and diagnostics
+Scan for lost partitions, rebuild from backup GPT, inspect recoverable deleted
+NTFS/FAT files, preview/export carved PNG/JPEG/PDF files, and review sector edits
+with original-byte backups. Recover to a different physical disk. Fragmented
+carving, encrypted/compressed NTFS recovery and multi-disk dynamic reconstruction
+are outside the supported recovery modes.
+
+Quick wipe resets partition metadata and leaves file data recoverable. Thorough
+zero/random/three-pass overwrites verify every pass. Free-space overwrite keeps
+allocated files and a reserve. Controller NVMe/ATA erasure depends on eligible
+hardware/firmware; a completion report is not a certified purge.
+
+SMART exports retain all device-exposed attributes, errors and self-test history
+in JSON, CSV, text and printable HTML. Missing data remains unavailable. A
+submitted self-test is not a health pass. Benchmarks run real native DiskSpd
+workloads, including custom block/queue/thread/read-mix profiles and history.
 
 Application source is MIT licensed. Third-party components retain their own
-licenses; see THIRD-PARTY-NOTICES.txt, runtime license files and Licenses/.
-Unmodified standalone wimlib-imagex 1.14.5 is GPLv3+; upstream labels ARM64
-builds experimental. Full wimlib and smartmontools source archives are included.
+licenses; see THIRD-PARTY-NOTICES.txt and Licenses/. Standalone wimlib-imagex
+1.14.5 is GPLv3+; upstream labels ARM64 builds experimental. Complete wimlib
+and smartmontools corresponding source archives are included.
 
-Source and current validation:
+Source, supported conditions and current validation:
 https://github.com/eMacTh3Creator/SoopaDriveTool
-https://github.com/eMacTh3Creator/SoopaDriveTool/blob/main/docs/VALIDATION-0.2.1.md
-
-Downloads and release notes:
+https://github.com/eMacTh3Creator/SoopaDriveTool/blob/main/docs/VALIDATION-0.3.0.md
 https://github.com/eMacTh3Creator/SoopaDriveTool/releases
 https://emacth3creator.github.io/SoopaDriveTool/

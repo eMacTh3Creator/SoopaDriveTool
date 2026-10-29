@@ -5,12 +5,13 @@ using SoopaDriveTool.Core;
 namespace SoopaDriveTool.Windows;
 public record BenchmarkProfile(string Name,int BlockBytes,int QueueDepth,int Threads,bool Random,int? ReadPercent=null);
 public record BenchmarkResult(string Name,string Mode,double MBps,double Iops,double LatencyMs,double P99Ms);
-public record BenchmarkRun(DateTime CreatedUtc,string Volume,int FileMiB,int Seconds,int Passes,string Profile,string Engine,string Architecture,List<BenchmarkResult> Results,List<BenchmarkProfile>? Workloads=null);
+public record BenchmarkRun(DateTime CreatedUtc,string Volume,int FileMiB,int Seconds,int Passes,string Profile,string Engine,string Architecture,List<BenchmarkResult> Results,List<BenchmarkProfile>? Workloads=null,bool? ZeroPattern=null);
 public static class BenchmarkService
 {
     public static readonly BenchmarkProfile[] Standard=[new("SEQ1M Q8T1",1048576,8,1,false),new("SEQ1M Q1T1",1048576,1,1,false),new("RND4K Q32T1",4096,32,1,true),new("RND4K Q1T1",4096,1,1,true)];
     public static async Task<BenchmarkRun> RunAsync(string folder,int fileMiB,int seconds,int passes,string profile,bool mixed,bool zero,IProgress<string>? progress,CancellationToken ct,IReadOnlyList<BenchmarkProfile>? custom=null)
     {
+        if(custom!=null)profile="Custom";
         if(fileMiB is <64 or >65536||seconds is <1 or >60||passes is <1 or >5)throw new ArgumentOutOfRangeException(nameof(fileMiB));
         folder=Path.GetFullPath(folder);BackupEngine.RejectExistingAncestorLinks(folder);
         var drive=new DriveInfo(Path.GetPathRoot(folder)!);if(!drive.IsReady)throw new IOException("Drive is not ready.");
@@ -53,7 +54,7 @@ public static class BenchmarkService
             }
             if(cleanupError!=null)throw new IOException("Could not remove the temporary benchmark directory: "+scratch,cleanupError);
         }
-        var run=new BenchmarkRun(DateTime.UtcNow,drive.Name,fileMiB,seconds,passes,profile,"Microsoft DiskSpd 2.3",System.Runtime.InteropServices.RuntimeInformation.ProcessArchitecture.ToString(),list,profiles.ToList());
+        var run=new BenchmarkRun(DateTime.UtcNow,drive.Name,fileMiB,seconds,passes,profile,"Microsoft DiskSpd 2.3",System.Runtime.InteropServices.RuntimeInformation.ProcessArchitecture.ToString(),list,profiles.ToList(),zero);
         await Data.SaveAsync(Path.Combine(Data.Home,"benchmarks",DateTime.UtcNow.ToString("yyyyMMdd-HHmmss-fff")+".json"),run);return run;
     }
     public static void ValidateProfiles(IReadOnlyList<BenchmarkProfile> profiles)

@@ -10,7 +10,7 @@ public static class SmartService
         if(type is not ("short" or "long" or "conveyance" or "abort"))throw new IOException("Unknown self-test.");
         await ReadAsync(disk,transport); // integrity and device identity checks
         string dir=Path.Combine(AppContext.BaseDirectory,"Tools","smartmontools");var args=new List<string>{"-B",Path.Combine(dir,"drivedb.h"),"-d",transport};if(type=="abort")args.Add("-X");else{args.Add("-t");args.Add(type);}args.Add("/dev/pd"+disk.Number);
-        var result=await ProcessTool.RunAsync(Path.Combine(dir,"smartctl.exe"),args);if((result.ExitCode&3)!=0)throw new IOException("The controller did not accept the self-test command: "+result.Output+result.Error);
+        var result=await ProcessTool.RunAsync(Path.Combine(dir,"smartctl.exe"),args);if((result.ExitCode&7)!=0)throw new IOException("The controller did not accept the self-test command: "+result.Output+result.Error);
         return result.Output+result.Error+"\nRefresh SMART to see actual test status and completion; submitting a test is not a health pass.";
     }
     public static async Task<SmartReport> ReadAsync(DiskInfo disk,string deviceType="auto")

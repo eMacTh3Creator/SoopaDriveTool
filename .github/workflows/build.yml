@@ -18,7 +18,7 @@ jobs:
           - runtime: win-arm64
             runner: windows-11-arm
     runs-on: ${{ matrix.runner }}
-    timeout-minutes: 45
+    timeout-minutes: 75
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-dotnet@v4
@@ -27,7 +27,7 @@ jobs:
       - name: Locate installer compiler
         shell: pwsh
         run: |
-          if (!(Test-Path 'C:\Program Files (x86)\Inno Setup 6\ISCC.exe')) {
+          if (!(Test-Path 'C:\Program Files (x86)\Inno Setup 6\ISCC.exe') -and !(Test-Path 'C:\Program Files\Inno Setup 6\ISCC.exe')) {
             $uri='https://github.com/jrsoftware/issrc/releases/download/is-6_7_4/innosetup-6.7.4.exe'
             Invoke-WebRequest $uri -OutFile "$env:RUNNER_TEMP\inno.exe"
             if ((Get-FileHash "$env:RUNNER_TEMP\inno.exe").Hash.ToLowerInvariant() -ne 'a549929319f9120716677c685535ca4671e4b937b5fdc87e2585f32d8eb30e8c') { throw 'Inno Setup checksum mismatch' }

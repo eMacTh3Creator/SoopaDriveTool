@@ -12,6 +12,7 @@
 #include <sstream>
 #include <stdexcept>
 #include <iomanip>
+#include "RecoveryFirstBoot.hpp"
 using Microsoft::WRL::ComPtr;
 static void Check(HRESULT hr,const char* phase){if(FAILED(hr)){std::ostringstream s;s<<phase<<" failed (0x"<<std::hex<<(unsigned long)hr<<")";throw std::runtime_error(s.str());}}
 static std::string Utf8(const std::wstring& s){if(s.empty())return "";int n=WideCharToMultiByte(CP_UTF8,WC_ERR_INVALID_CHARS,s.data(),(int)s.size(),nullptr,0,nullptr,nullptr);if(!n)throw std::runtime_error("Invalid Unicode");std::string r(n,0);WideCharToMultiByte(CP_UTF8,WC_ERR_INVALID_CHARS,s.data(),(int)s.size(),r.data(),n,nullptr,nullptr);return r;}
@@ -50,6 +51,6 @@ static int Snapshot(int argc,wchar_t** argv)
 }
 int wmain(int argc,wchar_t** argv)
 {
-    try{if(argc>=2&&std::wstring(argv[1])==L"vss-session")return Snapshot(argc,argv);if(argc==2&&std::wstring(argv[1])==L"version"){std::cout<<"SoopaDriveTool native engine 1.0\n";return 0;}throw std::runtime_error("Unknown native command");}
+    try{if(argc==3&&std::wstring(argv[1])==L"--first-boot-winre")return recoveryonce::Run(argv[2]);if(argc==4&&std::wstring(argv[1])==L"stage-recovery"){wchar_t module[MAX_PATH];if(!GetModuleFileNameW(nullptr,module,MAX_PATH))throw std::runtime_error("Native helper path is unavailable");recoveryonce::Stage(argv[2],recoveryonce::ParseGuid(argv[3]),module);std::cout<<"One time Windows recovery registration staged\n";return 0;}if(argc>=2&&std::wstring(argv[1])==L"vss-session")return Snapshot(argc,argv);if(argc==2&&std::wstring(argv[1])==L"version"){std::cout<<"SoopaDriveTool native engine 1.0\n";return 0;}throw std::runtime_error("Unknown native command");}
     catch(const std::exception& e){std::cerr<<e.what()<<std::endl;return 1;}
 }

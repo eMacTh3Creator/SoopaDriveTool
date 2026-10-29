@@ -1,4 +1,6 @@
-# SoopaDriveTool — research and engineering plan
+# SoopaDriveTool — original research and engineering plan
+
+> Historical planning document. The 0.3.0 implementation is described in the [current feature matrix](COMPLETION-MATRIX.md), [user guide](USER-GUIDE.md) and [validation](VALIDATION-0.3.0.md). The sections below retain the original research and baseline; their future-tense descriptions are not the current feature status.
 
 > Version 0.2.1 update: [current clone/wipe/queue/SMART behavior](DRIVE-WORKFLOWS-0.2.md) and [current validation](VALIDATION-0.2.1.md). The matrix below records the original 0.1 baseline; several items, including used-file cloning, inactive-Windows boot configuration, SMART exports and dependent chains, have since been implemented.
 

@@ -32,7 +32,7 @@ public partial class MainWindow:Window
         string[] names=["Overview","Disk manager","Benchmark","Backup & restore","Clone & image","Recovery inspector","Health","Recovery media","Activity","Settings","About & roadmap"];
         string[] icons=["◫","▤","ϟ","↺","⇄","⌕","♡","◉","≡","⚙","ⓘ"];
         for(int i=0;i<names.Length;i++){var name=names[i];var button=Btn(icons[i]+"    "+name,()=>Navigate(name));button.HorizontalContentAlignment=HorizontalAlignment.Left;button.Background=Brushes.Transparent;button.Foreground=B("#BECBE0");button.BorderThickness=new Thickness(0);button.Padding=new Thickness(14,13,4,13);button.Margin=new Thickness(0,0,0,4);button.Tag=name;rail.Children.Add(button);}
-        var foot=new StackPanel{Margin=new Thickness(24,12,18,18)};foot.Children.Add(T("LOCAL. PRIVATE. IN CONTROL.",9,B("#8295B8"),true));foot.Children.Add(T("v0.2.1  ·  Development preview",11,B("#BECBE0"),false,new Thickness(0,10,0,0)));Grid.SetRow(foot,2);sidebar.Children.Add(foot);
+        var foot=new StackPanel{Margin=new Thickness(24,12,18,18)};foot.Children.Add(T("LOCAL. PRIVATE. IN CONTROL.",9,B("#8295B8"),true));foot.Children.Add(T("v0.3.0  ·  Storage suite preview",11,B("#BECBE0"),false,new Thickness(0,10,0,0)));Grid.SetRow(foot,2);sidebar.Children.Add(foot);
         var main=new Grid();main.RowDefinitions.Add(new(){Height=new GridLength(104)});main.RowDefinitions.Add(new());main.RowDefinitions.Add(new(){Height=new GridLength(44)});Grid.SetColumn(main,1);root.Children.Add(main);
         var header=new Grid{Margin=new Thickness(32,24,24,12)};header.ColumnDefinitions.Add(new());header.ColumnDefinitions.Add(new(){Width=GridLength.Auto});var headings=new StackPanel();title.FontSize=26;title.FontWeight=FontWeights.SemiBold;subtitle.Foreground=Muted;subtitle.Margin=new Thickness(0,6,0,0);headings.Children.Add(title);headings.Children.Add(subtitle);header.Children.Add(headings);
         var actions=new StackPanel{Orientation=Orientation.Horizontal,VerticalAlignment=VerticalAlignment.Center};cancel.Click+=(_,_)=>cts?.Cancel();actions.Children.Add(cancel);
@@ -48,7 +48,7 @@ public partial class MainWindow:Window
     }
     static Brush B(string hex)=>(Brush)new BrushConverter().ConvertFromString(Preferences.Palette(hex))!;
     static TextBlock T(string text,double size=13,Brush? color=null,bool bold=false,Thickness? margin=null)=>new(){Text=text,FontSize=size,Foreground=color??Ink,FontWeight=bold?FontWeights.SemiBold:FontWeights.Normal,TextWrapping=TextWrapping.Wrap,Margin=margin??new Thickness(0)};
-    Button Btn(string text,Action action,bool primary=false){var b=new Button{Content=text};if(primary){b.Background=Accent;b.Foreground=Brushes.White;b.BorderBrush=Accent;}b.Click+=(_,_)=>{try{action();}catch(Exception ex){Error(ex);}};return b;}
+    Button Btn(string text,Action action,bool primary=false){var b=new Button{Content=text};if(primary){b.Background=(Brush)Application.Current.FindResource("Primary");b.Foreground=Brushes.White;b.BorderBrush=b.Background;}b.Click+=(_,_)=>{try{action();}catch(Exception ex){Error(ex);}};return b;}
     Button Btn(string text,Func<Task> action,bool primary=false)=>Btn(text,(Action)(()=>{_ = Guard(action);}),primary);
     async Task Guard(Func<Task> action){try{await action();}catch(Exception ex){Error(ex);}}
     void Error(Exception ex){status.Text=ex.Message;MessageBox.Show(this,ex.Message,"SoopaDriveTool",MessageBoxButton.OK,MessageBoxImage.Warning);}
@@ -168,14 +168,14 @@ public partial class MainWindow:Window
         ComboBox size=Choices("256","1024","4096","16384"),duration=Choices("3","5","10","30"),passes=Choices("1","3","5"),profile=Choices("Standard","Real world"),pattern=Choices("Random data","Zero fill");var mixed=new CheckBox{Content="Include mixed 70% read / 30% write",Margin=new Thickness(0,6,0,18)};
         var fields=new Grid();for(int i=0;i<3;i++)fields.ColumnDefinitions.Add(new());fields.RowDefinitions.Add(new());fields.RowDefinitions.Add(new());var controls=new (string,UIElement)[]{("Target volume",volume),("Test file (MiB)",size),("Seconds / workload",duration),("Passes (mean)",passes),("Profile",profile),("Data pattern",pattern)};
         for(int i=0;i<controls.Length;i++){var p=Stack(T(controls[i].Item1,12,Muted),controls[i].Item2);p.Margin=new Thickness(0,0,i%3<2?18:0,0);Grid.SetColumn(p,i%3);Grid.SetRow(p,i/3);fields.Children.Add(p);}
-        var custom=BenchmarkEditor();
+        int editorIndex=body.Children.Count;var custom=BenchmarkEditor();var editor=body.Children[editorIndex];body.Children.RemoveAt(editorIndex);
         var results=new StackPanel();var run=Btn("ϟ  Start benchmark",async()=>
         {
             if(volume.SelectedItem is not string folder)throw new IOException("Select a volume.");cts=new CancellationTokenSource();
             await Work("Benchmarking storage",async()=>{lastRun=await BenchmarkService.RunAsync(folder,int.Parse((string)size.SelectedItem),int.Parse((string)duration.SelectedItem),int.Parse((string)passes.SelectedItem),(string)profile.SelectedItem,mixed.IsChecked==true,pattern.SelectedIndex==1,new Progress<string>(s=>status.Text=s),cts.Token,custom());Draw();},true);
             cts.Dispose();cts=null;
         },true);
-        body.Children.Add(Card(Stack(fields,mixed,run)));body.Children.Add(results);Draw();
+        body.Children.Add(Card(Stack(fields,mixed,run)));body.Children.Add(results);body.Children.Add(editor);Draw();
         void Draw()
         {
             results.Children.Clear();if(lastRun==null){results.Children.Add(Card(Stack(T("Ready when you are.",20,Ink,true),T("Sequential and 4K random workloads at low and high queue depths.\nRead / write throughput, IOPS, average and 99th-percentile latency.",13,Muted,false,new Thickness(0,12,0,0)))));return;}
@@ -188,8 +188,9 @@ public partial class MainWindow:Window
     void ExportBenchmark(bool csv)
     {
         if(lastRun==null)return;var d=new SaveFileDialog{FileName="SoopaDriveTool-benchmark",Filter=csv?"CSV|*.csv":"JSON|*.json"};if(d.ShowDialog()!=true)return;
-        if(!csv)File.WriteAllText(d.FileName,JsonSerializer.Serialize(lastRun,Data.Json));else File.WriteAllLines(d.FileName,new[]{"Workload,Mode,MB/s,IOPS,Average ms,p99 ms"}.Concat(lastRun.Results.Select(r=>FormattableString.Invariant($"{r.Name},{r.Mode},{r.MBps:0.00},{r.Iops:0.00},{r.LatencyMs:0.000},{r.P99Ms:0.000}"))));
+        if(!csv)File.WriteAllText(d.FileName,JsonSerializer.Serialize(lastRun,Data.Json));else File.WriteAllLines(d.FileName,new[]{"Workload,Mode,MB/s,IOPS,Average ms,p99 ms"}.Concat(lastRun.Results.Select(r=>CsvCell(r.Name)+","+CsvCell(r.Mode)+FormattableString.Invariant($",{r.MBps:0.00},{r.Iops:0.00},{r.LatencyMs:0.000},{r.P99Ms:0.000}"))));
     }
+    static string CsvCell(string value){if(value.TrimStart().Length>0&&"=+-@".Contains(value.TrimStart()[0]))value="'"+value;string quote=char.ConvertFromUtf32(34);return quote+value.Replace(quote,quote+quote)+quote;}
     DataGrid Table(System.Collections.IEnumerable rows,params (string Header,string Path)[] columns)
     {
         var g=new DataGrid{ItemsSource=rows,MinHeight=90,MaxHeight=380,Margin=new Thickness(0,0,0,18)};foreach(var c in columns)g.Columns.Add(new DataGridTextColumn{Header=c.Header,Binding=new Binding(c.Path){StringFormat=c.Path is "MBps" or "Iops"?"{0:N2}":c.Path is "LatencyMs" or "P99Ms"?"{0:N3}":null},Width=new DataGridLength(1,DataGridLengthUnitType.Star)});return g;
@@ -216,8 +217,8 @@ public partial class MainWindow:Window
     }
     void About()
     {
-        body.Children.Add(Card(Stack(T("SoopaDriveTool",27,Ink,true),T("0.2.1 · Development preview · Native Windows ARM64 & x64 · Full SMART via bundled x64 smartctl",14,Accent,true,new Thickness(0,12,0,18)),T("An original disk workspace combining native partition operations, DiskSpd benchmarking, verified raw imaging, and versioned file backup. No account, advertisements, or telemetry.",14,Muted),T("This preview is unsigned. Advanced commercial-suite parity has not been reached. Use disposable data disks while evaluating destructive features.",13,B("#9C6C20"),false,new Thickness(0,18,0,0)))));
-        body.Children.Add(Card(Stack(T("Planned advanced work",20,Ink,true),T("Offline partition moving and merging\nVSS-consistent live system backup and running-OS migration\nEncrypted incremental disk images\nDeleted-file and partition recovery\nWinPE recovery environment\nAuthenticode signing and independent Windows-clone boot qualification",14,Muted,false,new Thickness(0,18,0,0)))));
+        body.Children.Add(Card(Stack(T("SoopaDriveTool",27,Ink,true),T("0.3.0 · Storage suite preview · Native Windows ARM64 & x64",14,Accent,true,new Thickness(0,12,0,18)),T("Partition management, Windows and sector cloning, encrypted versioned backup, native recovery media, benchmarks and full available SMART exports. No account, advertisements, or telemetry.",14,Muted),T("This release is unsigned. Device and filesystem capabilities determine which operations are available. Keep independent backups before applying disk changes.",13,B("#9C6C20"),false,new Thickness(0,18,0,0)))));
+        body.Children.Add(Card(Stack(T("Storage and recovery capabilities",20,Ink,true),T("Move, split, merge and redistribute partition space\nLive VSS Windows migration and protected Windows images\nEncrypted full, incremental and differential backups\nLost partition and deleted-file recovery with preview/export\nNative WinPE restore, disk cloning, erasure and UEFI boot repair\nARM64 and x64 installers, portable packages and local activity journals",14,Muted,false,new Thickness(0,18,0,0)))));
         var row=new WrapPanel();row.Children.Add(Btn("Source & issue tracker ↗",()=>Process.Start(new ProcessStartInfo("https://github.com/eMacTh3Creator/SoopaDriveTool"){UseShellExecute=true})));row.Children.Add(Btn("Research & roadmap ↗",()=>Process.Start(new ProcessStartInfo("https://github.com/eMacTh3Creator/SoopaDriveTool/blob/main/docs/RESEARCH-AND-PLAN.md"){UseShellExecute=true})));body.Children.Add(row);
     }
     static List<DiskInfo> DemoDisks()=>[new(){Number=0,Name="Windows SSD",UniqueId="DEMO0",Size=1024L*1024*1024*1024,Style="GPT",Bus="NVMe",Health="Healthy",IsSystem=true,IsBoot=true,Partitions=[new(){Number=1,Offset=1048576,Size=260L*1024*1024,Type="System",IsSystem=true},new(){Number=2,Offset=272629760,Size=740L*1024*1024*1024,Letter="C",Label="Windows",FileSystem="NTFS",Free=318L*1024*1024*1024,IsBoot=true,Encryption="None"},new(){Number=3,Offset=800L*1024*1024*1024,Size=220L*1024*1024*1024,Letter="D",Label="Projects",FileSystem="NTFS",Free=150L*1024*1024*1024,Encryption="None"}]},new(){Number=1,Name="Portable SSD",UniqueId="DEMO1",Size=500L*1024*1024*1024,Style="GPT",Bus="USB",Health="Healthy",Partitions=[new(){Number=1,Offset=1048576,Size=450L*1024*1024*1024,Letter="E",Label="Archive",FileSystem="exFAT",Free=281L*1024*1024*1024,Encryption="None"}]}];

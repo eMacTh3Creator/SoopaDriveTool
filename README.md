@@ -2,47 +2,47 @@
 
 [![Windows builds](https://github.com/eMacTh3Creator/SoopaDriveTool/actions/workflows/build.yml/badge.svg)](https://github.com/eMacTh3Creator/SoopaDriveTool/actions/workflows/build.yml)
 
-An original Windows drive workspace for **ARM64 and x64**. Modern WPF interface, native Microsoft DiskSpd benchmarks, data-disk partition operations, verified disk images/clones, and compressed versioned file backups.
+A native Windows 11 drive workspace for **ARM64 and x64**, with partition management, Windows migration, encrypted backup, bootable recovery, real storage benchmarks and full available SMART reports.
 
-**0.2.1 development preview — unsigned.** Includes clone modes, quick/thorough wiping, dependent action chains, live activity and full available SMART exports. Advanced commercial-suite parity is still in progress. Evaluate destructive operations on disposable data disks. The running system disk is protected.
+**0.3.0 storage suite preview — unsigned.** Prepare operations, review the projected layout and targets, then Apply. Activity follows each step through verification, with percentages when the engine can measure progress, throughput, elapsed time, next steps and optional waiting facts.
 
-[Download installers and portable builds](https://github.com/eMacTh3Creator/SoopaDriveTool/releases) · [Website](https://emacth3creator.github.io/SoopaDriveTool/) · [Deep research and plan](docs/RESEARCH-AND-PLAN.md) · [Report an issue](https://github.com/eMacTh3Creator/SoopaDriveTool/issues)
+[Download](https://github.com/eMacTh3Creator/SoopaDriveTool/releases) · [Website](https://emacth3creator.github.io/SoopaDriveTool/) · [User guide](docs/USER-GUIDE.md) · [Validation](docs/VALIDATION-0.3.0.md) · [Feature coverage](docs/COMPLETION-MATRIX.md)
 
-## Working features
+## Features
 
-- Disk/partition maps, mounted capacity, encryption/protection state and controller reliability data.
-- Initialize RAW disks as GPT/MBR; create, resize within Windows limits, format/delete/rename data partitions; drive-letter changes; online/offline and read-only state; scan/TRIM.
-- Sequential/random read/write/mixed benchmarks with file size, duration, passes, profiles, mean/p99 latency, history and JSON/CSV export.
-- Compressed content-addressed file snapshots, deduplication, SHA-256 verification, empty-folder restore and logged-on daily scheduling.
-- Clone modes: byte-exact whole disk, filesystem-aware NTFS volume (used files), and Windows-aware UEFI migration of an attached inactive installation. WIM modes need scratch space on a third disk.
-- Quick partition reset, full zero/random overwrite, or three-pass random/ones/zeros with full read-back verification. Quick reset does not erase file contents.
-- Dependent action chains, including delete → delete → create → rename, projected layouts, verified partition-reference resolution, and one Apply button.
-- Live activity with phases, percentages where available, bytes/throughput/ETA, next steps, event journals, and rotating facts.
-- Full device-exposed ATA/NVMe/SCSI SMART attributes/logs through smartctl; JSON, CSV, text and printable HTML exports.
-- Read-only raw-image MBR/GPT inspection and local operation journal.
+- **Partition management:** initialize, create, delete, rename, format, resize, move, split, merge and redistribute space; convert nonempty GPT/MBR, primary/logical, eligible basic/dynamic simple NTFS volumes, filesystems and allocation units. Stage dependent chains such as delete → delete → create → rename before applying.
+- **Cloning:** byte-exact, larger-target GPT relocation, used-file NTFS, inactive Windows UEFI and live VSS Windows migration. Windows modes create fresh boot partitions, preserve Windows drive mappings and configure available recovery images.
+- **Protected backups:** AES-256-GCM encrypted content and manifests, compressed/deduplicated chunks, full/incremental/differential points, exclusions, retention, passphrase rotation, selective restore and NTFS metadata. VSS reads open local files consistently. User/SYSTEM schedules use DPAPI-protected credentials.
+- **Disk and Windows images:** protected versioned raw and VSS Windows images, full resource verification and disk read-back; read-only VHD browsing and selective extraction from exported WIM images.
+- **Recovery media:** build architecture-matched WinPE ISO/USB media using an installed Microsoft ADK; optional signed drivers. The native recovery app restores images, clones disks, verifies overwrites, requests eligible ATA erasure and repairs UEFI boot files with an EFI backup.
+- **Recovery:** backup-GPT reconstruction, lost partition discovery, supported NTFS/FAT deleted-file recovery, PNG/JPEG/PDF carving, byte preview/export and reviewed sector editing with original-byte backups.
+- **Drive preparation:** quick partition reset; full zero/random or three-pass overwrite with complete read-back; free-space overwrite; eligible controller-native NVMe/ATA erase requests.
+- **Diagnostics:** full device-exposed SMART attributes, errors, wear and self-test history; JSON/CSV/text/printable HTML exports, self-test requests, temperature history, surface maps and storage topology.
+- **Benchmarks:** native Microsoft DiskSpd, standard or custom block/queue/thread/read-mix workloads, latency/IOPS/throughput, saved profiles, history comparisons and exports.
+- Light/dark/system themes, compact layout, accessible input labels, local journals and interrupted-operation detection. Interface instructions are English.
 
-## Boundaries
+## Supported conditions
 
-No partition moving/merging, cloning of the currently running OS, dynamic disks, deleted-file recovery, VSS system backups, encrypted backup container, or bootable WinPE environment yet. Windows-aware cloning configures destination EFI/BCD for an inactive installation; Windows-aware and byte-exact destinations passed independent ARM64 VM cold boots. x64 OS boot and physical hardware qualification remain outstanding. Byte-exact clones/restores require equal disk and sector sizes. File backups preserve content and timestamps, not full NTFS metadata; links and locked files stop the backup. Zero-overwrite is not SSD secure erase. See the [feature matrix and release gates](docs/RESEARCH-AND-PLAN.md).
+Windows 11 on Snapdragon/Apple Silicon uses ARM64; Intel/AMD Windows uses x64. The runtime is bundled. Start normally for benchmarks and file backups; restart as administrator within the app for disk changes. Pending chains survive that restart and must be reviewed again.
 
-## Run
+The running Windows disk is protected from partition changes and raw writes; live migration reads it through VSS. BitLocker/unknown encryption blocks partition changes. Used-file/Windows migration needs separate scratch storage. Byte-exact mode requires matching geometry; the explicit larger-target mode relocates GPT metadata. Disconnect the original before independently booting its clone.
 
-Windows 11 ARM64 (Snapdragon or Windows on Apple Silicon) → ARM64 installer. Windows 11 Intel/AMD → x64 installer. The .NET runtime is bundled. Start normally for benchmarks/backups; restart as administrator within the app for disk changes. Administrator restart preserves the pending chain, revalidates its original disk state and requires review/apply again.
+Conversions enforce filesystem and layout constraints. Dynamic-to-basic preserves single contiguous NTFS volumes and requires a restart; spanned/striped/mirrored layouts require migration. Read-only VHD browsing supports 512-byte raw images up to 2040 GiB. Deleted-file recovery supports the documented filesystem cases; fragmented carving, compressed/EFS NTFS recovery and multi-disk reconstruction are not claimed.
+
+Recovery-media creation requires Microsoft's Windows ADK Deployment Tools plus matching WinPE add-on. Microsoft boot files are supplied by that installation. Physical firmware erase, dissimilar-hardware migration, x64 OS recovery boots, USB bridges and high-DPI/accessibility coverage require further hardware qualification. A SMART report or controller completion is not a warranty or certified purge. See the exact [test evidence and limits](docs/VALIDATION-0.3.0.md).
 
 ## Build
 
-Windows build host, stable .NET 10 SDK, Inno Setup 6.7+, and 7-Zip for pinned smartmontools extraction:
+Use a Windows host with stable .NET 10, Visual Studio C++ Build Tools/Windows SDK, and Inno Setup 6.7+. 7-Zip is used to extract pinned smartmontools when it is not already staged.
 
 ```powershell
 ./scripts/build.ps1 -Runtime win-arm64
 ./scripts/build.ps1 -Runtime win-x64
 ./scripts/test.ps1 -Runtime win-arm64
-# Administrator; creates/deletes its own temporary VHDs only:
+# Administrator; creates/deletes its own disposable VHDs:
 ./scripts/test.ps1 -Runtime win-arm64 -Integration
 ```
 
-Engine binaries are fetched from pinned Microsoft/smartmontools releases and verified against `scripts/dependencies.json`. smartctl is a separate GPL executable; its license and complete corresponding source archive are included in packages. The x64 SMART collector runs under emulation on Windows ARM; the app and DiskSpd are native. No service is installed. No credentials are needed to build. See [validation](docs/VALIDATION-0.2.1.md), [security](SECURITY.md), and [third-party licenses](THIRD-PARTY-NOTICES.txt).
+Native storage/recovery hosts link the static MSVC runtime. Build dependencies and standalone engines are pinned by SHA-256 in `scripts/dependencies.json`. Complete smartmontools/wimlib corresponding source and licenses ship with packages. The SMART collector uses x64 emulation on ARM; the app, DiskSpd, VSS requester and recovery host are native. No persistent service, account or telemetry is required.
 
-The website uses buildless HTML/CSS/JS. GitHub Actions builds both architectures and deploys GitHub Pages. Release creation is explicit; CI does not publish a release on every push.
-
-[Clone/wipe/queue/SMART behavior and research](docs/DRIVE-WORKFLOWS-0.2.md) · [0.2 validation](docs/VALIDATION-0.2.1.md)
+GitHub Actions builds/tests both architectures and deploys the buildless GitHub Pages website. Releases are published explicitly. [Security](SECURITY.md) · [Third-party notices](THIRD-PARTY-NOTICES.txt) · [Original research](docs/RESEARCH-AND-PLAN.md)

@@ -32,15 +32,30 @@ public static class DiskAccess
             var number=Query(h,0x2d1080,null,12);if(number.Length<12||BitConverter.ToInt32(number,4)!=expected.Number||Length(h)!=expected.Size)throw new IOException("The retained device handle does not match the selected disk geometry.");
             string actual=Fingerprint(h);if(string.IsNullOrEmpty(expected.NativeIdentity)||actual!=expected.NativeIdentity)throw new IOException("The selected hardware descriptor changed. Refresh and prepare the operation again.");
             if(write&&ContainsRunningWindows(expected.Number))throw new IOException("Writes to the running Windows disk are blocked by native extent checks.");
-            return new(new FileStream(h,write?FileAccess.ReadWrite:FileAccess.Read,1,false),expected.Size,h);
+            return new(new FileStream(h,write?FileAccess.ReadWrite:FileAccess.Read,1,false),expected.Size,h,expected.SectorSize);
         }
         catch{h.Dispose();throw;}
     }
-    public sealed class BoundDiskStream(FileStream stream,long length,SafeFileHandle handle):Stream
+    public sealed class BoundDiskStream(FileStream stream,long length,SafeFileHandle handle,int sector=512):Stream
     {
-        public SafeFileHandle Handle=>handle;public override bool CanRead=>stream.CanRead;public override bool CanWrite=>stream.CanWrite;public override bool CanSeek=>true;public override long Length=>length;public override long Position{get=>stream.Position;set=>stream.Position=value;}
-        public override int Read(byte[] buffer,int offset,int count)=>stream.Read(buffer,offset,count);public override int Read(Span<byte> b)=>stream.Read(b);public override ValueTask<int> ReadAsync(Memory<byte> b,CancellationToken ct=default)=>stream.ReadAsync(b,ct);
-        public override void Write(byte[] b,int o,int n)=>stream.Write(b,o,n);public override void Write(ReadOnlySpan<byte> b)=>stream.Write(b);public override ValueTask WriteAsync(ReadOnlyMemory<byte> b,CancellationToken ct=default)=>stream.WriteAsync(b,ct);public override void Flush()=>stream.Flush(true);public override Task FlushAsync(CancellationToken ct)=>stream.FlushAsync(ct);public override long Seek(long o,SeekOrigin origin)=>stream.Seek(o,origin);public override void SetLength(long value)=>throw new NotSupportedException();protected override void Dispose(bool disposing){if(disposing)stream.Dispose();base.Dispose(disposing);}
+        long cursor;
+        public SafeFileHandle Handle=>handle;public override bool CanRead=>stream.CanRead;public override bool CanWrite=>stream.CanWrite;public override bool CanSeek=>true;public override long Length=>length;public override long Position{get=>cursor;set{if(value<0||value>length)throw new IOException("Seek exceeds the disk.");cursor=value;}}
+        int Count(int requested)=>(int)Math.Min(requested,length-cursor);
+        public override int Read(byte[] buffer,int offset,int count)=>Read(buffer.AsSpan(offset,count));
+        public override int Read(Span<byte> buffer)
+        {
+            int n=Count(buffer.Length);if(n==0)return 0;long begin=cursor/sector*sector;int bytes=checked((int)(((cursor+n+sector-1)/sector*sector)-begin));stream.Position=begin;
+            if(begin==cursor&&bytes==n)stream.ReadExactly(buffer[..n]);else{byte[] temporary=System.Buffers.ArrayPool<byte>.Shared.Rent(bytes);try{stream.ReadExactly(temporary.AsSpan(0,bytes));temporary.AsSpan((int)(cursor-begin),n).CopyTo(buffer);}finally{System.Buffers.ArrayPool<byte>.Shared.Return(temporary);}}cursor+=n;return n;
+        }
+        public override async ValueTask<int> ReadAsync(Memory<byte> buffer,CancellationToken ct=default)
+        {
+            int n=Count(buffer.Length);if(n==0)return 0;long begin=cursor/sector*sector;int bytes=checked((int)(((cursor+n+sector-1)/sector*sector)-begin));stream.Position=begin;
+            if(begin==cursor&&bytes==n)await stream.ReadExactlyAsync(buffer[..n],ct);else{byte[] temporary=System.Buffers.ArrayPool<byte>.Shared.Rent(bytes);try{await stream.ReadExactlyAsync(temporary.AsMemory(0,bytes),ct);temporary.AsMemory((int)(cursor-begin),n).CopyTo(buffer);}finally{System.Buffers.ArrayPool<byte>.Shared.Return(temporary);}}cursor+=n;return n;
+        }
+        void Writable(int count){if(cursor%sector!=0||count%sector!=0||count>length-cursor)throw new IOException("Direct disk writes must be whole sectors within the retained disk bounds.");stream.Position=cursor;}
+        public override void Write(byte[] b,int o,int n)=>Write(b.AsSpan(o,n));public override void Write(ReadOnlySpan<byte> b){Writable(b.Length);stream.Write(b);cursor+=b.Length;}
+        public override async ValueTask WriteAsync(ReadOnlyMemory<byte> b,CancellationToken ct=default){Writable(b.Length);await stream.WriteAsync(b,ct);cursor+=b.Length;}
+        public override void Flush()=>stream.Flush(true);public override Task FlushAsync(CancellationToken ct)=>stream.FlushAsync(ct);public override long Seek(long o,SeekOrigin origin){Position=origin==SeekOrigin.Begin?o:origin==SeekOrigin.Current?cursor+o:length+o;return cursor;}public override void SetLength(long value)=>throw new NotSupportedException();protected override void Dispose(bool disposing){if(disposing)stream.Dispose();base.Dispose(disposing);}
     }
     public static async Task RequireSeparatePathAsync(string path,params int[] disks)
     {

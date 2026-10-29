@@ -47,6 +47,11 @@ partial class Program
             if(args.Contains("--native-store-only")){await NativeStoreCheck(root);Console.WriteLine($"ALL {passed} CHECKS PASSED");return 0;}
             if(args.Contains("--metadata-only")){await MetadataAclCheck(root);Console.WriteLine($"ALL {passed} CHECKS PASSED");return 0;}
             if(args.Length==2&&args[0]=="--build-recovery-iso"){if(Environment.MachineName!="SDTLAB")throw new Exception("Spare only");await RecoveryMediaService.BuildIsoAsync(args[1],RecoveryMediaService.DefaultAdk,[],new CollectProgress([]));Console.WriteLine("RECOVERY ISO BUILT");return 0;}
+            if(args.Contains("--browse-only")){await V10MigrationChecks(root,true);Console.WriteLine($"ALL {passed} CHECKS PASSED");return 0;}
+            if(args.Length==2&&args[0]=="--prepare-pe-fixture"){await PreparePeFixture(args[1]);return 0;}
+            if(args.Length==2&&args[0]=="--capture-windows-fixture"){await CaptureWindowsFixture(args[1]);return 0;}
+            if(args.Length==2&&args[0]=="--dynamic-fixture"){await DynamicFixture(args[1]);Console.WriteLine($"ALL {passed} CHECKS PASSED");return 0;}
+            if(args.Contains("--migration-only")){await V10MigrationChecks(root);Console.WriteLine($"ALL {passed} CHECKS PASSED");return 0;}
             if(args.Contains("--advanced-only")){await V10AdvancedChecks(root);Console.WriteLine($"ALL {passed} CHECKS PASSED");return 0;}
             if(args.Contains("--snapshot-only")){await V10SnapshotChecks(root);Console.WriteLine($"ALL {passed} CHECKS PASSED");return 0;}
             if(args.Contains("--uefi-only")){await UefiLayoutChecks(root,Disk(),false);Console.WriteLine($"ALL {passed} CHECKS PASSED");return 0;}

@@ -7,6 +7,7 @@ using System.Text.Json;
 using SoopaDriveTool.Core;
 namespace SoopaDriveTool.Windows;
 public record VaultBackupJob(int Version,string Id,string Source,string Repository,VaultOptions Options,bool Vss,bool SystemAccount,string Frequency,string Time,string Secret,bool Enabled=true);
+public record BackupScheduleRequest(string Source,string Repository,VaultOptions Options,bool Vss,bool SystemAccount,string Frequency,string Time,string? Passphrase);
 public static class BackupScheduleService
 {
     [StructLayout(LayoutKind.Sequential)]struct Blob{public int Length;public IntPtr Data;}

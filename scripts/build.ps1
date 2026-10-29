@@ -1,4 +1,4 @@
-param([ValidateSet('win-arm64','win-x64')][string]$Runtime='win-x64',[string]$Version='0.2.1',[string]$Compiler)
+param([ValidateSet('win-arm64','win-x64')][string]$Runtime='win-x64',[string]$Version='0.3.0',[string]$Compiler)
 $ErrorActionPreference='Stop';$ProgressPreference='SilentlyContinue';$env:DOTNET_CLI_TELEMETRY_OPTOUT='1'
 $root=Split-Path $PSScriptRoot -Parent
 $tools=Join-Path $root '.tools';New-Item -ItemType Directory -Force $tools | Out-Null
@@ -54,7 +54,7 @@ try{
  Copy-Item $wimSource "$publish\Licenses\wimlib-1.14.5.tar.gz"
  Copy-Item "$root\docs\wimlib" "$publish\Licenses\wimlib" -Recurse
  Copy-Item "$root\docs\DotNet-LICENSE.txt","$root\docs\DotNet-THIRD-PARTY-NOTICES.txt","$root\docs\WPF-LICENSE.txt","$root\docs\WPF-THIRD-PARTY-NOTICES.txt" $publish
- if(!$Compiler){$candidates=@("$tools\InnoSetup\ISCC.exe",'C:\Program Files (x86)\Inno Setup 6\ISCC.exe','C:\Program Files (x86)\Inno Setup 7\ISCC.exe','C:\Program Files\Inno Setup 7\ISCC.exe');$Compiler=$candidates | Where-Object {Test-Path $_} | Select-Object -First 1}
+ if(!$Compiler){$candidates=@("$tools\InnoSetup\ISCC.exe",'C:\Program Files\Inno Setup 6\ISCC.exe','C:\Program Files (x86)\Inno Setup 6\ISCC.exe','C:\Program Files (x86)\Inno Setup 7\ISCC.exe','C:\Program Files\Inno Setup 7\ISCC.exe');$Compiler=$candidates | Where-Object {Test-Path $_} | Select-Object -First 1}
  if(!$Compiler){throw 'Install Inno Setup 6.7+ or pass -Compiler with the ISCC.exe path.'}
  & $Compiler /Qp "/DAppVersion=$Version" "/DRuntime=$Runtime" "/DPublishDir=$publish" "/DOutDir=$output" "$PSScriptRoot\installer.iss"
  if($LASTEXITCODE -ne 0){throw 'Installer compilation failed'}
